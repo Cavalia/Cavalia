@@ -1,14 +1,16 @@
-###**Cavalia: A transactional multicore main-memory database.**###
+##Cavalia
+A transactional multicore main-memory database.
 
-### Linux Platform Installation ###
+##Linux Platform Installation
+
 1. Download and install dependent libraries, including: boost-1.55.0, gtest-1.7.0, protobuf-2.5.0, libcuckoo;
 2. Clone Cavalia project, update CMakeLists.txt to set dependent library directories. 
 3. Build the project using the following command: mkdir build; cd build; cmake -DCMAKE_INSTALL_PREFIX=/to/your/directory ..; make -j; make install.
 
 Please note that the project requires g++ 4.8 with C++11 enabled.
 
-### Compile Options ###
-1. ###Concurrency control###
+##Compile Options
+###Concurrency control
 * ST: disable cc.
 * SILOCK (not ready): locking-based snapshot isolation with no-wait strategy.
 * SIOCC (not ready): optimistic snapshot isolation.
@@ -25,10 +27,10 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * HYBRID: a combination of 2PL and OCC.
 * NOVALID: mute validation (requires OCC or SILO enabled).
 
-1. ###Timestamp allocation###
+###Timestamp allocation
 * BATCH_TIMESTAMP: allocate timestamp in batch.
 
-2. ###Profiler###
+###Profiler
 * MUTE: mute profiling.
 * PRECISE_TIMER: use rdtsc timer.
 * PROFILE_PHASE: profile execution time of each transaction phase (insert, select, and commit).
@@ -41,24 +43,24 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * PROFILE_CC_EXECUTION_TIME: measure time breakdown of the current concurrency control algorithm.
 * PROFILE_CC_EXECUTION_COUNT: measure statistics of the current concurrency control algorithm.
 
-3. ###Hardware architecture###
+###Hardware architecture
 * NUMA: enable NUMA awareness.
 * PTHREAD_LOCK: use pthread_spin_lock.
 * BUILTIN_LOCK: use __sync_lock_test_and_set.
 
-4. ###Index###
+###Index
 * CUCKOO_INDEX: enable cuckoo index.
 
-5. ###Logging###
+###Logging
 * VALUE_LOGGING: enable value logging.
 * COMMAND_LOGGING: enable command logging.
 
-### Notes ###
+### Notes
 * please turn off all the cc-related options when testing transaction replays.
 * the memory allocated for storage manager, including indexes and records, goes unmanaged -- we do not reclaim them throughout the lifetime.
 
-### Authors ###
-Yingjun Wu \<yingjun AT comp.nus.edu.sg\>
-Wentian Guo \<wentian AT comp.nus.edu.sg\>
+### Authors
+* Yingjun Wu \<yingjun AT comp.nus.edu.sg\>
+* Wentian Guo \<wentian AT comp.nus.edu.sg\>
 
 Please feel free to contact us if you confront any problem when using Cavalia. Thanks!
