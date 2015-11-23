@@ -1,4 +1,4 @@
-##Cavalia
+#Cavalia
 A transactional multicore main-memory database.
 
 ##Linux Platform Installation
@@ -55,11 +55,11 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * VALUE_LOGGING: enable value logging.
 * COMMAND_LOGGING: enable command logging.
 
-### Notes
+##Notes
 * please turn off all the cc-related options when testing transaction replays.
 * the memory allocated for storage manager, including indexes and records, goes unmanaged -- we do not reclaim them throughout the lifetime.
 
-### Authors
+##Authors
 * Yingjun Wu \<yingjun AT comp.nus.edu.sg\>
 * Wentian Guo \<wentian AT comp.nus.edu.sg\>
 
