@@ -58,7 +58,7 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * the memory allocated for storage manager, including indexes and records, goes unmanaged -- we do not reclaim them throughout the lifetime.
 
 ### Authors ###
-Yingjun Wu <yingjun AT comp.nus.edu.sg>
-Wentian Guo <wentian AT comp.nus.edu.sg>
+Yingjun Wu \<yingjun AT comp.nus.edu.sg\>
+Wentian Guo \<wentian AT comp.nus.edu.sg\>
 
 Please feel free to contact us if you confront any problem when using Cavalia. Thanks!
