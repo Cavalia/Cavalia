@@ -22,8 +22,7 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * LOCK: two-phase locking with no-wait strategy.
 * LOCK_WAIT: two-phase locking with wait-die strategy.
 * OCC: optimistic concurrency control.
-* SILO: an implementation following silo's design. 
-* REPAIR: transaction repair.
+* SILO: an implementation following silo's design.
 * HYBRID: a combination of 2PL and OCC.
 * NOVALID: mute validation (requires OCC or SILO enabled).
 
