@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_DATABASE_BTREE_INDEX_H__
 #define __CAVALIA_DATABASE_BTREE_INDEX_H__
 
-#include <btree_map.h>
+#include <BTree/btree_map.h>
 #include "BaseOrderedIndex.h"
 
 namespace Cavalia {
