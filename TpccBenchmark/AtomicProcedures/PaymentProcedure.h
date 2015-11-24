@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_PAYMENT_PROCEDURE_H__
 #define __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_PAYMENT_PROCEDURE_H__
 
-#include <StoredProcedure.h>
+#include <Concurrency/StoredProcedure.h>
 #include "../TpccInformation.h"
 
 namespace Cavalia{

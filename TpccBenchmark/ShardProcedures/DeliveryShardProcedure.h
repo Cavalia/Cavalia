@@ -3,7 +3,7 @@
 #define __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_DELIVERY_SHARD_PROCEDURE_H__
 
 #include <unordered_map>
-#include <StoredProcedure.h>
+#include <Concurrency/StoredProcedure.h>
 #include "../TpccInformation.h"
 
 namespace Cavalia{
