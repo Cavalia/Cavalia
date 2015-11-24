@@ -1,6 +1,10 @@
 #Cavalia
 A transactional multicore main-memory database.
 
+##Features
+
+Cavalia is a main-memory database system specifically designed for modern multicore architectures. It aims at providing a generalized framework for comparing different concurrency-control mechanisms. A highlight in Cavalia is that new hardware features (e.g., NUMA, HTM, and NVRAM) are judiciously leveraged for achieving higher level of concurrency when processing massive volume of transactions. Cavalia is an on-going project that is under intensive development. Please feel free to contact us if you confront any problem when using Cavalia. Thanks!
+
 ##Linux Platform Installation
 
 1. Download and install dependent libraries, including: boost-1.55.0, gtest-1.7.0, protobuf-2.5.0, libcuckoo;
@@ -62,4 +66,4 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * Yingjun Wu \<yingjun AT comp.nus.edu.sg\>
 * Wentian Guo \<wentian AT comp.nus.edu.sg\>
 
-Please feel free to contact us if you confront any problem when using Cavalia. Thanks!
+
