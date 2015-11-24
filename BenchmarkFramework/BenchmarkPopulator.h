@@ -4,11 +4,11 @@
 
 
 #include <TimeMeasurer.h>
-#include <BaseStorageManager.h>
+#include <Storage/BaseStorageManager.h>
 
 namespace Cavalia{
 	namespace Benchmark{
-		using namespace Cavalia::StorageEngine;
+		using namespace Cavalia::Database;
 		class BenchmarkPopulator{
 		public:
 			BenchmarkPopulator(BaseStorageManager *storage_manager) : storage_manager_(storage_manager){}

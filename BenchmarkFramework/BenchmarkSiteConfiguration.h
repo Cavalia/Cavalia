@@ -2,12 +2,12 @@
 #ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_SITE_CONFIGURATION_H__
 #define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_SITE_CONFIGURATION_H__
 
-#include <MetaTypes.h>
+#include <Meta/MetaTypes.h>
 #include "NumaTopology.h"
 
 namespace Cavalia {
 	namespace Benchmark {
-		using namespace Cavalia::StorageEngine;
+		using namespace Cavalia::Database;
 		class BenchmarkSiteConfiguration {
 		public:
 			BenchmarkSiteConfiguration(const size_t &core_count, const size_t &node_count) : core_count_(core_count), node_count_(node_count) {}

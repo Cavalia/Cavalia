@@ -2,13 +2,13 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_SCHEMA_H__
 #define __CAVALIA_TPCC_BENCHMARK_TPCC_SCHEMA_H__
 
-#include <RecordSchema.h>
+#include <Storage/RecordSchema.h>
 #include "TpccMeta.h"
 
 namespace Cavalia{
 	namespace Benchmark{
 		namespace Tpcc{
-			using namespace StorageEngine;
+			using namespace Database;
 			class TpccSchema{
 			public:
 				static RecordSchema* GenerateItemSchema(){

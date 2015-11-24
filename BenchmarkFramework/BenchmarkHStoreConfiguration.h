@@ -1,14 +1,14 @@
 #pragma once
-#ifndef __CAVALIA_TPCC_BENCHMARK_BENCHMARK_HSTORE_CONFIGURATION_H__
-#define __CAVALIA_TPCC_BENCHMARK_BENCHMARK_HSTORE_CONFIGURATION_H__
+#ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_HSTORE_CONFIGURATION_H__
+#define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_HSTORE_CONFIGURATION_H__
 
 #include <cmath>
-#include <MetaTypes.h>
+#include <Meta/MetaTypes.h>
 #include "NumaTopology.h"
 
 namespace Cavalia {
 	namespace Benchmark {
-		using namespace Cavalia::StorageEngine;
+		using namespace Cavalia::Database;
 		class BenchmarkHStoreConfiguration {
 		public:
 			BenchmarkHStoreConfiguration(const size_t &core_count, const size_t &node_count) : core_count_(core_count), node_count_(node_count) {}

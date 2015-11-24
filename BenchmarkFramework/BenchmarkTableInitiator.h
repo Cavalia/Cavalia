@@ -2,11 +2,11 @@
 #ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_TABLE_INITIATOR_H__
 #define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_TABLE_INITIATOR_H__
 
-#include <BaseStorageManager.h>
+#include <Storage/BaseStorageManager.h>
 
 namespace Cavalia{
 	namespace Benchmark{
-		using namespace Cavalia::StorageEngine;
+		using namespace Cavalia::Database;
 		class BenchmarkTableInitiator{
 		public:
 			BenchmarkTableInitiator(){}

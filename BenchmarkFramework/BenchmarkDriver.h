@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_DRIVER_H__
 #define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_DRIVER_H__
 
-#include <MetaTypes.h>
+#include <Meta/MetaTypes.h>
 
 #define CHECK_DIRECTORY(BenchmarkName) \
 if (boost::filesystem::exists(#BenchmarkName) == false){ \

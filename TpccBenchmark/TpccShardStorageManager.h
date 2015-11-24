@@ -1,14 +1,14 @@
 #pragma once
-#ifndef __CAVALIA_STORAGE_ENGINE_TPCC_SHARD_STORAGE_MANAGER_H__
-#define __CAVALIA_STORAGE_ENGINE_TPCC_SHARD_STORAGE_MANAGER_H__
+#ifndef __CAVALIA_DATABASE_TPCC_SHARD_STORAGE_MANAGER_H__
+#define __CAVALIA_DATABASE_TPCC_SHARD_STORAGE_MANAGER_H__
 
-#include <ShardStorageManager.h>
+#include <Storage/ShardStorageManager.h>
 #include "TpccShardTable.h"
 
 namespace Cavalia{
 	namespace Benchmark{
 		namespace Tpcc{
-			using namespace Cavalia::StorageEngine;
+			using namespace Cavalia::Database;
 			class TpccShardStorageManager : public ShardStorageManager {
 			public:
 				TpccShardStorageManager(const std::string &filename, const std::vector<TableLocation> &table_locations, bool is_thread_safe) : ShardStorageManager(filename, table_locations, is_thread_safe){}

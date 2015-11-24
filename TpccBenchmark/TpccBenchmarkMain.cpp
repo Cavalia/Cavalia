@@ -3,16 +3,16 @@
 #include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
 
-#include <Profilers.h>
+#include <Profiler/Profilers.h>
 
-#include <IORedirector.h>
+#include <Redirector/IORedirector.h>
 
-#include <BaseLogger.h>
+#include <Logger/BaseLogger.h>
 
 #include <BenchmarkDriver.h>
 #include <BenchmarkArguments.h>
-#include <ShareStorageManager.h>
-#include <ShardStorageManager.h>
+#include <Storage/ShareStorageManager.h>
+#include <Storage/ShardStorageManager.h>
 
 #include "TpccTableInitiator.h"
 #include "TpccPopulator.h"

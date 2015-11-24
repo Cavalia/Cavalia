@@ -6,15 +6,15 @@
 #include <fstream>
 #include <boost/filesystem.hpp>
 #include <BenchmarkScaleParams.h>
-#include <IORedirector.h>
+#include <Redirector/IORedirector.h>
 
 #include <TimeMeasurer.h>
 #include <EventTuple.h>
-#include <MetaTypes.h>
+#include <Meta/MetaTypes.h>
 
 namespace Cavalia{
 	namespace Benchmark{
-		using namespace StorageEngine;
+		using namespace Database;
 		class BenchmarkSource{
 		public:
 			BenchmarkSource(const std::string &prefix, IORedirector *redirector, BenchmarkScaleParams *const scale_params, const size_t &num_transactions, const SourceType source_type, const size_t &partition_count, const size_t dist_ratio) : redirector_ptr_(redirector), num_transactions_(num_transactions), source_type_(source_type), partition_count_(partition_count), dist_ratio_(dist_ratio){

@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_HSTORE_EXECUTOR_H__
 #define __CAVALIA_TPCC_BENCHMARK_TPCC_HSTORE_EXECUTOR_H__
 
-#include <HStoreExecutor.h>
+#include <Executor/HStoreExecutor.h>
 
 #include "ShardProcedures/DeliveryShardProcedure.h"
 #include "ShardProcedures/NewOrderShardProcedure.h"

@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <cassert>
-#include <MetaTypes.h>
+#include <Meta/MetaTypes.h>
 
 enum AppType { APP_POPULATE, APP_REPLAY, APP_CC_EXECUTE, APP_FLOW_EXECUTE, APP_HSTORE_EXECUTE, APP_SITE_EXECUTE, APP_CHOP_EXECUTE, kAppSize };
 enum AppReplayType { APP_SERIAL_REPLAY };
@@ -119,10 +119,10 @@ static void ArgumentsParser(int argc, char *argv[]) {
 			num_stage = atoi(&argv[i][2]);
 		}
 		else if (argv[i][1] == 'z') {
-			Cavalia::StorageEngine::gTupleBatchSize = atoi(&argv[i][2]);
+			Cavalia::Database::gTupleBatchSize = atoi(&argv[i][2]);
 		}
 		else if (argv[i][1] == 'o') {
-			Cavalia::StorageEngine::gAdhocRatio = atoi(&argv[i][2]);
+			Cavalia::Database::gAdhocRatio = atoi(&argv[i][2]);
 		}
 		else if (argv[i][1] == 'h') {
 			PrintUsage();

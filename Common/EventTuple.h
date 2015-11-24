@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __CAVALIA_COMMON_EVENT_TUPLE_H__
-#define __CAVALIA_COMMON_EVENT_TUPLE_H__
+#ifndef __COMMON_EVENT_TUPLE_H__
+#define __COMMON_EVENT_TUPLE_H__
 
 #include <cassert>
 #include <cstdint>

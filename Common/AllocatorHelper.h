@@ -54,7 +54,6 @@ public:
 	}
 
 	char* Alloc(){
-		//printf("block_size=%d\n", block_size_);
 		FreeBlock *block;
 		// allocate from buffer.
 		if (free_block_head_ == NULL){
@@ -62,7 +61,6 @@ public:
 			// sizeof(FreeBlock): meta data size.
 			size_t size = (block_size_ + sizeof(FreeBlock)+(MEM_ALLIGN - 1)) & ~(MEM_ALLIGN - 1);
 			if (size_in_buffer_ < size){
-				printf("block size=%d, allocate more...\n", block_size_);
 				size_in_buffer_ = block_size_ * kBlockNums[size_id_];
 #if defined(NUMA)
 				buffer_ = (char*)numa_alloc_local(size_in_buffer_);

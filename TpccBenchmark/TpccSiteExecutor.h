@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_SITE_EXECUTOR_H__
 #define __CAVALIA_TPCC_BENCHMARK_TPCC_SITE_EXECUTOR_H__
 
-#include <SiteExecutor.h>
+#include <Executor/SiteExecutor.h>
 
 #include "ShardProcedures/DeliveryShardProcedure.h"
 #include "ShardProcedures/NewOrderShardProcedure.h"

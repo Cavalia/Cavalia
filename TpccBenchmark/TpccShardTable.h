@@ -1,14 +1,14 @@
 #pragma once
-#ifndef __CAVALIA_STORAGE_ENGINE_TPCC_SHARD_TABLE_H__
-#define __CAVALIA_STORAGE_ENGINE_TPCC_SHARD_TABLE_H__
+#ifndef __CAVALIA_DATABASE_TPCC_SHARD_TABLE_H__
+#define __CAVALIA_DATABASE_TPCC_SHARD_TABLE_H__
 
-#include <ShardTable.h>
+#include <Storage/ShardTable.h>
 #include "TpccMeta.h"
 
 namespace Cavalia {
 	namespace Benchmark {
 		namespace Tpcc{
-			using namespace Cavalia::StorageEngine;
+			using namespace Cavalia::Database;
 			class TpccShardTable : public ShardTable {
 			public:
 				TpccShardTable(const RecordSchema * const schema_ptr, const TableLocation &table_location, bool is_thread_safe) : ShardTable(schema_ptr, table_location, is_thread_safe){}
