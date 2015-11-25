@@ -19,11 +19,12 @@
 #include "TpccSource.h"
 #include "TpccConcurrentExecutor.h"
 
+#if defined(__linux__)
 #include "TpccHStoreConfiguration.h"
 #include "TpccHStoreExecutor.h"
-
 #include "TpccSiteConfiguration.h"
 #include "TpccSiteExecutor.h"
+#endif
 
 using namespace Cavalia;
 using namespace Cavalia::Benchmark::Tpcc;
@@ -57,6 +58,7 @@ int main(int argc, char *argv[]) {
 			PRINT_STORAGE_STATUS;
 			REPORT_PROFILERS;
 		}
+#if defined(__linux__)
 		else if (app_type == APP_HSTORE_EXECUTE) {
 			// number of threads should be equal to number of warehouses.
 			size_t total_num_core = num_core * num_node;
@@ -81,6 +83,7 @@ int main(int argc, char *argv[]) {
 			EXECUTE_TRANSACTIONS_SITE(Tpcc);
 			PRINT_STORAGE_STATUS;
 		}
+#endif
 		delete logger;
 		logger = NULL;
 	}

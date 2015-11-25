@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_TUPLES_H__
-#define __CAVALIA_TPCC_BENCHMARK_TPCC_TUPLES_H__
+#ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_PARAMS_H__
+#define __CAVALIA_TPCC_BENCHMARK_TPCC_PARAMS_H__
 
 #include <unordered_map>
 

@@ -30,6 +30,11 @@ namespace Cavalia{
 				memcpy(data_ptr_ + schema_ptr_->GetColumnOffset(column_id), data, schema_ptr_->GetColumnSize(column_id));
 			}
 
+			// rename.
+			void UpdateColumn(const size_t &column_id, const char*data){
+				memcpy(data_ptr_ + schema_ptr_->GetColumnOffset(column_id), data, schema_ptr_->GetColumnSize(column_id));
+			}
+
 			// set column. type must be varchar.
 			void SetColumn(const size_t &column_id, const CharArray &data){
 				assert(schema_ptr_->GetColumnType(column_id) == ValueType::VARCHAR && schema_ptr_->GetColumnSize(column_id) >= data.size_);
@@ -127,12 +132,6 @@ namespace Cavalia{
 					hashcode += *(HashcodeType*)GetColumn(schema_ptr_->GetPartitionColumnId(i));
 				}
 				return hashcode;
-			}
-
-			///////////////////UPDATE//////////////////
-			// update after search.
-			void UpdateColumn(const size_t &column_id, const char*value){
-				memcpy(GetColumn(column_id), value, schema_ptr_->GetColumnSize(column_id));
 			}
 
 		private:

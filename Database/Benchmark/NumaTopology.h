@@ -2,7 +2,6 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_BENCHMARK_NUMA_TOPOLOGY_H__
 #define __CAVALIA_TPCC_BENCHMARK_BENCHMARK_NUMA_TOPOLOGY_H__
 
-#if defined(NUMA)
 #include <iostream>
 #include <vector>
 #include <numa.h>
@@ -45,6 +44,4 @@ namespace Cavalia{
 		};
 	}
 }
-#endif
-
 #endif

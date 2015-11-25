@@ -15,7 +15,6 @@ namespace Cavalia {
 			~BenchmarkHStoreConfiguration() {}
 
 			void MeasureConfiguration() {
-#if defined(NUMA)
 				NumaTopology topology;
 				topology.Print();
 				assert(node_count_ <= topology.max_node_count_);
@@ -46,9 +45,6 @@ namespace Cavalia {
 					}
 				}
 				txn_location_.node_count_ = node_count_;
-#else
-				assert(false);
-#endif
 			}
 
 			const TxnLocation& GetTxnLocation() const {

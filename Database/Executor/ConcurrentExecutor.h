@@ -4,6 +4,7 @@
 
 #include <FastRandom.h>
 #include <ThreadHelper.h>
+#include <NumaHelper.h>
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
@@ -111,11 +112,7 @@ namespace Cavalia{
 				}
 				/////////////////////////////////////////////////
 				// prepare local managers.
-#if defined(NUMA)
-				size_t node_id = numa_node_of_cpu(core_id);
-#else
-				size_t node_id = 0;
-#endif
+				size_t node_id = GetNumaNodeId(core_id);
 
 #if defined(HEALING)
 				TransactionManager *txn_manager = manager_generator_(storage_manager_, logger_, thread_id, node_id);

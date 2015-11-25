@@ -211,7 +211,7 @@ namespace Cavalia{
 				}
 				// 60%: payment by last name
 				//if (y <= 60) {
-				//	param->c_last_ = TpccRandomGenerator::GenerateRandomLastName(scale_params_->num_customers_per_district_);
+					//param->c_last_ = TpccRandomGenerator::GenerateRandomLastName(scale_params_->num_customers_per_district_);
 				//}
 				// 40%: payment by id
 				//else {

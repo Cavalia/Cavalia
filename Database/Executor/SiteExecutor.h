@@ -3,6 +3,7 @@
 #define __CAVALIA_DATABASE_SITE_EXECUTOR_H__
 
 #include <ThreadHelper.h>
+#include <NumaHelper.h>
 #include <unordered_map>
 #include <boost/thread/mutex.hpp>
 #include "../Storage/ShareStorageManager.h"
@@ -99,11 +100,7 @@ namespace Cavalia {
 				}
 				/////////////////////////////////////////////////
 				// prepare local managers.
-#if defined(NUMA)
-				size_t node_id = numa_node_of_cpu(core_id);
-#else
-				size_t node_id = 0;
-#endif
+				size_t node_id = GetNumaNodeId(core_id);
 				TransactionManager txn_manager(storage_manager_, logger_, part_id, this->thread_count_);
 				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
 				for (auto &entry : registers_){

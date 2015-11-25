@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __CAVALIA_DATABASE_GLOBAL_CONTENT_H__
-#define __CAVALIA_DATABASE_GLOBAL_CONTENT_H__
+#ifndef __CAVALIA_DATABASE_GLOBAL_TIMESTAMP_H__
+#define __CAVALIA_DATABASE_GLOBAL_TIMESTAMP_H__
 
 #include <cstdint>
 #include <queue>
@@ -24,7 +24,7 @@ namespace Cavalia{
 			///////////////////////
 			// for multiversion concurrency control, including snapshot isolation. 
 			// the purpose is (1) to collect garbage for version maintenance; (2) generate a timestamp to retrieve consistent snapshot.
-			
+
 			// for OCC or 2PL, we can use maximum timestamp to retrieve consistent snapshot.
 			// this is because the timestamp for OCC and 2PL is generated at the commit time, and new committed transactions must have larger timestamp.
 			static uint64_t GetMaxTimestamp(){
@@ -56,7 +56,7 @@ namespace Cavalia{
 
 		public:
 			static std::atomic<uint64_t> monotone_timestamp_;
-			
+
 			static std::atomic<uint64_t> *thread_timestamp_[kMaxThreadNum];
 			static size_t thread_count_;
 		};

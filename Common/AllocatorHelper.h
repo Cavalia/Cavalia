@@ -6,10 +6,8 @@
 #include <cstring>
 #include <cassert>
 #include <mutex>
-#if defined(NUMA)
+#if defined(__linux__)
 #include <numa.h>
-#endif
-#if defined(THREAD_ALLOC)
 #include <pthread.h>
 #endif
 
@@ -44,7 +42,7 @@ public:
 		block_size_ = size;
 		size_id_ = size_id;
 		size_in_buffer_ = block_size_ * kBlockNums[size_id_];
-#if defined(NUMA)
+#if defined(__linux__)
 		buffer_ = (char*)numa_alloc_onnode(size_in_buffer_, node_id);
 #else
 		buffer_ = (char*)malloc(size_in_buffer_);
@@ -62,7 +60,7 @@ public:
 			size_t size = (block_size_ + sizeof(FreeBlock)+(MEM_ALLIGN - 1)) & ~(MEM_ALLIGN - 1);
 			if (size_in_buffer_ < size){
 				size_in_buffer_ = block_size_ * kBlockNums[size_id_];
-#if defined(NUMA)
+#if defined(__linux__)
 				buffer_ = (char*)numa_alloc_local(size_in_buffer_);
 #else
 				buffer_ = (char*)malloc(size_in_buffer_);
@@ -132,7 +130,7 @@ public:
 		register_lock_.unlock();
 
 		int node_id = numa_node_of_cpu(core_id);
-#if defined(NUMA)
+#if defined(__linux__)
 		arenas_[thread_id] = (Arena*)numa_alloc_onnode(sizeof(Arena)*kSizeNum, node_id);
 		for (size_t j = 0; j < kSizeNum; ++j){
 			new(&(arenas_[thread_id][j]))Arena();
@@ -167,7 +165,7 @@ public:
 #endif
 
 	static char* AllocNode(const size_t &size, const size_t &numa_node_id){
-#if defined(NUMA)
+#if defined(__linux__)
 		return (char*)numa_alloc_onnode(size, numa_node_id);
 #else
 		return (char*)malloc(size);
@@ -175,7 +173,7 @@ public:
 	}
 
 	 static void FreeNode(char *ptr, const size_t &size){
-#if defined(NUMA)
+#if defined(__linux__)
 		numa_free(ptr, size);
 #else
 		free(ptr);
@@ -183,7 +181,7 @@ public:
 	}
 
 	static char* AllocLocal(const size_t &size){
-#if defined(NUMA)
+#if defined(__linux__)
 		return (char*)numa_alloc_local(size);
 #else
 		return (char*)malloc(size);
@@ -191,7 +189,7 @@ public:
 	}
 
 	static void FreeLocal(char *ptr, const size_t &size){
-#if defined(NUMA)
+#if defined(__linux__)
 		numa_free(ptr, size);
 #else
 		free(ptr);
