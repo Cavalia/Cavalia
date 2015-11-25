@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_NEW_ORDER_SHARD_PROCEDURE_H__
 #define __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_NEW_ORDER_SHARD_PROCEDURE_H__
 
-#include <Concurrency/StoredProcedure.h>
+#include <Transaction/StoredProcedure.h>
 #include "../TpccInformation.h"
 
 namespace Cavalia{
@@ -18,7 +18,7 @@ namespace Cavalia{
 						allocator_->Free((char*)ol_amounts);
 					}
 
-					virtual bool Execute(EventTuple *param, CharArray &ret, const ExeContext &exe_context){
+					virtual bool Execute(TxnParam *param, CharArray &ret, const ExeContext &exe_context){
 						const NewOrderParam *new_order_param = static_cast<const NewOrderParam*>(param);
 						int partition_id = (new_order_param->w_id_ - 1) % partition_count_;
 						double total = 0;

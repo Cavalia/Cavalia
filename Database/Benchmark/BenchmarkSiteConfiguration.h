@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_SITE_CONFIGURATION_H__
 #define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_SITE_CONFIGURATION_H__
 
-#include <Meta/MetaTypes.h>
+#include "../Meta/MetaTypes.h"
 #include "NumaTopology.h"
 
 namespace Cavalia {

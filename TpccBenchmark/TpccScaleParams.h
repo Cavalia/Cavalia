@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_SCALE_PARAMS_H__
 #define __CAVALIA_TPCC_BENCHMARK_SCALE_PARAMS_H__
 
-#include <BenchmarkScaleParams.h>
+#include <Benchmark/BenchmarkScaleParams.h>
 #include "TpccConstants.h"
 
 namespace Cavalia{

@@ -3,7 +3,7 @@
 #define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_HSTORE_CONFIGURATION_H__
 
 #include <cmath>
-#include <Meta/MetaTypes.h>
+#include "../Meta/MetaTypes.h"
 #include "NumaTopology.h"
 
 namespace Cavalia {

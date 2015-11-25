@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_PAYMENT_PROCEDURE_H__
 #define __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_PAYMENT_PROCEDURE_H__
 
-#include <Concurrency/StoredProcedure.h>
+#include <Transaction/StoredProcedure.h>
 #include "../TpccInformation.h"
 
 namespace Cavalia{
@@ -14,7 +14,7 @@ namespace Cavalia{
 					PaymentProcedure(const size_t &txn_type) : StoredProcedure(txn_type){}
 					virtual ~PaymentProcedure(){}
 
-					virtual bool Execute(EventTuple *param, CharArray &ret, const ExeContext &exe_context){
+					virtual bool Execute(TxnParam *param, CharArray &ret, const ExeContext &exe_context){
 						context_.PassContext(exe_context);
 						const PaymentParam *payment_param = static_cast<const PaymentParam*>(param);
 						SchemaRecord *warehouse_record = NULL;

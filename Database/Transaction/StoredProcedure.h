@@ -2,11 +2,11 @@
 #ifndef __CAVALIA_DATABASE_STORED_PROCEDURE_H__
 #define __CAVALIA_DATABASE_STORED_PROCEDURE_H__
 
-#include <EventTuple.h>
 #include "../Storage/SchemaRecord.h"
 #include "../Storage/SchemaRecords.h"
 #include "TransactionManager.h"
 #include "TxnContext.h"
+#include "TxnParam.h"
 
 #define DB_QUERY(statement) \
 if (transaction_manager_->statement == false) return false;
@@ -42,7 +42,7 @@ namespace Cavalia{
 				partition_id_ = partition_id;
 			}
 
-			virtual bool Execute(EventTuple *param, CharArray &ret, const ExeContext &exe_context) { return true; }
+			virtual bool Execute(TxnParam *param, CharArray &ret, const ExeContext &exe_context) { return true; }
 
 		private:
 			StoredProcedure(const StoredProcedure&);

@@ -62,7 +62,7 @@ namespace Cavalia{
 			return true;
 		}
 
-		bool TransactionManager::CommitTransaction(TxnContext *context, EventTuple *param, CharArray &ret_str){
+		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str){
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			uint64_t max_rw_ts = 0;
 			for (size_t i = 0; i < access_list_.access_count_; ++i){

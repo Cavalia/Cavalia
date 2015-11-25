@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_POPULATOR_H__
 #define __CAVALIA_TPCC_BENCHMARK_TPCC_POPULATOR_H__
 
-#include <BenchmarkPopulator.h>
+#include <Benchmark/BenchmarkPopulator.h>
 #include "TpccRecords.h"
 #include "TpccScaleParams.h"
 #include "TpccInformation.h"

@@ -19,7 +19,7 @@ namespace Cavalia {
 				buffer_.Clear();
 			}
 
-			CharArray* Commit(const size_t &txn_type, EventTuple *param) {
+			CharArray* Commit(const size_t &txn_type, TxnParam *param) {
 				memcpy(buffer_.char_ptr_, (char*)(&txn_type), sizeof(txn_type));
 				size_t tmp_size = 0;
 				param->Serialize(buffer_.char_ptr_ + sizeof(txn_type) + sizeof(tmp_size), tmp_size);

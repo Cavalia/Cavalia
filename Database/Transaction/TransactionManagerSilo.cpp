@@ -52,7 +52,7 @@ namespace Cavalia{
 			}
 		}
 
-		bool TransactionManager::CommitTransaction(TxnContext *context, EventTuple *param, CharArray &ret_str){
+		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str){
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			// step 1: acquire write lock.
 			uint64_t max_rw_ts = 0;

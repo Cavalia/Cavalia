@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_DRIVER_H__
 #define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_DRIVER_H__
 
-#include <Meta/MetaTypes.h>
+#include "../Meta/MetaTypes.h"
 
 #define CHECK_DIRECTORY(BenchmarkName) \
 if (boost::filesystem::exists(#BenchmarkName) == false){ \
@@ -56,40 +56,12 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 	BenchmarkName##ConcurrentExecutor executor(&io_redirector, &storage_manager, logger, NumThread); \
 	executor.Start();
 
-#define EXECUTE_TRANSACTIONS_CHOP(BenchmarkName, NumThread) \
-	BenchmarkName##ChopExecutor executor(&io_redirector, &storage_manager, logger, NumThread); \
-	executor.Start();
-
-///////////////////////////////////////////////////////////
-#define RELOAD_STORAGE_FLOW(BenchmarkName) \
-	ShardStorageManager storage_manager(#BenchmarkName"/Checkpoint", configure.GetTableLocations(), false); \
-	BenchmarkName##TableInitiator initiator; \
-	initiator.Initialize(&storage_manager); \
-	storage_manager.ReloadCheckpoint();
-
-#define CONFIGURE_CENTRAL_FLOW(BenchmarkName, NumThread, NumNode) \
-	BenchmarkName##CentralFlowConfiguration configure(NumThread, NumNode); \
-	configure.MeasureConfiguration();
-
-// flow transactions
-#define EXECUTE_TRANSACTIONS_CENTRAL_FLOW(BenchmarkName, NumThread) \
-	BenchmarkName##CentralFlowExecutor executor(&io_redirector, &storage_manager, logger, NumThread, configure.GetSliceCounts()); \
-	executor.Start();
-
-#define CONFIGURE_CHOP_FLOW(BenchmarkName, NumThread, NumNode) \
-	BenchmarkName##ChopFlowConfiguration configure(NumThread, NumNode); \
-	configure.MeasureConfiguration();
-
-#define EXECUTE_TRANSACTIONS_CHOP_FLOW(BenchmarkName, NumThread) \
-	BenchmarkName##ChopFlowExecutor executor(&io_redirector, &storage_manager, logger, NumThread, configure.GetSliceCounts()); \
-	executor.Start();
 ////////////////////////////////////////////////////////////
 #define RELOAD_STORAGE_PARTITION(BenchmarkName, ThreadSafe) \
 	BenchmarkName##ShardStorageManager storage_manager(#BenchmarkName"/Checkpoint", configure.GetTableLocations(), ThreadSafe); \
 	BenchmarkName##TableInitiator initiator; \
 	initiator.Initialize(&storage_manager); \
 	storage_manager.ReloadCheckpoint();
-
 
 #define CONFIGURE_HSTORE(BenchmarkName, NumThread, NumNode) \
 	BenchmarkName##HStoreConfiguration configure(NumThread, NumNode); \
@@ -110,14 +82,6 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 ////////////////////////////////////////////////////////////
 #define REPLAY_TRANSACTIONS(BenchmarkName) \
 	BenchmarkName##SerialReplayer replayer(#BenchmarkName"/CommandLogging", &storage_manager); \
-	replayer.Start();
-
-#define REPLAY_TRANSACTIONS_BASIC_PARALLEL(BenchmarkName, NumThread) \
-	BenchmarkName##BasicParallelReplayer replayer(#BenchmarkName"/CommandLogging", &storage_manager, NumThread, #BenchmarkName"Chop.txt"); \
-	replayer.Start();
-
-#define REPLAY_TRANSACTIONS_STAGE_PARALLEL(BenchmarkName, NumThread, NumLayer) \
-	BenchmarkName##StageParallelReplayer replayer(#BenchmarkName"/CommandLogging", &storage_manager, NumThread, NumLayer, #BenchmarkName"Chop.txt"); \
 	replayer.Start();
 
 #endif

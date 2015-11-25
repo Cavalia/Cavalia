@@ -7,10 +7,10 @@
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
-#include "../Storage/ShareStorageManager.h"
 #include "../Profiler/Profilers.h"
-#include "../Concurrency/StoredProcedure.h"
-#include "../Concurrency/ScalableTimestamp.h"
+#include "../Storage/ShareStorageManager.h"
+#include "../Transaction/StoredProcedure.h"
+#include "../Transaction/ScalableTimestamp.h"
 #include "BaseExecutor.h"
 #if defined(DBX)
 #include <RtmLock.h>
@@ -45,7 +45,7 @@ namespace Cavalia{
 
 		private:
 			virtual void PrepareProcedures() = 0;
-			virtual EventTuple* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
+			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
 
 			virtual void ProcessQuery(){
 				allocator_->Init(thread_count_);
@@ -95,11 +95,11 @@ namespace Cavalia{
 					// copy to local memory.
 					TupleBatch *execution_batch = new TupleBatch(gTupleBatchSize);
 					for (size_t j = 0; j < tuple_batch->size(); ++j) {
-						EventTuple *entry = tuple_batch->get(j);
+						TxnParam *entry = tuple_batch->get(j);
 						// copy each parameter.
 						CharArray str;
 						entry->Serialize(str);
-						EventTuple* new_tuple = DeserializeParam(entry->type_, str);
+						TxnParam* new_tuple = DeserializeParam(entry->type_, str);
 						execution_batch->push_back(new_tuple);
 						str.Clear();
 						delete entry;
@@ -143,7 +143,7 @@ namespace Cavalia{
 				ExeContext exe_context;
 				for (auto &tuples : execution_batches){
 					for (size_t idx = 0; idx < tuples->size(); ++idx) {
-						EventTuple *tuple = tuples->get(idx);
+						TxnParam *tuple = tuples->get(idx);
 						//double a = r.next_uniform();
 						//if (a < gAdhocRatio*1.0 / 100){
 						//	is_adhoc = true;

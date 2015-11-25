@@ -21,7 +21,7 @@ namespace Cavalia {
 			return false;
 		}
 
-		bool TransactionManager::CommitTransaction(TxnContext *context, EventTuple *param, CharArray &ret_str) {
+		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str) {
 			return true;
 		}
 	}

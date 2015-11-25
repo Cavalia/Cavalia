@@ -50,7 +50,7 @@ namespace Cavalia{
 			return true;
 		}
 
-		bool TransactionManager::CommitTransaction(TxnContext *context, EventTuple *param){
+		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param){
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			bool is_success = true;
 			size_t lock_count = 0;

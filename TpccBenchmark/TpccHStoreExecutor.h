@@ -64,8 +64,8 @@ namespace Cavalia {
 						};
 					}
 
-					virtual EventTuple* DeserializeParam(const size_t &param_type, const CharArray &entry) {
-						EventTuple *tuple;
+					virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) {
+						TxnParam *tuple;
 						if (param_type == TupleType::DELIVERY) {
 							tuple = new DeliveryParam();
 						}
@@ -89,7 +89,7 @@ namespace Cavalia {
 						return tuple;
 					}
 
-					virtual void GetPartitionIds(const EventTuple *tuple, std::set<size_t> &part_ids){
+					virtual void GetPartitionIds(const TxnParam *tuple, std::set<size_t> &part_ids){
 						if (tuple->type_ == DELIVERY){
 							part_ids.insert((((DeliveryParam*)tuple)->w_id_ - 1) % thread_count_);
 						}

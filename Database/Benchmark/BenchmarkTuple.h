@@ -2,13 +2,13 @@
 #ifndef __CAVALIA_BENCHMARK_COMMON_BENCHMARK_TUPLES_H__
 #define __CAVALIA_BENCHMARK_COMMON_BENCHMARK_TUPLES_H__
 
-#include <EventTuple.h>
+#include "../Transaction/TxnParam.h"
 
 namespace Cavalia{
 	namespace Benchmark{
 
 #define TUPLE_CLASS(TupleName) \
-		class TupleName##Tuple : public EventTuple{ \
+		class TupleName##Tuple : public TxnParam{ \
 		public: \
 		TupleName##Tuple() { \
 		memset(reinterpret_cast<char*>(&data_), 0, sizeof(data_)); \

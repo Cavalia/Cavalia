@@ -4,28 +4,14 @@
 
 #include <unordered_map>
 
-#include <BenchmarkTuple.h>
+#include <Transaction/TxnParam.h>
 #include "TpccRecords.h"
 #include "TpccMeta.h"
 
 namespace Cavalia{
 	namespace Benchmark{
 		namespace Tpcc{
-
-			TUPLE_CLASS(Item);
-			TUPLE_CLASS(Warehouse);
-			TUPLE_CLASS(District);
-			TUPLE_CLASS(Customer);
-			TUPLE_CLASS(Stock);
-			TUPLE_CLASS(Order);
-			TUPLE_CLASS(NewOrder);
-			TUPLE_CLASS(OrderLine);
-			TUPLE_CLASS(History);
-			TUPLE_CLASS(DistrictNewOrder);
-
-			//=====================================================================
-
-			class DeliveryParam : public EventTuple{
+			class DeliveryParam : public TxnParam{
 			public:
 				DeliveryParam(){
 					type_ = DELIVERY;
@@ -58,16 +44,9 @@ namespace Cavalia{
 				int w_id_;
 				int o_carrier_id_;
 				int64_t ol_delivery_d_;
-
-#if defined(FLOW)
-				// additional parameters
-				int no_o_ids_[DISTRICTS_PER_WAREHOUSE];
-				double sums_[DISTRICTS_PER_WAREHOUSE];
-				int c_ids_[DISTRICTS_PER_WAREHOUSE];
-#endif
 			};
 
-			class NewOrderParam : public EventTuple{
+			class NewOrderParam : public TxnParam{
 			public:
 				NewOrderParam(){
 					type_ = NEW_ORDER;
@@ -144,22 +123,9 @@ namespace Cavalia{
 				int i_ids_[15];
 				int i_w_ids_[15];
 				int i_qtys_[15];
-
-#if defined(FLOW)
-				// additional parameters
-				int next_o_id_;
-				double w_tax_;
-				double d_tax_;
-				std::string s_dists_[15];
-				double ol_amounts_[15];
-#endif
-#if defined(CHOP)
-				std::string s_dists_[15];
-				double ol_amounts_[15];
-#endif
 			};
 
-			class PaymentParam : public EventTuple{
+			class PaymentParam : public TxnParam{
 			public:
 				PaymentParam(){
 					type_ = PAYMENT;
@@ -228,11 +194,11 @@ namespace Cavalia{
 				int c_w_id_;
 				int c_d_id_;
 				int c_id_;
-				//std::string c_last_;
+				std::string c_last_;
 				int64_t h_date_;
 			};
 
-			class OrderStatusParam : public EventTuple{
+			class OrderStatusParam : public TxnParam{
 			public:
 				OrderStatusParam(){
 					type_ = ORDER_STATUS;
@@ -264,11 +230,11 @@ namespace Cavalia{
 			public:
 				int w_id_;
 				int d_id_;
-				//std::string c_last_;
+				std::string c_last_;
 				int c_id_;
 			};
 
-			class StockLevelParam : public EventTuple{
+			class StockLevelParam : public TxnParam{
 			public:
 				StockLevelParam(){
 					type_ = STOCK_LEVEL;

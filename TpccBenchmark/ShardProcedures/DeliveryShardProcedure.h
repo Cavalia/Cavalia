@@ -3,7 +3,7 @@
 #define __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_DELIVERY_SHARD_PROCEDURE_H__
 
 #include <unordered_map>
-#include <Concurrency/StoredProcedure.h>
+#include <Transaction/StoredProcedure.h>
 #include "../TpccInformation.h"
 
 namespace Cavalia{
@@ -18,7 +18,7 @@ namespace Cavalia{
 					}
 					virtual ~DeliveryShardProcedure(){}
 
-					virtual bool Execute(EventTuple *param, CharArray &ret, const ExeContext &exe_context){
+					virtual bool Execute(TxnParam *param, CharArray &ret, const ExeContext &exe_context){
 						const DeliveryParam *delivery_param = static_cast<const DeliveryParam*>(param);
 						int partition_id = (delivery_param->w_id_ - 1) % partition_count_;
 						for (int no_d_id = 1; no_d_id <= DISTRICTS_PER_WAREHOUSE; ++no_d_id){

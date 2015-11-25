@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_TABLE_INITIATOR_H__
 #define __CAVALIA_TPCC_BENCHMARK_TPCC_TABLE_INITIATOR_H__
 
-#include <BenchmarkTableInitiator.h>
+#include <Benchmark/BenchmarkTableInitiator.h>
 #include "TpccInformation.h"
 
 namespace Cavalia{

@@ -6,7 +6,7 @@
 #include "../Storage/BaseStorageManager.h"
 #include "../Logger/BaseLogger.h"
 #include "../Redirector/IORedirector.h"
-#include "../Concurrency/StoredProcedure.h"
+#include "../Transaction/StoredProcedure.h"
 
 namespace Cavalia{
 	namespace Database{

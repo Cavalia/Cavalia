@@ -27,8 +27,8 @@ namespace Cavalia{
 						procedures_[TupleType::PAYMENT] = new PaymentProcedure(TupleType::PAYMENT);
 					}
 
-					virtual EventTuple* DeserializeParam(const size_t &param_type, const CharArray &entry){
-						EventTuple *tuple;
+					virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry){
+						TxnParam *tuple;
 						if (param_type == TupleType::DELIVERY){
 							tuple = new DeliveryParam();
 						}

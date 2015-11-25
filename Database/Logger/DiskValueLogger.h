@@ -62,7 +62,7 @@
 //				assert(false);
 //			}
 //
-//			virtual void CommitTransaction(const size_t &txn_type, EventTuple *param){
+//			virtual void CommitTransaction(const size_t &txn_type, TxnParam *param){
 //				AcquireLock();
 //				commit_count_ += 1;
 //				if (commit_count_%commit_batch_ == 0){

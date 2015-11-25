@@ -170,7 +170,7 @@ namespace Cavalia{
 				return rt;
 			}
 
-			bool CommitTransaction(TxnContext *context, EventTuple *param, CharArray &ret_str);
+			bool CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str);
 			void AbortTransaction();
 
 
@@ -198,9 +198,9 @@ namespace Cavalia{
 			}
 
 #if defined(HEALING)
-			virtual bool CommitAdhocTransaction(TxnContext *context, EventTuple *param, CharArray &ret_str);
-			virtual bool ReConstruct(TxnContext *context, EventTuple *param, Access *access){ return false; }
-			virtual bool ReExecute(TxnContext *context, EventTuple *param, Access *accesss, CharArray &ret_str){ return false; }
+			virtual bool CommitAdhocTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str);
+			virtual bool ReConstruct(TxnContext *context, TxnParam *param, Access *access){ return false; }
+			virtual bool ReExecute(TxnContext *context, TxnParam *param, Access *accesss, CharArray &ret_str){ return false; }
 #endif
 
 			uint64_t GenerateTimestamp(const uint64_t curr_ts, const uint64_t &max_write_ts){

@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_ORDER_STATUS_PROCEDURE_H__
 #define __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_ORDER_STATUS_PROCEDURE_H__
 
-#include <Concurrency/StoredProcedure.h>
+#include <Transaction/StoredProcedure.h>
 #include "../TpccInformation.h"
 
 namespace Cavalia{
@@ -17,7 +17,7 @@ namespace Cavalia{
 					}
 					virtual ~OrderStatusProcedure(){}
 
-					virtual bool Execute(EventTuple *param, CharArray &ret, const ExeContext &exe_context){
+					virtual bool Execute(TxnParam *param, CharArray &ret, const ExeContext &exe_context){
 						context_.PassContext(exe_context);
 						const OrderStatusParam *order_status_param = static_cast<const OrderStatusParam*>(param);
 						

@@ -21,7 +21,7 @@
 //			virtual void DeleteRecord(const size_t &thread_id, const size_t &table_id, const std::string &primary_key) {}
 //			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &commit_ts) {}
 //
-//			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &commit_ts, const size_t &txn_type, EventTuple *param) {
+//			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param) {
 //				CharArray param_chars;
 //				param->Serialize(param_chars);
 //				// write stored procedure type.

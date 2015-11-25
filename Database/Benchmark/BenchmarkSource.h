@@ -4,13 +4,11 @@
 
 #include <iostream>
 #include <fstream>
-#include <boost/filesystem.hpp>
-#include <BenchmarkScaleParams.h>
-#include <Redirector/IORedirector.h>
-
 #include <TimeMeasurer.h>
-#include <EventTuple.h>
-#include <Meta/MetaTypes.h>
+#include <boost/filesystem.hpp>
+#include "BenchmarkScaleParams.h"
+#include "../Redirector/IORedirector.h"
+#include "../Meta/MetaTypes.h"
 
 namespace Cavalia{
 	namespace Benchmark{
@@ -48,7 +46,7 @@ namespace Cavalia{
 		protected:
 			void DumpToDisk(TupleBatch *tuples) {
 				for (size_t i = 0; i < tuples->size(); ++i) {
-					EventTuple *tuple = tuples->get(i);
+					TxnParam *tuple = tuples->get(i);
 					CharArray param_chars;
 					tuple->Serialize(param_chars);
 					// write stored procedure type.
@@ -82,7 +80,7 @@ namespace Cavalia{
 					file_pos += sizeof(entry.size_);
 					if (file_size - file_pos >= entry.size_) {
 						log_reloader.read(entry.char_ptr_, entry.size_);
-						EventTuple* event_tuple = DeserializeParam(param_type, entry);
+						TxnParam* event_tuple = DeserializeParam(param_type, entry);
 						if (event_tuple != NULL) {
 							tuples->push_back(event_tuple);
 							if (tuples->size() == gTupleBatchSize) {
@@ -108,7 +106,7 @@ namespace Cavalia{
 			
 			}
 
-			virtual EventTuple* DeserializeParam(const size_t &param_type, const CharArray&) = 0;
+			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray&) = 0;
 			virtual void StartExecution() = 0;
 
 		private:

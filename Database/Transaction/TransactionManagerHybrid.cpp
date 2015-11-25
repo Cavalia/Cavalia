@@ -99,7 +99,7 @@ namespace Cavalia{
 			}
 		}
 
-		bool TransactionManager::CommitTransaction(TxnContext *context, EventTuple *param, CharArray &ret_str){
+		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str){
 			if (context->is_retry_ == false){
 				BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 				// step 1: acquire lock and validate

@@ -81,7 +81,7 @@ namespace Cavalia{
 			return true;
 		}
 
-		bool TransactionManager::CommitTransaction(TxnContext *context, EventTuple *param, CharArray &ret_str){
+		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str){
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			for (size_t i = 0; i < access_list_.access_count_; ++i) {
 				Access *access_ptr = access_list_.GetAccess(i);

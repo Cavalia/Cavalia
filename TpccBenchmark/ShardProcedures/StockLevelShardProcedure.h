@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_STOCK_LEVEL_SHARD_PROCEDURE_H__
 #define __CAVALIA_TPCC_BENCHMARK_ATOMIC_PROCEDURES_STOCK_LEVEL_SHARD_PROCEDURE_H__
 
-#include <Concurrency/StoredProcedure.h>
+#include <Transaction/StoredProcedure.h>
 #include "../TpccInformation.h"
 
 namespace Cavalia{
@@ -17,7 +17,7 @@ namespace Cavalia{
 					}
 					virtual ~StockLevelShardProcedure(){}
 
-					virtual bool Execute(EventTuple *param, CharArray &ret, const ExeContext &exe_context){
+					virtual bool Execute(TxnParam *param, CharArray &ret, const ExeContext &exe_context){
 						const StockLevelParam *stock_level_param = static_cast<const StockLevelParam*>(param);
 						int partition_id = (stock_level_param->w_id_ - 1) % partition_count_;
 						memcpy(d_key, &stock_level_param->d_id_, sizeof(int));

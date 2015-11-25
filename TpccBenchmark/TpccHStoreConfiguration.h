@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_HSTORE_CONFIGURATION_H__
 #define __CAVALIA_TPCC_BENCHMARK_TPCC_HSTORE_CONFIGURATION_H__
 
-#include <BenchmarkHStoreConfiguration.h>
+#include <Benchmark/BenchmarkHStoreConfiguration.h>
 #include "TpccMeta.h"
 
 namespace Cavalia {

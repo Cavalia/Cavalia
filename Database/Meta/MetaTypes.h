@@ -7,41 +7,7 @@
 #include <cstdint>
 #include <cassert>
 #include <AllocatorHelper.h>
-#include <EventTuple.h>
-
-#if defined(MUTE)
-#define MEASURE_BEGIN() ;
-
-#define MEASURE_END(TASK) ;
-
-#define MEASURE_END_LAYER(TASK, numLayer) ;
-
-#define MEASURE_END_PARTITION(TASK, numPartition) ;
-
-#define MEASURE_END_LAYER_PARTITION(TASK, numLayer, numPartition) ;
-#else
-#define MEASURE_BEGIN()\
-	TimeMeasurer timer; \
-	timer.StartTimer();
-
-#define MEASURE_END(TASK)\
-	timer.EndTimer(); \
-	std::cout << #TASK" consumed " << timer.GetElapsedMilliSeconds() << " ms." << std::endl;
-
-#define MEASURE_END_LAYER(TASK, numLayer)\
-	timer.EndTimer(); \
-	std::cout << #TASK" <layer " << numLayer << "> consumed " << timer.GetElapsedMilliSeconds() << " ms." << std::endl;
-
-#define MEASURE_END_PARTITION(TASK, numPartition)\
-	timer.EndTimer(); \
-	std::cout << #TASK" <partition " << numPartition << "> consumed " << timer.GetElapsedMilliSeconds() << " ms." << std::endl;
-
-#define MEASURE_END_LAYER_PARTITION(TASK, numLayer, numPartition)\
-	timer.EndTimer(); \
-	std::cout << #TASK" <layer " << numLayer << ", partition " << numPartition << "> consumed " << timer.GetElapsedMilliSeconds() << " ms." << std::endl;
-#endif
-
-
+#include "../Transaction/TxnParam.h"
 
 namespace Cavalia{
 	namespace Database{
@@ -86,12 +52,12 @@ namespace Cavalia{
 		class TupleBatch {
 		public:
 			TupleBatch() {
-				tuples_ = new EventTuple*[gTupleBatchSize];
+				tuples_ = new TxnParam*[gTupleBatchSize];
 				tuple_count_ = 0;
 				batch_size_ = gTupleBatchSize;
 			}
 			TupleBatch(const size_t &batch_size) {
-				tuples_ = new EventTuple*[batch_size];
+				tuples_ = new TxnParam*[batch_size];
 				tuple_count_ = 0;
 				batch_size_ = batch_size;
 			}
@@ -100,7 +66,7 @@ namespace Cavalia{
 				tuples_ = NULL;
 			}
 
-			void push_back(EventTuple *tuple) {
+			void push_back(TxnParam *tuple) {
 				assert(tuple_count_ < batch_size_);
 				tuples_[tuple_count_] = tuple;
 				++tuple_count_;
@@ -110,19 +76,19 @@ namespace Cavalia{
 				return tuple_count_;
 			}
 
-			EventTuple* get(const size_t idx) const {
+			TxnParam* get(const size_t idx) const {
 				return tuples_[idx];
 			}
 
 		private:
-			EventTuple **tuples_;
+			TxnParam **tuples_;
 			size_t tuple_count_;
 			size_t batch_size_;
 		};
 
 		struct TuplePtrWrapper{
 			size_t part_id_;
-			EventTuple *tuple_;
+			TxnParam *tuple_;
 		};
 
 		class TupleBatchWrapper {
@@ -142,7 +108,7 @@ namespace Cavalia{
 				tuples_ = NULL;
 			}
 
-			void push_back(EventTuple *tuple, const size_t &part_id) {
+			void push_back(TxnParam *tuple, const size_t &part_id) {
 				assert(tuple_count_ < batch_size_);
 				tuples_[tuple_count_].tuple_ = tuple;
 				tuples_[tuple_count_].part_id_ = part_id;

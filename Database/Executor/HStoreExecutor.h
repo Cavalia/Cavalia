@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <boost/thread/mutex.hpp>
 #include "../Storage/ShareStorageManager.h"
-#include "../Concurrency/StoredProcedure.h"
+#include "../Transaction/StoredProcedure.h"
 #include "../Content/HStoreContent.h"
 #include "BaseExecutor.h"
 
@@ -57,7 +57,7 @@ namespace Cavalia {
 
 		private:
 			virtual void PrepareProcedures() = 0;
-			virtual EventTuple* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
+			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
 
 			virtual void ProcessQuery() {
 				boost::thread_group thread_group;
@@ -100,11 +100,11 @@ namespace Cavalia {
 					// copy to local memory.
 					TupleBatch *execution_batch = new TupleBatch(gTupleBatchSize);
 					for (size_t j = 0; j < tuple_batch->size(); ++j) {
-						EventTuple *entry = tuple_batch->get(j);
+						TxnParam *entry = tuple_batch->get(j);
 						// copy each parameter.
 						CharArray str;
 						entry->Serialize(str);
-						EventTuple* new_tuple = DeserializeParam(entry->type_, str);
+						TxnParam* new_tuple = DeserializeParam(entry->type_, str);
 						execution_batch->push_back(new_tuple);
 						str.Clear();
 						delete entry;
@@ -139,7 +139,7 @@ namespace Cavalia {
 				ExeContext exe_context;
 				for (auto &tuples : execution_batches) {
 					for (size_t idx = 0; idx < tuples->size(); ++idx) {
-						EventTuple *tuple = tuples->get(idx);
+						TxnParam *tuple = tuples->get(idx);
 						std::set<size_t> part_ids;
 						GetPartitionIds(tuple, part_ids);
 						content.LockPartitions(part_ids);
@@ -170,7 +170,7 @@ namespace Cavalia {
 				/////////////////////////////////////////////////
 			}
 
-			virtual void GetPartitionIds(const EventTuple *tuple, std::set<size_t> &part_ids) = 0;
+			virtual void GetPartitionIds(const TxnParam *tuple, std::set<size_t> &part_ids) = 0;
 
 		private:
 			HStoreExecutor(const HStoreExecutor &);

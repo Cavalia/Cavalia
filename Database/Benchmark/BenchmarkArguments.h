@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <cassert>
-#include <Meta/MetaTypes.h>
+#include "../Meta/MetaTypes.h"
 
 enum AppType { APP_POPULATE, APP_REPLAY, APP_CC_EXECUTE, APP_FLOW_EXECUTE, APP_HSTORE_EXECUTE, APP_SITE_EXECUTE, APP_CHOP_EXECUTE, kAppSize };
 enum AppReplayType { APP_SERIAL_REPLAY };

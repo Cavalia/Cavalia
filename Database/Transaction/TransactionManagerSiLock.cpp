@@ -60,7 +60,7 @@ namespace Cavalia{
 			return true;
 		}
 
-		bool TransactionManager::CommitTransaction(TxnContext *context, EventTuple *param){
+		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param){
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			int64_t commit_timestamp = GlobalContent::GetMonotoneTimestamp();
 			//install writes

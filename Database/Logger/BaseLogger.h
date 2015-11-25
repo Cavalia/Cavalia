@@ -4,7 +4,7 @@
 
 #include <vector>
 #include <cstdint>
-#include <EventTuple.h>
+#include "../Transaction/TxnParam.h"
 #include "../Meta/MetaTypes.h"
 
 namespace Cavalia{

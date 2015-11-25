@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_SOURCE_H__
 #define __CAVALIA_TPCC_BENCHMARK_TPCC_SOURCE_H__
 
-#include <BenchmarkSource.h>
+#include <Benchmark/BenchmarkSource.h>
 #include "TpccInformation.h"
 #include "TpccScaleParams.h"
 
@@ -24,8 +24,8 @@ namespace Cavalia{
 				OrderStatusParam* GenerateOrderStatusParam(const int &w_id = -1) const;
 				StockLevelParam* GenerateStockLevelParam(const int &w_id = -1) const;
 
-				virtual EventTuple* DeserializeParam(const size_t &param_type, const CharArray &entry) {
-					EventTuple *tuple;
+				virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) {
+					TxnParam *tuple;
 					if (param_type == TupleType::DELIVERY) {
 						tuple = new DeliveryParam();
 					}
