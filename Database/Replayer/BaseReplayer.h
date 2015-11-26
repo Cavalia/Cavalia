@@ -2,84 +2,51 @@
 #ifndef __CAVALIA_DATABASE_BASE_REPLAYER_H__
 #define __CAVALIA_DATABASE_BASE_REPLAYER_H__
 
+#include <TimeMeasurer.h>
 #include <unordered_map>
+#include <fstream>
 #include <thread>
-#include "NullLogger.h"
-#include "StoredProcedure.h"
-#include "StoredProcedure.h"
+#include "../Transaction/StoredProcedure.h"
+#include "../Storage/BaseStorageManager.h"
 
 namespace Cavalia{
 	namespace Database{
 		class BaseReplayer{
 		public:
-			BaseReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : filename_(filename), storage_manager_(storage_manager), thread_count_(thread_count){}
+			BaseReplayer(const std::string &dir_name, BaseStorageManager *const storage_manager, const size_t &thread_count, bool is_vl) : dir_name_(dir_name), storage_manager_(storage_manager), thread_count_(thread_count){
+				infiles_ = new std::ifstream[thread_count_];
+				// is value logging
+				if (is_vl == true){
+					for (size_t i = 0; i < thread_count_; ++i){
+						infiles_[i].open(dir_name_ + "/vl" + std::to_string(i));
+					}
+				}
+				// is command logging
+				else{
+					for (size_t i = 0; i < thread_count_; ++i){
+						infiles_[i].open(dir_name_ + "/cl" + std::to_string(i));
+					}
+				}
+			}
 			virtual ~BaseReplayer(){
-				for (auto &entry : log_buffer_){
-					delete entry.second;
-					entry.second = NULL;
+				for (size_t i = 0; i < thread_count_; ++i){
+					infiles_[i].close();
 				}
+				delete[] infiles_;
+				infiles_ = NULL;
 			}
 
-			virtual void Start(){
-				Register();
-				TimeMeasurer timer;
-				timer.StartTimer();
-				ReloadAll();
-				timer.EndTimer();
-				std::cout << "reload log elapsed time=" << timer.GetElapsedMilliSeconds() << "ms" << std::endl;
-
-				timer.StartTimer();
-				ProcessLog();
-				timer.EndTimer();
-				std::cout << "process log elapsed time=" << timer.GetElapsedMilliSeconds() << "ms" << std::endl;
-			}
-
-		private:
-			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray&) = 0;
-			virtual void ReloadAll(){
-				std::ifstream log_reloader(filename_, std::ifstream::binary);
-				assert(log_reloader.good() == true);
-				log_reloader.seekg(0, std::ios::end);
-				size_t file_size = static_cast<size_t>(log_reloader.tellg());
-				log_reloader.seekg(0, std::ios::beg);
-				size_t file_pos = 0;
-				CharArray entry;
-				entry.Allocate(1024);
-				while (file_pos < file_size){
-					size_t param_type;
-					log_reloader.read(reinterpret_cast<char*>(&param_type), sizeof(param_type));
-					file_pos += sizeof(param_type);
-					log_reloader.read(reinterpret_cast<char*>(&entry.size_), sizeof(entry.size_));
-					file_pos += sizeof(entry.size_);
-					if (file_size - file_pos >= entry.size_){
-						log_reloader.read(entry.char_ptr_, entry.size_);
-						TxnParam* event_tuple = DeserializeParam(param_type, entry);
-						if (event_tuple != NULL){
-							log_buffer_.push_back(std::make_pair(param_type, event_tuple));
-						}
-						file_pos += entry.size_;
-					}
-					else{
-						break;
-					}
-				}
-				entry.Release();
-				log_reloader.close();
-			}
-
-			virtual void Register() = 0;
-			virtual void ProcessLog() = 0;
+			virtual void Start() = 0;
 
 		private:
 			BaseReplayer(const BaseReplayer &);
 			BaseReplayer& operator=(const BaseReplayer &);
 
 		protected:
-			std::string filename_;
+			std::string dir_name_;
 			BaseStorageManager *const storage_manager_;
-			NullLogger logger_;
 			size_t thread_count_;
-			InputBatch log_buffer_;
+			std::ifstream *infiles_;
 		};
 	}
 }

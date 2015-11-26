@@ -38,7 +38,7 @@ namespace Cavalia{
 				is_ready_ = NULL;
 			}
 
-			void Start(){
+			virtual void Start(){
 				GlobalContent::thread_count_ = thread_count_;
 				PrepareProcedures();
 				ProcessQuery();

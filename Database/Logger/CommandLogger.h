@@ -9,7 +9,7 @@ namespace Cavalia {
 	namespace Database {
 		class CommandLogger : public BaseLogger {
 		public:
-			CommandLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count) {
+			CommandLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, false) {
 				buffers_ = new CharArray[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
 					buffers_[i].Allocate(kCommandLogBufferSize);

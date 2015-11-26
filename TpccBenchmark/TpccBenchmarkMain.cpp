@@ -10,6 +10,7 @@
 #include <Redirector/IORedirector.h>
 #include <Logger/CommandLogger.h>
 #include <Logger/ValueLogger.h>
+#include <Replayer/ValueReplayer.h>
 #include <Storage/ShareStorageManager.h>
 #include <Storage/ShardStorageManager.h>
 
@@ -19,6 +20,7 @@
 #include "TpccPopulator.h"
 #include "TpccSource.h"
 #include "TpccConcurrentExecutor.h"
+#include "TpccCommandReplayer.h"
 
 #if defined(__linux__)
 #include "TpccHStoreConfiguration.h"
@@ -30,6 +32,7 @@
 using namespace Cavalia;
 using namespace Cavalia::Benchmark::Tpcc;
 using namespace Cavalia::Benchmark::Tpcc::Executor;
+using namespace Cavalia::Benchmark::Tpcc::Replayer;
 
 int main(int argc, char *argv[]) {
 	ArgumentsParser(argc, argv);
@@ -40,6 +43,17 @@ int main(int argc, char *argv[]) {
 		POPULATE_STORAGE(Tpcc);
 		PRINT_STORAGE_STATUS;
 		CHECKPOINT_STORAGE;
+	}
+	else if (app_type == APP_REPLAY) {
+		RELOAD_STORAGE(Tpcc, false);
+		PRINT_STORAGE_STATUS;
+		if (replay_type == APP_COMMAND_REPLAY) {
+			COMMAND_REPLAY(Tpcc, "/dev/shm", num_core);
+		}
+		else if (replay_type == APP_VALUE_REPLAY) {
+			VALUE_REPLAY(Tpcc, "/dev/shm", num_core);
+		}
+		PRINT_STORAGE_STATUS;
 	}
 	else {
 		assert(factor_count == 2);

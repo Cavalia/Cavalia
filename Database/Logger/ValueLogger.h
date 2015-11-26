@@ -4,17 +4,14 @@
 
 #include <CharArray.h>
 #include "BaseLogger.h"
-#include "../Meta/MetaTypes.h"
+#include "../Meta/MetaConstants.h"
 
 namespace Cavalia{
 	namespace Database{
-		const uint8_t kInsert = 0;
-		const uint8_t kUpdate = 1;
-		const uint8_t kDelete = 2;
 
 		class ValueLogger : public BaseLogger{
 		public:
-			ValueLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count){
+			ValueLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, true){
 				buffers_ = new CharArray[thread_count_];
 				buffer_offsets_ = new size_t[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){

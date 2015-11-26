@@ -49,8 +49,8 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 	storage_manager.ReloadCheckpoint();
 
 // multiple concurrency control types
-#define EXECUTE_TRANSACTIONS_CONCURRENT(BenchmarkName, NumThread) \
-	BenchmarkName##ConcurrentExecutor executor(&io_redirector, &storage_manager, logger, NumThread); \
+#define EXECUTE_TRANSACTIONS_CONCURRENT(BenchmarkName, NumCore) \
+	BenchmarkName##ConcurrentExecutor executor(&io_redirector, &storage_manager, logger, NumCore); \
 	executor.Start();
 
 ////////////////////////////////////////////////////////////
@@ -60,16 +60,16 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 	initiator.Initialize(&storage_manager); \
 	storage_manager.ReloadCheckpoint();
 
-#define CONFIGURE_HSTORE(BenchmarkName, NumThread, NumNode) \
-	BenchmarkName##HStoreConfiguration configure(NumThread, NumNode); \
+#define CONFIGURE_HSTORE(BenchmarkName, NumCore, NumNode) \
+	BenchmarkName##HStoreConfiguration configure(NumCore, NumNode); \
 	configure.MeasureConfiguration();
 
 #define EXECUTE_TRANSACTIONS_HSTORE(BenchmarkName) \
 	BenchmarkName##HStoreExecutor executor(&io_redirector, &storage_manager, logger, configure.GetTxnLocation()); \
 	executor.Start();
 
-#define CONFIGURE_SITE(BenchmarkName, NumThread, NumNode) \
-	BenchmarkName##SiteConfiguration configure(NumThread, NumNode); \
+#define CONFIGURE_SITE(BenchmarkName, NumCore, NumNode) \
+	BenchmarkName##SiteConfiguration configure(NumCore, NumNode); \
 	configure.MeasureConfiguration();
 
 #define EXECUTE_TRANSACTIONS_SITE(BenchmarkName) \
@@ -77,8 +77,12 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 	executor.Start();
 
 ////////////////////////////////////////////////////////////
-#define REPLAY_TRANSACTIONS(BenchmarkName) \
-	BenchmarkName##SerialReplayer replayer(#BenchmarkName"/CommandLogging", &storage_manager); \
+#define COMMAND_REPLAY(BenchmarkName, DirName, NumCore) \
+	BenchmarkName##CommandReplayer replayer(#DirName"/"#BenchmarkName"/", &storage_manager, NumCore); \
+	replayer.Start();
+
+#define VALUE_REPLAY(BenchmarkName, DirName, NumCore) \
+	ValueReplayer replayer(#DirName"/"#BenchmarkName"/", &storage_manager, NumCore); \
 	replayer.Start();
 
 #endif
