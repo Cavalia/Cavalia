@@ -8,7 +8,8 @@
 
 #include <Profiler/Profilers.h>
 #include <Redirector/IORedirector.h>
-#include <Logger/BaseLogger.h>
+#include <Logger/CommandLogger.h>
+//#include <Logger/ValueLogger.h>
 #include <Storage/ShareStorageManager.h>
 #include <Storage/ShardStorageManager.h>
 
@@ -45,11 +46,13 @@ int main(int argc, char *argv[]) {
 		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
 		BaseLogger *logger = NULL;
 		if (app_type == APP_CC_EXECUTE) {
-#if defined(VALUE_LOGGING) || defined(COMMAND_LOGGING)
-			ENABLE_MEMORY_LOGGER(num_core);
+#if defined(COMMAND_LOGGING)
+			ENABLE_COMMAND_LOGGER(Tpcc, "/dev/shm", num_core);
+#endif
+#if defined(VALUE_LOGGING)
+			ENABLE_VALUE_LOGGER(Tpcc, "/dev/shm", num_core);
 #endif
 			IORedirector io_redirector(num_core);
-			//SET_SOURCE(Tpcc, num_txn);
 			SET_SOURCE_PARTITION(Tpcc, num_txn, (int)(scale_factors[0]), dist_ratio);
 			INIT_PROFILERS;
 			RELOAD_STORAGE(Tpcc, false);

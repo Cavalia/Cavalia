@@ -26,14 +26,11 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 #define PRINT_STORAGE_STATUS \
 	std::cout << storage_manager.GetStatisticsString() << std::endl;
 
-#define ENABLE_LOGGER(BenchmarkName, LogType) \
-	logger = new LogType##Logger(#BenchmarkName"/"#LogType"Logging");
+#define ENABLE_COMMAND_LOGGER(BenchmarkName, DirName, NumTxn) \
+	logger = new CommandLogger(#DirName"/"#BenchmarkName"/", NumTxn);
 
-#define ENABLE_MEMORY_LOGGER(NumThread) \
-	logger = new BaseLogger(NumThread);
-
-#define DISABLE_LOGGER \
-	logger = new NullLogger();
+#define ENABLE_VALUE_LOGGER(BenchmarkName, DirName, NumTxn) \
+	logger = new ValueLogger(#DirName"/"#BenchmarkName"/", NumTxn);
 
 ////////////////////////////////////////////////////////////
 #define SET_SOURCE(BenchmarkName, NumTxn) \

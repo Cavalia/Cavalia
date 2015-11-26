@@ -141,8 +141,7 @@ namespace Cavalia {
 				CharArray *log_str = log_buffer_.Commit();
 				logger_->CommitTransaction(this->thread_id_, commit_ts, log_str);
 #elif defined(COMMAND_LOGGING)
-				CharArray *log_str = log_buffer_.Commit(context->txn_type_, param);
-				logger_->CommitTransaction(this->thread_id_, commit_ts, log_str);
+				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, commit_ts, context->txn_type_, param);
 #endif
 
 				// step 3: release locks and clean up.

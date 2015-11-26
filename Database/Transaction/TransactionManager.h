@@ -5,9 +5,8 @@
 #include <unordered_set>
 #include "../Meta/MetaTypes.h"
 #include "../Profiler/Profilers.h"
-#include "../Logger/BaseLogger.h"
-#include "../Logger/ValueLogBuffer.h"
-#include "../Logger/CommandLogBuffer.h"
+//#include "../Logger/ValueLogger.h"
+#include "../Logger/CommandLogger.h"
 #include "../Content/ContentCommon.h"
 #include "../Storage/TableRecords.h"
 #include "../Storage/SchemaRecords.h"
@@ -258,11 +257,6 @@ namespace Cavalia{
 #endif
 #if defined(MVTO) || defined(MVLOCK) || defined(MVLOCK_WAIT) || defined(MVOCC)
 			std::vector<SchemaRecord*> read_only_set_;
-#endif
-#if defined(VALUE_LOGGING)
-			ValueLogBuffer log_buffer_;
-#elif defined(COMMAND_LOGGING)
-			CommandLogBuffer log_buffer_;
 #endif
 #if defined(DBX)
 			RtmLock *rtm_lock_;
