@@ -9,7 +9,7 @@
 #include <Profiler/Profilers.h>
 #include <Redirector/IORedirector.h>
 #include <Logger/CommandLogger.h>
-//#include <Logger/ValueLogger.h>
+#include <Logger/ValueLogger.h>
 #include <Storage/ShareStorageManager.h>
 #include <Storage/ShardStorageManager.h>
 

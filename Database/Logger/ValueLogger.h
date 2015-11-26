@@ -1,117 +1,95 @@
-//#pragma once
-//#ifndef __CAVALIA_DATABASE_DISK_VALUE_LOGGER_H__
-//#define __CAVALIA_DATABASE_DISK_VALUE_LOGGER_H__
-//
-//#include <fstream>
-//#include <boost/thread/mutex.hpp>
-//#include <boost/atomic.hpp>
-//
-//#include "BaseLogger.h"
-//#include "LogEntry.h"
-//#include "Serialization/LogEntryDump.pb.h"
-//
-//namespace Cavalia{
-//	namespace Database{
-//		const size_t kBufferSize = 4096000;
-//		class DiskValueLogger : public BaseLogger{
-//		public:
-//			DiskValueLogger(const std::string &filename, size_t commit_batch = 1) : commit_batch_(commit_batch){
-//				commit_count_ = 0;
-//				output_file_.open(filename, std::ofstream::binary);
-//				buffer_.Allocate(kBufferSize);
-//				buffer_offset_ = 0;
-//				memset(&spinlock_, 0, sizeof(spinlock_));
-//			}
-//			virtual ~DiskValueLogger(){
-//				output_file_.write(reinterpret_cast<char*>(&buffer_offset_), sizeof(buffer_offset_));
-//				output_file_.write(buffer_.char_ptr_, buffer_offset_);
-//				output_file_.flush();
-//				buffer_.Clear();
-//				
-//				output_file_.close();
-//			}
-//
-//			virtual void InsertRecord(const int64_t &txn_id, const size_t &table_id, const SchemaRecord &record){
-//				AcquireLock();
-//				log_entry_dump_.set_opt_type(LogEntryDump_OptType_INSERT);
-//				log_entry_dump_.set_table_id(table_id);
-//				log_entry_dump_.set_primary_key(record.GetPrimaryKey());
-//				size_t record_size = record.GetRecordSize();
-//				log_entry_dump_.set_val_len(record_size);
-//				log_entry_dump_.set_new_val(std::string(record.data_ptr_, record_size));
-//				FlushToBuffer();
-//				ReleaseLock();
-//			}
-//			virtual void DeleteRecord(const int64_t &txn_id, const size_t &table_id, const SchemaRecord &record){
-//				assert(false);
-//			}
-//			virtual void UpdateRecord(const int64_t &txn_id, const size_t &table_id, const SchemaRecord &record, const ColumnPredicate &param){
-//				AcquireLock();
-//				log_entry_dump_.set_opt_type(LogEntryDump_OptType_UPDATE);
-//				log_entry_dump_.set_table_id(table_id);
-//				log_entry_dump_.set_primary_key(record.GetPrimaryKey());
-//				log_entry_dump_.set_column_id(0);
-//				size_t record_size = record.GetRecordSize();
-//				log_entry_dump_.set_val_len(record_size);
-//				//log_entry_dump_.set_old_val(std::string(record.FetchData(), record_size));
-//				log_entry_dump_.set_new_val(std::string(record.data_ptr_, record_size));
-//				FlushToBuffer();
-//				ReleaseLock();
-//			}
-//			virtual void UpdateRecord(const int64_t &txn_id, const size_t &table_id, const SchemaRecord &record, const ColumnPredicates &params){
-//				assert(false);
-//			}
-//
-//			virtual void CommitTransaction(const size_t &txn_type, TxnParam *param){
-//				AcquireLock();
-//				commit_count_ += 1;
-//				if (commit_count_%commit_batch_ == 0){
-//					output_file_.write(reinterpret_cast<char*>(&buffer_offset_), sizeof(buffer_offset_));
-//					output_file_.write(buffer_.char_ptr_, buffer_offset_);
-//					output_file_.flush();
-//					buffer_.Clear();
-//					buffer_offset_ = 0;
-//					commit_count_ = 0;
-//				}
-//				ReleaseLock();
-//			}
-//
-//			virtual void AbortTransaction(const int64_t &txn_id){
-//				AcquireLock();
-//				buffer_.Clear();
-//				buffer_offset_ = 0;
-//				ReleaseLock();
-//			}
-//		private:
-//			void FlushToBuffer(){
-//				size_t byte_size = log_entry_dump_.ByteSize();
-//				log_entry_dump_.SerializeToArray(buffer_.char_ptr_ + buffer_offset_, byte_size);
-//				log_entry_dump_.Clear();
-//				buffer_offset_ += byte_size;
-//			}
-//			void AcquireLock(){
-//				spinlock_.lock();
-//			}
-//			void ReleaseLock(){
-//				spinlock_.unlock();
-//			}
-//
-//		private:
-//			DiskValueLogger(const DiskValueLogger &);
-//			DiskValueLogger& operator=(const DiskValueLogger &);
-//
-//		private:
-//			const size_t commit_batch_;
-//			size_t commit_count_;
-//			std::ofstream output_file_;
-//
-//			LogEntryDump log_entry_dump_;
-//			CharArray buffer_;
-//			size_t buffer_offset_;
-//
-//			boost::detail::spinlock spinlock_;
-//		};
-//	}
-//}
-//
-//#endif
+#pragma once
+#ifndef __CAVALIA_DATABASE_VALUE_LOGGER_H__
+#define __CAVALIA_DATABASE_VALUE_LOGGER_H__
+
+#include <CharArray.h>
+#include "BaseLogger.h"
+#include "../Meta/MetaTypes.h"
+
+namespace Cavalia{
+	namespace Database{
+		const uint8_t kInsert = 0;
+		const uint8_t kUpdate = 1;
+		const uint8_t kDelete = 2;
+
+		class ValueLogger : public BaseLogger{
+		public:
+			ValueLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count){
+				buffers_ = new CharArray[thread_count_];
+				buffer_offsets_ = new size_t[thread_count_];
+				for (size_t i = 0; i < thread_count_; ++i){
+					buffers_[i].Allocate(kValueLogBufferSize);
+					buffer_offsets_[i] = 0;
+				}
+			}
+			virtual ~ValueLogger(){
+				for (size_t i = 0; i < thread_count_; ++i){
+					buffers_[i].Clear();
+				}
+				delete[] buffers_;
+				delete[] buffer_offsets_;
+			}
+
+			virtual void InsertRecord(const size_t &thread_id, const size_t &table_id, char *data, const size_t &data_size) {
+				CharArray &buffer_ref = buffers_[thread_id];
+				size_t &offset_ref = buffer_offsets_[thread_id];
+				memcpy(buffer_ref.char_ptr_, (char*)(&kInsert), sizeof(uint8_t));
+				offset_ref += sizeof(uint8_t);
+				memcpy(buffer_ref.char_ptr_ + offset_ref, (char*)(&table_id), sizeof(size_t));
+				offset_ref += sizeof(size_t);
+				memcpy(buffer_ref.char_ptr_ + offset_ref, (char*)(&data_size), sizeof(size_t));
+				offset_ref += sizeof(size_t);
+				memcpy(buffer_ref.char_ptr_ + offset_ref, data, data_size);
+				offset_ref += data_size;
+			}
+
+			virtual void UpdateRecord(const size_t &thread_id, const size_t &table_id, char *data, const size_t &data_size) {
+				CharArray &buffer_ref = buffers_[thread_id];
+				size_t &offset_ref = buffer_offsets_[thread_id];
+				memcpy(buffer_ref.char_ptr_, (char*)(&kUpdate), sizeof(uint8_t));
+				offset_ref += sizeof(uint8_t);
+				memcpy(buffer_ref.char_ptr_ + offset_ref, (char*)(&table_id), sizeof(size_t));
+				offset_ref += sizeof(size_t);
+				memcpy(buffer_ref.char_ptr_ + offset_ref, (char*)(&data_size), sizeof(size_t));
+				offset_ref += sizeof(size_t);
+				memcpy(buffer_ref.char_ptr_ + offset_ref, data, data_size);
+				offset_ref += data_size;
+			}
+
+			virtual void DeleteRecord(const size_t &thread_id, const size_t &table_id, const std::string &primary_key) {
+				CharArray &buffer_ref = buffers_[thread_id];
+				size_t &offset_ref = buffer_offsets_[thread_id];
+				memcpy(buffer_ref.char_ptr_, (char*)(&kDelete), sizeof(uint8_t));
+				offset_ref += sizeof(uint8_t);
+				memcpy(buffer_ref.char_ptr_ + offset_ref, (char*)(&table_id), sizeof(size_t));
+				offset_ref += sizeof(size_t);
+				size_t size = primary_key.size();
+				memcpy(buffer_ref.char_ptr_ + offset_ref, (char*)(&size), sizeof(size_t));
+				offset_ref += sizeof(size_t);
+				memcpy(buffer_ref.char_ptr_ + offset_ref, primary_key.c_str(), size);
+				offset_ref += size;
+			}
+
+			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &commit_ts){
+				outfiles_[thread_id].write(reinterpret_cast<char*>(&buffer_offsets_[thread_id]), sizeof(buffer_offsets_[thread_id]));
+				outfiles_[thread_id].write(buffers_[thread_id].char_ptr_, buffer_offsets_[thread_id]);
+				outfiles_[thread_id].flush();
+				buffer_offsets_[thread_id] = 0;
+			}
+
+			virtual void AbortTransaction(const size_t &thread_id){
+				buffer_offsets_[thread_id] = 0;
+			}
+
+		private:
+			ValueLogger(const ValueLogger &);
+			ValueLogger& operator=(const ValueLogger &);
+
+		private:
+			CharArray *buffers_;
+			size_t *buffer_offsets_;
+		};
+	}
+}
+
+#endif

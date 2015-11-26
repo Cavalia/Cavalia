@@ -35,9 +35,6 @@ namespace Cavalia{
 		enum AccessType : size_t { READ_ONLY, READ_WRITE, DELETE_ONLY };
 		enum SourceType : size_t { RANDOM_SOURCE, PARTITION_SOURCE };
 
-		const uint8_t kInsert = 0;
-		const uint8_t kUpdate = 1;
-		const uint8_t kDelete = 2;
 
 		typedef uint32_t HashcodeType;
 

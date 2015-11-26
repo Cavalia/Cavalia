@@ -111,7 +111,7 @@ namespace Cavalia {
 						COMPILER_MEMORY_FENCE;
 						access_record->content_.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						log_buffer_.UpdateRecord(access_record->schema_ptr_->GetTableId(), access_ptr->local_record_->data_ptr_, access_record->schema_ptr_->GetSchemaSize());
+						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_record->record_->schema_ptr_->GetTableId(), access_ptr->local_record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
 #endif
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
@@ -121,7 +121,7 @@ namespace Cavalia {
 						COMPILER_MEMORY_FENCE;
 						access_record->content_.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						log_buffer_.DeleteRecord(access_record->schema_ptr_->GetTableId(), access_record->GetPrimaryKey());
+						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_record->record_->schema_ptr_->GetTableId(), access_record->record_->GetPrimaryKey());
 #endif
 					}
 				}
@@ -133,13 +133,12 @@ namespace Cavalia {
 					insertion_ptr->insertion_record_ = tb_record;
 					//storage_manager_->tables_[insertion_ptr->table_id_]->InsertRecord(insertion_ptr->primary_key_, insertion_ptr->insertion_record_);
 #if defined(VALUE_LOGGING)
-					log_buffer_.InsertRecord(insertion_ptr->table_id_, insertion_record->data_ptr_, insertion_record->schema_ptr_->GetSchemaSize());
+					((ValueLogger*)logger_)->InsertRecord(this->thread_id_, insertion_ptr->table_id_, insertion_ptr->insertion_record_->record_->data_ptr_, insertion_ptr->insertion_record_->record_->schema_ptr_->GetSchemaSize());
 #endif
 				}
 				// commit.
 #if defined(VALUE_LOGGING)
-				CharArray *log_str = log_buffer_.Commit();
-				logger_->CommitTransaction(this->thread_id_, commit_ts, log_str);
+				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, commit_ts);
 #elif defined(COMMAND_LOGGING)
 				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, commit_ts, context->txn_type_, param);
 #endif

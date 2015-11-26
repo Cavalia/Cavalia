@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include "../Meta/MetaTypes.h"
 #include "../Profiler/Profilers.h"
-//#include "../Logger/ValueLogger.h"
+#include "../Logger/ValueLogger.h"
 #include "../Logger/CommandLogger.h"
 #include "../Content/ContentCommon.h"
 #include "../Storage/TableRecords.h"
