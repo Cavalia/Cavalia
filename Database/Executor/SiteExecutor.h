@@ -9,6 +9,9 @@
 #include "../Storage/ShareStorageManager.h"
 #include "../Transaction/StoredProcedure.h"
 #include "BaseExecutor.h"
+#if defined(DBX)
+#include <RtmLock.h>
+#endif
 
 namespace Cavalia {
 	namespace Database {
@@ -59,7 +62,7 @@ namespace Cavalia {
 					}
 					is_all_ready = true;
 				}
-#if defined(LOCK) || defined(OCC) || defined(SILO) || defined(HYBRID) || defined(DBX)
+#if defined(LOCK) || defined(OCC) || defined(SILO) || defined(HYBRID)
 				ScalableTimestamp scalable_ts(thread_count_);
 #endif
 				std::cout << "start processing..." << std::endl;
@@ -109,6 +112,9 @@ namespace Cavalia {
 					procedures[entry.first]->SetPartitionId(node_id);
 					procedures[entry.first]->SetPartitionCount(txn_location_.node_count_);
 				}
+#if defined(DBX)
+				txn_manager.SetRtmLock(&rtm_lock_);
+#endif
 				/////////////////////////////////////////////////
 				is_ready_[part_id] = true;
 				while (is_begin_ == false);
@@ -186,6 +192,9 @@ namespace Cavalia {
 			std::atomic<size_t> total_count_;
 			std::atomic<size_t> total_abort_count_;
 			TxnLocation txn_location_;
+#if defined(DBX)
+			RtmLock rtm_lock_;
+#endif
 		};
 	}
 }
