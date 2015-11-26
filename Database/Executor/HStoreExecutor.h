@@ -90,12 +90,12 @@ namespace Cavalia {
 				// note that core_id is not equal to thread_id.
 				PinToCore(core_id);
 				/////////////copy parameter to each core.
-				std::vector<TupleBatch*> execution_batches;
-				std::vector<TupleBatch*> *input_batches = redirector_ptr_->GetParameterBatches(part_id);
+				std::vector<ParamBatch*> execution_batches;
+				std::vector<ParamBatch*> *input_batches = redirector_ptr_->GetParameterBatches(part_id);
 				for (size_t i = 0; i < input_batches->size(); ++i) {
-					TupleBatch *tuple_batch = input_batches->at(i);
+					ParamBatch *tuple_batch = input_batches->at(i);
 					// copy to local memory.
-					TupleBatch *execution_batch = new TupleBatch(gTupleBatchSize);
+					ParamBatch *execution_batch = new ParamBatch(gTupleBatchSize);
 					for (size_t j = 0; j < tuple_batch->size(); ++j) {
 						TxnParam *entry = tuple_batch->get(j);
 						// copy each parameter.

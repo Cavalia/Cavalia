@@ -44,7 +44,7 @@ namespace Cavalia{
 			}
 
 		protected:
-			void DumpToDisk(TupleBatch *tuples) {
+			void DumpToDisk(ParamBatch *tuples) {
 				for (size_t i = 0; i < tuples->size(); ++i) {
 					TxnParam *tuple = tuples->get(i);
 					CharArray param_chars;
@@ -71,7 +71,7 @@ namespace Cavalia{
 				size_t file_pos = 0;
 				CharArray entry;
 				entry.Allocate(10240);
-				TupleBatch *tuples = new TupleBatch(gTupleBatchSize);
+				ParamBatch *tuples = new ParamBatch(gTupleBatchSize);
 				while (file_pos < file_size) {
 					size_t param_type;
 					log_reloader.read(reinterpret_cast<char*>(&param_type), sizeof(param_type));
@@ -85,7 +85,7 @@ namespace Cavalia{
 							tuples->push_back(event_tuple);
 							if (tuples->size() == gTupleBatchSize) {
 								redirector_ptr_->PushParameterBatch(tuples);
-								tuples = new TupleBatch(gTupleBatchSize);
+								tuples = new ParamBatch(gTupleBatchSize);
 							}
 						}
 						file_pos += entry.size_;
