@@ -26,6 +26,10 @@ namespace Cavalia{
 							memcpy(d_no_key, &no_d_id, sizeof(int));
 							memcpy(d_no_key + sizeof(int), &(delivery_param->w_id_), sizeof(int));
 							SchemaRecord *district_new_order_record = NULL;
+							// claim: this is an nondeterministic query. for deterministic databases, nondeterministic queries are not allowed.
+							// see https://docs.voltdb.com/UsingVoltDB/DesignProc.php Section 5.1.2.
+							// to enable comparison with deterministic databases, we modified this query and add a new table DISTRICT_NEW_ORDER_TABLE.
+							// this table maintains the minimum new order id. to eliminate the nondeterminism, we require the transaction to access new orders sequentially. This strategy is also adopted in H-Store.
 							// "getNewOrder": "SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1"
 							// "deleteNewOrder": "DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?"
 							DB_QUERY(SelectKeyRecord(&context_, DISTRICT_NEW_ORDER_TABLE_ID, std::string(d_no_key, sizeof(int)* 2), district_new_order_record, READ_WRITE, no_d_id - 1));

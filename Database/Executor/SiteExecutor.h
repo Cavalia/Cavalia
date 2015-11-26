@@ -3,6 +3,7 @@
 #define __CAVALIA_DATABASE_SITE_EXECUTOR_H__
 
 #include <ThreadHelper.h>
+#include <NumaHelper.h>
 #include <unordered_map>
 #include <boost/thread/mutex.hpp>
 #include "../Storage/ShareStorageManager.h"
@@ -76,12 +77,12 @@ namespace Cavalia {
 				// note that core_id is not equal to thread_id.
 				PinToCore(core_id);
 				/////////////copy parameter to each core.
-				std::vector<TupleBatch*> execution_batches;
-				std::vector<TupleBatch*> *input_batches = redirector_ptr_->GetParameterBatches(part_id);
+				std::vector<ParamBatch*> execution_batches;
+				std::vector<ParamBatch*> *input_batches = redirector_ptr_->GetParameterBatches(part_id);
 				for (size_t i = 0; i < input_batches->size(); ++i) {
-					TupleBatch *tuple_batch = input_batches->at(i);
+					ParamBatch *tuple_batch = input_batches->at(i);
 					// copy to local memory.
-					TupleBatch *execution_batch = new TupleBatch(gTupleBatchSize);
+					ParamBatch *execution_batch = new ParamBatch(gTupleBatchSize);
 					for (size_t j = 0; j < tuple_batch->size(); ++j) {
 						TxnParam *entry = tuple_batch->get(j);
 						// copy each parameter.
@@ -99,11 +100,7 @@ namespace Cavalia {
 				}
 				/////////////////////////////////////////////////
 				// prepare local managers.
-#if defined(NUMA)
-				size_t node_id = numa_node_of_cpu(core_id);
-#else
-				size_t node_id = 0;
-#endif
+				size_t node_id = GetNumaNodeId(core_id);
 				TransactionManager txn_manager(storage_manager_, logger_, part_id, this->thread_count_);
 				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
 				for (auto &entry : registers_){

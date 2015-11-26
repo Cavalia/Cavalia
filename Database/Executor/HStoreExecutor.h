@@ -3,6 +3,7 @@
 #define __CAVALIA_DATABASE_HSTORE_EXECUTOR_H__
 
 #include <ThreadHelper.h>
+#include <NumaHelper.h>
 #include <unordered_map>
 #include <boost/thread/mutex.hpp>
 #include "../Storage/ShareStorageManager.h"
@@ -27,11 +28,7 @@ namespace Cavalia {
 				spinlocks_ = new boost::detail::spinlock*[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
 					size_t core_id = txn_location_.core_ids_.at(i);
-#if defined(NUMA)
-					size_t node_id = numa_node_of_cpu(core_id);
-#else
-					size_t node_id = 0;
-#endif
+					size_t node_id = GetNumaNodeId();
 					boost::detail::spinlock *lock = (boost::detail::spinlock*)MemAllocator::AllocNode(sizeof(boost::detail::spinlock), node_id);
 					memset(lock, 0, sizeof(boost::detail::spinlock));
 					spinlocks_[i] = lock;
@@ -93,12 +90,12 @@ namespace Cavalia {
 				// note that core_id is not equal to thread_id.
 				PinToCore(core_id);
 				/////////////copy parameter to each core.
-				std::vector<TupleBatch*> execution_batches;
-				std::vector<TupleBatch*> *input_batches = redirector_ptr_->GetParameterBatches(part_id);
+				std::vector<ParamBatch*> execution_batches;
+				std::vector<ParamBatch*> *input_batches = redirector_ptr_->GetParameterBatches(part_id);
 				for (size_t i = 0; i < input_batches->size(); ++i) {
-					TupleBatch *tuple_batch = input_batches->at(i);
+					ParamBatch *tuple_batch = input_batches->at(i);
 					// copy to local memory.
-					TupleBatch *execution_batch = new TupleBatch(gTupleBatchSize);
+					ParamBatch *execution_batch = new ParamBatch(gTupleBatchSize);
 					for (size_t j = 0; j < tuple_batch->size(); ++j) {
 						TxnParam *entry = tuple_batch->get(j);
 						// copy each parameter.
@@ -116,7 +113,7 @@ namespace Cavalia {
 				}
 				/////////////////////////////////////////////////
 				// prepare local managers.
-#if defined(NUMA)
+#if defined(__linux__)
 				size_t node_id = numa_node_of_cpu(core_id);
 #else
 				size_t node_id = 0;

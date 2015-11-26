@@ -3,10 +3,10 @@
 #define __CAVALIA_DATABASE_BASE_EXECUTOR_H__
 
 #include <TimeMeasurer.h>
-#include "../Storage/BaseStorageManager.h"
-#include "../Logger/BaseLogger.h"
 #include "../Redirector/IORedirector.h"
 #include "../Transaction/StoredProcedure.h"
+#include "../Storage/BaseStorageManager.h"
+#include "../Logger/BaseLogger.h"
 
 namespace Cavalia{
 	namespace Database{

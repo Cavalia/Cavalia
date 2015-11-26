@@ -58,27 +58,6 @@ namespace Cavalia{
 			MvHistoryEntry* prev_;
 		};
 
-		//struct ConflictFlag{
-		//	ConflictFlag() : in_conflict_(false), out_conflict_(false){}
-		//	bool in_conflict_;
-		//	bool out_conflict_;
-		//	uint64_t commit_timestamp_;
-		//	std::mutex mutex_;
-		//};
-
-		//struct SsiHistoryEntry {
-		//	SsiHistoryEntry() {
-		//		data_ptr_ = NULL;
-		//		next_ = NULL;
-		//		prev_ = NULL;
-		//	}
-		//	uint64_t timestamp_;
-		//	char* data_ptr_;
-		//	ConflictFlag* conflict_flag_;
-		//	SsiHistoryEntry* next_;
-		//	SsiHistoryEntry* prev_;
-		//};
-
 		struct LockEntry{
 			LockEntry(){
 				lock_ready_ = NULL;

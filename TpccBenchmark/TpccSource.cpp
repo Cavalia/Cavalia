@@ -23,7 +23,7 @@ namespace Cavalia{
 				}
 
 				if (source_type_ == RANDOM_SOURCE){
-					TupleBatch *tuples = new TupleBatch(gTupleBatchSize);
+					ParamBatch *tuples = new ParamBatch(gTupleBatchSize);
 					for (size_t i = 0; i < num_transactions_; ++i){
 						int x = TpccRandomGenerator::GenerateInteger(1, 100);
 						if (x <= frequency_weights[0]) {
@@ -54,7 +54,7 @@ namespace Cavalia{
 						if ((i + 1) % gTupleBatchSize == 0){
 							DumpToDisk(tuples);
 							redirector_ptr_->PushParameterBatch(tuples);
-							tuples = new TupleBatch(gTupleBatchSize);
+							tuples = new ParamBatch(gTupleBatchSize);
 						}
 					}
 					if (tuples->size() != 0){
@@ -69,7 +69,7 @@ namespace Cavalia{
 				else{
 					assert(source_type_ == PARTITION_SOURCE);
 					size_t partition_id = 0;
-					TupleBatch *tuples = new TupleBatch(gTupleBatchSize);
+					ParamBatch *tuples = new ParamBatch(gTupleBatchSize);
 					for (size_t i = 0; i < num_transactions_; ++i){
 						// need to randomly generate one.
 						size_t warehouse_id = 0;
@@ -108,7 +108,7 @@ namespace Cavalia{
 						if ((i + 1) % gTupleBatchSize == 0){
 							DumpToDisk(tuples);
 							redirector_ptr_->PushParameterBatch(tuples);
-							tuples = new TupleBatch(gTupleBatchSize);
+							tuples = new ParamBatch(gTupleBatchSize);
 							partition_id = (partition_id + 1) % partition_count_;
 						}
 					}
@@ -211,7 +211,7 @@ namespace Cavalia{
 				}
 				// 60%: payment by last name
 				//if (y <= 60) {
-				//	param->c_last_ = TpccRandomGenerator::GenerateRandomLastName(scale_params_->num_customers_per_district_);
+					//param->c_last_ = TpccRandomGenerator::GenerateRandomLastName(scale_params_->num_customers_per_district_);
 				//}
 				// 40%: payment by id
 				//else {

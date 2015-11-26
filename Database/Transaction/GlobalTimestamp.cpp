@@ -1,4 +1,4 @@
-#include "GlobalContent.h"
+#include "GlobalTimestamp.h"
 
 namespace Cavalia{
 	namespace Database{

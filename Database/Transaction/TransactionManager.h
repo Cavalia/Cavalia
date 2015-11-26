@@ -3,18 +3,18 @@
 #define __CAVALIA_DATABASE_TRANSACTION_MANAGER_H__
 
 #include <unordered_set>
-#include "../Storage/BaseStorageManager.h"
-#include "../Logger/BaseLogger.h"
-#include "../Content/GlobalContent.h"
-#include "../Content/ContentCommon.h"
-#include "../Profiler/Profilers.h"
 #include "../Meta/MetaTypes.h"
-#include "../Storage/TableRecords.h"
-#include "../Storage/SchemaRecords.h"
+#include "../Profiler/Profilers.h"
+#include "../Logger/BaseLogger.h"
 #include "../Logger/ValueLogBuffer.h"
 #include "../Logger/CommandLogBuffer.h"
-#include "Access.h"
+#include "../Content/ContentCommon.h"
+#include "../Storage/TableRecords.h"
+#include "../Storage/SchemaRecords.h"
+#include "../Storage/BaseStorageManager.h"
+#include "TxnAccess.h"
 #include "TxnContext.h"
+#include "GlobalTimestamp.h"
 #include "BatchTimestamp.h"
 #include "ScalableTimestamp.h"
 #if defined(DBX)
@@ -28,14 +28,11 @@ namespace Cavalia{
 		public:
 			// for executors
 			TransactionManager(BaseStorageManager *const storage_manager, BaseLogger *const logger, const size_t &thread_id, const size_t &thread_count) : storage_manager_(storage_manager), logger_(logger), thread_id_(thread_id), thread_count_(thread_count){
-				// common.
 				table_count_ = storage_manager->table_count_;
 				is_first_access_ = true;
 				global_ts_ = 0;
 				local_ts_ = 0;
 				
-				this->progress_ts_ = 0;
-				GlobalContent::thread_timestamp_[thread_id_] = &(this->progress_ts_);
 #if defined(HEALING)
 				access_caches_ = new AccessPtrList<kMaxAccessPerTableNum>[table_count_];
 				accesses_caches_ = new AccessPtrsList<kMaxOptPerTableNum, kMaxAccessPerOptNum>[table_count_];
@@ -73,8 +70,7 @@ namespace Cavalia{
 				return InsertRecord(context, table_id, record->GetPrimaryKey(), record);
 			}
 
-			///////////////////NEW API//////////////////
-			// normal
+			// shared
 			bool SelectKeyRecord(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *&record, const AccessType access_type, const size_t &access_id){
 				BEGIN_INDEX_TIME_MEASURE(thread_id_);
 				TableRecord *t_record = NULL;
@@ -108,7 +104,7 @@ namespace Cavalia{
 				return true;
 			}
 
-			// normal
+			// shared
 			bool SelectRecord(TxnContext *context, const size_t &table_id, const size_t &idx_id, const std::string &secondary_key, SchemaRecord *&record, const AccessType access_type, const size_t &access_id){
 				BEGIN_INDEX_TIME_MEASURE(thread_id_);
 				TableRecord *t_record = NULL;
@@ -142,7 +138,7 @@ namespace Cavalia{
 				return true;
 			}
 
-			// normal
+			// shared
 			bool SelectRecords(TxnContext *context, const size_t &table_id, const size_t &idx_id, const std::string &secondary_key, SchemaRecords *records, const AccessType access_type, const size_t &access_id) {
 				BEGIN_INDEX_TIME_MEASURE(thread_id_);
 				storage_manager_->tables_[table_id]->SelectRecords(idx_id, secondary_key, t_records_);
@@ -243,7 +239,10 @@ namespace Cavalia{
 			bool is_first_access_;
 			uint64_t global_ts_;
 			uint32_t local_ts_;
-			std::atomic<uint64_t> progress_ts_;
+			AccessList<kMaxAccessNum> access_list_;
+			InsertionList<kMaxAccessNum> insertion_list_;
+			TableRecords *t_records_;
+
 #if defined(BATCH_TIMESTAMP)
 			BatchTimestamp batch_ts_;
 #endif
@@ -256,8 +255,6 @@ namespace Cavalia{
 			AccessList<kMaxAccessPerTableNum> *access_lists_;
 			InsertionList<kMaxAccessPerTableNum> *insertion_lists_;
 #else
-			AccessList<kMaxAccessNum> access_list_;
-			InsertionList<kMaxAccessNum> insertion_list_;
 #endif
 #if defined(MVTO) || defined(MVLOCK) || defined(MVLOCK_WAIT) || defined(MVOCC)
 			std::vector<SchemaRecord*> read_only_set_;
@@ -267,7 +264,6 @@ namespace Cavalia{
 #elif defined(COMMAND_LOGGING)
 			CommandLogBuffer log_buffer_;
 #endif
-			TableRecords *t_records_;
 #if defined(DBX)
 			RtmLock *rtm_lock_;
 #endif

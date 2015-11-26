@@ -7,6 +7,7 @@
 #include <cstring>
 #include <unordered_map>
 #include <Toolkits.h>
+#include "ColumnInfo.h"
 #include "../Meta/MetaTypes.h"
 
 namespace Cavalia{

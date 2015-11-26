@@ -5,7 +5,7 @@
 #include "TpccMeta.h"
 #include "TpccRandomGenerator.h"
 #include "TpccSchema.h"
-#include "TpccTuples.h"
+#include "TpccParams.h"
 #include "TpccConstants.h"
 
 #endif
