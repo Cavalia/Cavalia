@@ -121,10 +121,7 @@ namespace Cavalia{
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE) {
 						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						//TODO: recycle old version
-						//allocator_->Free(access_ptr->local_record_->data_ptr_);
-						//access_ptr->local_record_->~SchemaRecord();
-						//allocator_->Free((char*)access_ptr->local_record_);
+						//TODO: recycle old version, by mem_allocator or delete
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
 				}
