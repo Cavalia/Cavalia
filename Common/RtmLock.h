@@ -25,6 +25,8 @@ struct RtmLock{
 #endif
 	}
 
+	// PROFILE_RTM collect statistics in the critical path, which will be the bottleneck for performance
+	// should disable PROFILE_RTM when performance is perfered
 	inline void Lock(){
 #if defined(PROFILE_RTM)
 		++total_count_;
