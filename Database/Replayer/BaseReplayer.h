@@ -18,13 +18,15 @@ namespace Cavalia{
 				// is value logging
 				if (is_vl == true){
 					for (size_t i = 0; i < thread_count_; ++i){
-						infiles_[i].open(dir_name_ + "/vl" + std::to_string(i));
+						infiles_[i].open(dir_name_ + "/vl" + std::to_string(i), std::ifstream::binary);
+						assert(infiles_[i].good() == true);
 					}
 				}
 				// is command logging
 				else{
 					for (size_t i = 0; i < thread_count_; ++i){
-						infiles_[i].open(dir_name_ + "/cl" + std::to_string(i));
+						infiles_[i].open(dir_name_ + "/cl" + std::to_string(i), std::ifstream::binary);
+						assert(infiles_[i].good() == true);
 					}
 				}
 			}

@@ -14,13 +14,13 @@ namespace Cavalia{
 				// is value logging
 				if (is_vl == true){
 					for (size_t i = 0; i < thread_count_; ++i){
-						outfiles_[i].open(dir_name_ + "/vl" + std::to_string(i));
+						outfiles_[i].open(dir_name_ + "/vl" + std::to_string(i), std::ofstream::binary);
 					}
 				}
 				// is command logging
 				else{
 					for (size_t i = 0; i < thread_count_; ++i){
-						outfiles_[i].open(dir_name_ + "/cl" + std::to_string(i));
+						outfiles_[i].open(dir_name_ + "/cl" + std::to_string(i), std::ofstream::binary);
 					}
 				}
 			}
