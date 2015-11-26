@@ -133,8 +133,6 @@ namespace Cavalia{
 				while (is_begin_ == false);
 				int count = 0;
 				int abort_count = 0;
-				//std::vector<long long> latencies;
-				//TimeMeasurer per_txn_timer;
 				CharArray ret;
 				ret.char_ptr_ = new char[1024];
 				ExeContext exe_context;
@@ -146,7 +144,6 @@ namespace Cavalia{
 						//	is_adhoc = true;
 						//}
 						BEGIN_TRANSACTION_TIME_MEASURE(thread_id);
-						//per_txn_timer.StartTimer();
 						ret.size_ = 0;
 						exe_context.is_retry_ = false;
 						if (procedures[tuple->type_]->Execute(tuple, ret, exe_context) == false){
@@ -156,7 +153,6 @@ namespace Cavalia{
 								total_count_ += count;
 								total_abort_count_ += abort_count;
 								END_TRANSACTION_TIME_MEASURE(thread_id, tuple->type_);
-								//PrintToFile(thread_id, latencies);
 								return;
 							}
 							BEGIN_CC_ABORT_TIME_MEASURE(thread_id);
@@ -170,23 +166,16 @@ namespace Cavalia{
 									total_abort_count_ += abort_count;
 									END_CC_ABORT_TIME_MEASURE(thread_id);
 									END_TRANSACTION_TIME_MEASURE(thread_id, tuple->type_);
-									//PrintToFile(thread_id, latencies);
 									return;
 								}
 							}
 							END_CC_ABORT_TIME_MEASURE(thread_id);
 						}
 						++count;
-						//per_txn_timer.EndTimer();
-						//long long latency = per_txn_timer.GetElapsedNanoSeconds();
-						/*if (count % 100 == 0){
-							latencies.push_back(latency);
-						}*/
 						END_TRANSACTION_TIME_MEASURE(thread_id, tuple->type_);
 						if (is_finish_ == true){
 							total_count_ += count;
 							total_abort_count_ += abort_count;
-							//PrintToFile(thread_id, latencies);
 							return;
 						}
 					}
@@ -197,7 +186,6 @@ namespace Cavalia{
 				time_lock_.unlock();
 				total_count_ += count;
 				total_abort_count_ += abort_count;
-				//PrintToFile(thread_id, latencies);
 				/////////////////////////////////////////////////
 				/*for (auto &entry : deregisters_){
 					entry.second((char*)(procedures[entry.first]));
@@ -207,15 +195,6 @@ namespace Cavalia{
 				procedures = NULL;*/
 				/////////////////////////////////////////////////
 			}
-
-			/*void PrintToFile(const size_t &thread_id, std::vector<long long> &latencies){
-				std::ofstream outfile(std::to_string(thread_id) + "_latency.txt");
-				for (auto &entry : latencies){
-					outfile << entry << std::endl;
-				}
-				outfile.flush();
-				outfile.close();
-			}*/
 			
 			size_t GetCoreId(const size_t &thread_id){
 				return thread_id;

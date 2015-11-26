@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <vector>
 #include <CharArray.h>
+#include "../Meta/MetaTypes.h"
 
 namespace Cavalia{
 	namespace Database{
