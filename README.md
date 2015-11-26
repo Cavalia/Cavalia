@@ -3,7 +3,7 @@ A transactional multicore main-memory database.
 
 ##Features
 
-Cavalia is a main-memory database system specifically designed for modern multicore architectures. It aims at providing a generalized framework for comparing different concurrency-control mechanisms. A highlight in Cavalia is that new hardware features (e.g., NUMA, HTM, and NVRAM) are judiciously leveraged for achieving higher level of concurrency when processing massive volume of transactions. Cavalia is an on-going project that is under intensive development. Please feel free to contact us if you confront any problem when using Cavalia. Thanks!
+Cavalia is a main-memory database system specifically designed for modern multicore architectures. It aims at providing a generalized framework for comparing different concurrency-control mechanisms. A highlight in Cavalia is that new hardware features (e.g., NUMA, HTM, and NVRAM) are judiciously leveraged for achieving higher level of concurrency when processing massive volume of transactions. Cavalia is an ongoing project that is under intensive development. Please feel free to contact us if you confront any problem when using Cavalia. Thanks!
 
 ##Linux Platform Installation
 
