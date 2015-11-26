@@ -244,10 +244,12 @@ namespace Cavalia {
 							if (partition_id == part_id){
 								char *entry = MemAllocator::AllocNode(record_size, numa_node_id);
 								memcpy(entry, tmp_entry, record_size);
-								SchemaRecord *s_record = (SchemaRecord*)MemAllocator::AllocNode(sizeof(SchemaRecord), numa_node_id);
+								/*SchemaRecord *s_record = (SchemaRecord*)MemAllocator::AllocNode(sizeof(SchemaRecord), numa_node_id);
 								new(s_record)SchemaRecord(schema_ptr_, entry);
 								TableRecord *t_record = (TableRecord*)MemAllocator::AllocNode(sizeof(TableRecord), numa_node_id);
-								new(t_record)TableRecord(s_record);
+								new(t_record)TableRecord(s_record);*/
+								SchemaRecord* s_record = new SchemaRecord(schema_ptr_, entry);
+								TableRecord* t_record = new TableRecord(s_record);
 								InsertRecord(t_record);
 							}
 						}

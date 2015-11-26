@@ -8,8 +8,6 @@
 #include "../Content/LockWaitContent.h"
 #elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(HEALING) || defined(HYBRID)
 #include "../Content/LockContent.h"
-#elif defined(DBX)
-#include "../Content/DbxContent.h"
 #elif defined(TO)
 #include "../Content/ToContent.h"
 #elif defined(MVTO)
@@ -30,8 +28,11 @@
 
 namespace Cavalia{
 	namespace Database{
+#ifdef __linux__
+		struct __attribute__((aligned(64))) TableRecord{
+#else
 		struct TableRecord{
-
+#endif
 #if  defined(SILOCK) || defined(SIOCC) || defined(MVLOCK) || defined(MVOCC) || defined(MVTO) || defined(MVLOCK_WAIT)
 			TableRecord(SchemaRecord *record) : record_(record), content_(record->data_ptr_) {}
 #elif defined(TO)
@@ -62,7 +63,7 @@ namespace Cavalia{
 #elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(HEALING) || defined(HYBRID)
 			LockContent content_;
 #elif defined(DBX)
-			DbxContent content_;
+			uint64_t timestamp_;
 #elif defined(LOCK_WAIT)
 			LockWaitContent content_;
 #endif

@@ -9,9 +9,10 @@
 #include <iostream>
 
 struct RtmLock{
-	RtmLock(const size_t max_retries = 3){
+	RtmLock(const size_t max_conflict_retries = 100, const size_t max_capacity_retries = 10){
 		memset(&spinlock_, 0, sizeof(spinlock_));
-		max_retries_ = max_retries;
+		max_conflict_retries_ = max_conflict_retries;
+		max_capacity_retries_ = max_capacity_retries;
 #if defined(PROFILE_RTM)
 		fallback_count_ = 0;
 		total_count_ = 0;
@@ -29,7 +30,8 @@ struct RtmLock{
 		++total_count_;
 #endif
 		unsigned status;
-		for (size_t i = 0; i < max_retries_; ++i){
+		int capacity_abort_num = 0;
+		for (size_t i = 0; i < max_conflict_retries_; ++i){
 			status = _xbegin();
 			if (status == _XBEGIN_STARTED){
 				if (spinlock_.v_ == 0){
@@ -43,7 +45,10 @@ struct RtmLock{
 				}
 			}
 			else if (status & _XABORT_CAPACITY){
-				break;
+				++capacity_abort_num;
+				if (capacity_abort_num >= max_capacity_retries_){
+					break;
+				}
 			}
 			else if (!(status & _XABORT_RETRY)){
 #if defined(PROFILE_RTM)
@@ -52,7 +57,6 @@ struct RtmLock{
 				break;
 			}
 		}
-		spinlock_.lock();
 #if defined(PROFILE_RTM)
 		++fallback_count_;
 		if(status & _XABORT_CONFLICT){
@@ -70,19 +74,8 @@ struct RtmLock{
 		if(status & _XABORT_EXPLICIT){
 			++explicit_count_;
 		}
-		if(fallback_count_%100 == 0){
-		printf("lock count=%d, fallback count=%d, conflict_count=%d, nested_count=%d, capacity_count=%d, explicit_count=%d, retry_count=%d, debug_count=%d\n", int(total_count_), int(fallback_count_), int(conflict_count_), int(nested_count_), int(capacity_count_), int(explicit_count_), int(retry_count_), int(debug_count_));
-	printf("fallback rate=%f, conflict rate=%f, nested rate=%f, capacity rate=%f, explicit rate=%f, retry rate=%f, debug rate=%f\n", 
-			fallback_count_ * 1.0 / total_count_,
-			conflict_count_ * 1.0 / total_count_,
-			nested_count_ * 1.0 / total_count_,
-			capacity_count_ * 1.0 / total_count_,
-			explicit_count_ * 1.0 / total_count_,
-			retry_count_ * 1.0 / total_count_,
-			debug_count_ * 1.0 / total_count_
-			);
-		}
 #endif
+		spinlock_.lock();
 	}
 
 	inline void Unlock(){
@@ -94,6 +87,20 @@ struct RtmLock{
 		}
 	}
 
+	void Print(){
+#if defined(PROFILE_RTM)
+		printf("lock count=%d, fallback count=%d, conflict_count=%d, nested_count=%d, capacity_count=%d, explicit_count=%d, retry_count=%d, debug_count=%d\n", int(total_count_), int(fallback_count_), int(conflict_count_), int(nested_count_), int(capacity_count_), int(explicit_count_), int(retry_count_), int(debug_count_));
+		printf("fallback rate=%f, conflict rate=%f, nested rate=%f, capacity rate=%f, explicit rate=%f, retry rate=%f, debug rate=%f\n",
+			fallback_count_ * 1.0 / total_count_,
+			conflict_count_ * 1.0 / total_count_,
+			nested_count_ * 1.0 / total_count_,
+			capacity_count_ * 1.0 / total_count_,
+			explicit_count_ * 1.0 / total_count_,
+			retry_count_ * 1.0 / total_count_,
+			debug_count_ * 1.0 / total_count_
+			);
+#endif	
+	}
 #if defined(PROFILE_RTM)
 	std::atomic<size_t> fallback_count_;
 	std::atomic<size_t> total_count_;
@@ -106,7 +113,8 @@ struct RtmLock{
 #endif
 private:
 	boost::detail::spinlock spinlock_;
-	size_t max_retries_;
+	size_t max_conflict_retries_;
+	size_t max_capacity_retries_;
 };
 
 #endif
