@@ -28,7 +28,7 @@ namespace Cavalia {
 				spinlocks_ = new boost::detail::spinlock*[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
 					size_t core_id = txn_location_.core_ids_.at(i);
-					size_t node_id = GetNumaNodeId();
+					size_t node_id = GetNumaNodeId(core_id);
 					boost::detail::spinlock *lock = (boost::detail::spinlock*)MemAllocator::AllocNode(sizeof(boost::detail::spinlock), node_id);
 					memset(lock, 0, sizeof(boost::detail::spinlock));
 					spinlocks_[i] = lock;
