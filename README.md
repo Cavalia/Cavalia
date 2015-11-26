@@ -30,6 +30,13 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * HYBRID: a combination of 2PL and OCC.
 * NOVALID: mute validation (requires OCC or SILO enabled).
 
+###Index
+* CUCKOO_INDEX: enable cuckoo index.
+
+###Logging
+* VALUE_LOGGING: enable value logging.
+* COMMAND_LOGGING: enable command logging.
+
 ###Timestamp allocation
 * BATCH_TIMESTAMP: allocate timestamp in batch.
 
@@ -47,16 +54,8 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * PROFILE_CC_EXECUTION_COUNT: measure statistics of the current concurrency control algorithm.
 
 ###Hardware architecture
-* NUMA: enable NUMA awareness.
 * PTHREAD_LOCK: use pthread_spin_lock.
 * BUILTIN_LOCK: use __sync_lock_test_and_set.
-
-###Index
-* CUCKOO_INDEX: enable cuckoo index.
-
-###Logging
-* VALUE_LOGGING: enable value logging.
-* COMMAND_LOGGING: enable command logging.
 
 ##Notes
 * please turn off all the cc-related options when testing transaction replays.
