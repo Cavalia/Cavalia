@@ -9,7 +9,7 @@ namespace Cavalia {
 	namespace Database {
 		class CertifyWaitLock {
 		public:
-			CertifyWaitLock() : read_count_(0), is_writing_(false), is_certifying_(false){}
+			CertifyWaitLock() : reader_count_(0), is_writing_(false), is_certifying_(false){}
 			~CertifyWaitLock(){}
 
 			void AcquireReadLock() {
@@ -20,7 +20,7 @@ namespace Cavalia {
 						spinlock_.Unlock();
 					}
 					else{
-						++read_count_;
+						++reader_count_;
 						spinlock_.Unlock();
 						return;
 					}
@@ -45,9 +45,9 @@ namespace Cavalia {
 			void AcquireCertifyLock() {
 				bool rt = true;
 				while (1){
-					while (read_count_ != 0);
+					while (reader_count_ != 0);
 					spinlock_.Lock();
-					if (read_count_ != 0){
+					if (reader_count_ != 0){
 						spinlock_.Unlock();
 					}
 					else{
@@ -61,8 +61,8 @@ namespace Cavalia {
 
 			void ReleaseReadLock() {
 				spinlock_.Lock();
-				assert(read_count_ > 0);
-				--read_count_;
+				assert(reader_count_ > 0);
+				--reader_count_;
 				spinlock_.Unlock();
 			}
 
@@ -82,7 +82,7 @@ namespace Cavalia {
 
 		private:
 			SpinLock spinlock_;
-			size_t read_count_;
+			size_t reader_count_;
 			bool is_writing_;
 			bool is_certifying_;
 		};

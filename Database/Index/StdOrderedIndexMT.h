@@ -2,8 +2,8 @@
 #ifndef __CAVALIA_DATABASE_STD_ORDERED_INDEX_MT_H__
 #define __CAVALIA_DATABASE_STD_ORDERED_INDEX_MT_H__
 
+#include <RWLock.h>
 #include "StdOrderedIndex.h"
-#include "../Lock/RWLock.h"
 
 namespace Cavalia {
 	namespace Database {

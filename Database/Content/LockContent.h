@@ -3,7 +3,7 @@
 #define __CAVALIA_DATABASE_LOCK_CONTENT_H__
 
 #include <atomic>
-#include "../Lock/RWLock.h"
+#include <RWLock.h>
 
 namespace Cavalia {
 	namespace Database {
