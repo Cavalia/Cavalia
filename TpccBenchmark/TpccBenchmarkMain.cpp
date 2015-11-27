@@ -35,23 +35,24 @@ using namespace Cavalia::Benchmark::Tpcc::Executor;
 using namespace Cavalia::Benchmark::Tpcc::Replayer;
 
 int main(int argc, char *argv[]) {
+	std::string dir_name = "/dev/shm";
 	ArgumentsParser(argc, argv);
-	CHECK_DIRECTORY(Tpcc);
+	CHECK_DIRECTORY(Tpcc, dir_name);
 	if (app_type == APP_POPULATE) {
 		assert(factor_count == 2);
 		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
-		POPULATE_STORAGE(Tpcc);
+		POPULATE_STORAGE(Tpcc, dir_name);
 		PRINT_STORAGE_STATUS;
 		CHECKPOINT_STORAGE;
 	}
 	else if (app_type == APP_REPLAY) {
-		RELOAD_STORAGE(Tpcc, false);
+		RELOAD_STORAGE(Tpcc, dir_name, false);
 		PRINT_STORAGE_STATUS;
 		if (replay_type == APP_COMMAND_REPLAY) {
-			COMMAND_REPLAY(Tpcc, "/dev/shm", num_core);
+			COMMAND_REPLAY(Tpcc, dir_name, num_core);
 		}
 		else if (replay_type == APP_VALUE_REPLAY) {
-			VALUE_REPLAY(Tpcc, "/dev/shm", num_core);
+			VALUE_REPLAY(Tpcc, dir_name, num_core);
 		}
 		PRINT_STORAGE_STATUS;
 	}
@@ -61,15 +62,15 @@ int main(int argc, char *argv[]) {
 		BaseLogger *logger = NULL;
 		if (app_type == APP_CC_EXECUTE) {
 #if defined(COMMAND_LOGGING)
-			ENABLE_COMMAND_LOGGER(Tpcc, "/dev/shm", num_core);
+			ENABLE_COMMAND_LOGGER(Tpcc, dir_name, num_core);
 #endif
 #if defined(VALUE_LOGGING)
-			ENABLE_VALUE_LOGGER(Tpcc, "/dev/shm", num_core);
+			ENABLE_VALUE_LOGGER(Tpcc, dir_name, num_core);
 #endif
 			IORedirector io_redirector(num_core);
-			SET_SOURCE_PARTITION(Tpcc, num_txn, (int)(scale_factors[0]), dist_ratio);
+			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, (int)(scale_factors[0]), dist_ratio);
 			INIT_PROFILERS;
-			RELOAD_STORAGE(Tpcc, false);
+			RELOAD_STORAGE(Tpcc, dir_name, false);
 			PRINT_STORAGE_STATUS;
 			EXECUTE_TRANSACTIONS_CONCURRENT(Tpcc, num_core);
 			PRINT_STORAGE_STATUS;
@@ -82,8 +83,8 @@ int main(int argc, char *argv[]) {
 			assert(total_num_core == int(scale_factors[0]));
 			CONFIGURE_HSTORE(Tpcc, num_core, num_node);
 			IORedirector io_redirector(total_num_core);
-			SET_SOURCE_PARTITION(Tpcc, num_txn, total_num_core, dist_ratio);
-			RELOAD_STORAGE_PARTITION(Tpcc, false);
+			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, total_num_core, dist_ratio);
+			RELOAD_STORAGE_PARTITION(Tpcc, dir_name, false);
 			PRINT_STORAGE_STATUS;
 			EXECUTE_TRANSACTIONS_HSTORE(Tpcc);
 			PRINT_STORAGE_STATUS;
@@ -94,8 +95,8 @@ int main(int argc, char *argv[]) {
 			assert(num_node <= int(scale_factors[0]));
 			CONFIGURE_SITE(Tpcc, num_core, num_node);
 			IORedirector io_redirector(total_num_core);
-			SET_SOURCE_PARTITION(Tpcc, num_txn, num_node, dist_ratio);
-			RELOAD_STORAGE_PARTITION(Tpcc, true);
+			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, num_node, dist_ratio);
+			RELOAD_STORAGE_PARTITION(Tpcc, dir_name, true);
 			PRINT_STORAGE_STATUS;
 			EXECUTE_TRANSACTIONS_SITE(Tpcc);
 			PRINT_STORAGE_STATUS;

@@ -4,14 +4,14 @@
 
 #include "../Meta/MetaTypes.h"
 
-#define CHECK_DIRECTORY(BenchmarkName) \
+#define CHECK_DIRECTORY(BenchmarkName, DirName) \
 if (boost::filesystem::exists(#BenchmarkName) == false){ \
-	bool rt = boost::filesystem::create_directory(#BenchmarkName); \
+	bool rt = boost::filesystem::create_directory(#DirName"/"#BenchmarkName); \
 	assert(rt == true); \
 }
 
-#define POPULATE_STORAGE(BenchmarkName) \
-	ShareStorageManager storage_manager(#BenchmarkName"/Checkpoint", false); \
+#define POPULATE_STORAGE(BenchmarkName, DirName) \
+	ShareStorageManager storage_manager(#DirName"/"#BenchmarkName"/Checkpoint", false); \
 	BenchmarkName##TableInitiator initiator; \
 	initiator.Initialize(&storage_manager); \
 	BenchmarkName##Populator populator(&params, &storage_manager); \
@@ -33,17 +33,17 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 	logger = new ValueLogger(#DirName"/"#BenchmarkName"/", NumTxn);
 
 ////////////////////////////////////////////////////////////
-#define SET_SOURCE(BenchmarkName, NumTxn) \
-	BenchmarkName##Source source(#BenchmarkName"/txn", &io_redirector, &params, NumTxn, RANDOM_SOURCE); \
+#define SET_SOURCE(BenchmarkName, DirName, NumTxn) \
+	BenchmarkName##Source source(#DirName"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, RANDOM_SOURCE); \
 	source.Start();
 
-#define SET_SOURCE_PARTITION(BenchmarkName, NumTxn, NumPartition, DistRatio) \
-	BenchmarkName##Source source(#BenchmarkName"/txn", &io_redirector, &params, NumTxn, PARTITION_SOURCE, NumPartition, DistRatio); \
+#define SET_SOURCE_PARTITION(BenchmarkName, DirName, NumTxn, NumPartition, DistRatio) \
+	BenchmarkName##Source source(#DirName"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, PARTITION_SOURCE, NumPartition, DistRatio); \
 	source.Start();
 
 ///////////////////////////////////////////////////////////
-#define RELOAD_STORAGE(BenchmarkName, ThreadSafe) \
-	ShareStorageManager storage_manager(#BenchmarkName"/Checkpoint", ThreadSafe); \
+#define RELOAD_STORAGE(BenchmarkName, DirName, ThreadSafe) \
+	ShareStorageManager storage_manager(#DirName"/"#BenchmarkName"/Checkpoint", ThreadSafe); \
 	BenchmarkName##TableInitiator initiator; \
 	initiator.Initialize(&storage_manager); \
 	storage_manager.ReloadCheckpoint();
@@ -54,8 +54,8 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 	executor.Start();
 
 ////////////////////////////////////////////////////////////
-#define RELOAD_STORAGE_PARTITION(BenchmarkName, ThreadSafe) \
-	BenchmarkName##ShardStorageManager storage_manager(#BenchmarkName"/Checkpoint", configure.GetTableLocations(), ThreadSafe); \
+#define RELOAD_STORAGE_PARTITION(BenchmarkName, DirName, ThreadSafe) \
+	BenchmarkName##ShardStorageManager storage_manager(#DirName"/"#BenchmarkName"/Checkpoint", configure.GetTableLocations(), ThreadSafe); \
 	BenchmarkName##TableInitiator initiator; \
 	initiator.Initialize(&storage_manager); \
 	storage_manager.ReloadCheckpoint();

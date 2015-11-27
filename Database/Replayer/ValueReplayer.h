@@ -13,7 +13,7 @@ namespace Cavalia{
 			virtual ~ValueReplayer(){}
 
 			virtual void Start(){
-			
+
 			}
 
 		private:
