@@ -5,13 +5,13 @@
 #include "../Meta/MetaTypes.h"
 
 #define CHECK_DIRECTORY(BenchmarkName, DirName) \
-if (boost::filesystem::exists(#BenchmarkName) == false){ \
-	bool rt = boost::filesystem::create_directory(#DirName"/"#BenchmarkName); \
+if (boost::filesystem::exists(DirName+"/"#BenchmarkName) == false){ \
+	bool rt = boost::filesystem::create_directory(DirName+"/"#BenchmarkName); \
 	assert(rt == true); \
 }
 
 #define POPULATE_STORAGE(BenchmarkName, DirName) \
-	ShareStorageManager storage_manager(#DirName"/"#BenchmarkName"/Checkpoint", false); \
+	ShareStorageManager storage_manager(DirName+"/"#BenchmarkName"/Checkpoint", false); \
 	BenchmarkName##TableInitiator initiator; \
 	initiator.Initialize(&storage_manager); \
 	BenchmarkName##Populator populator(&params, &storage_manager); \
@@ -27,23 +27,23 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 	std::cout << storage_manager.GetStatisticsString() << std::endl;
 
 #define ENABLE_COMMAND_LOGGER(BenchmarkName, DirName, NumTxn) \
-	logger = new CommandLogger(#DirName"/"#BenchmarkName"/", NumTxn);
+	logger = new CommandLogger(DirName+"/"#BenchmarkName"/", NumTxn);
 
 #define ENABLE_VALUE_LOGGER(BenchmarkName, DirName, NumTxn) \
-	logger = new ValueLogger(#DirName"/"#BenchmarkName"/", NumTxn);
+	logger = new ValueLogger(DirName+"/"#BenchmarkName"/", NumTxn);
 
 ////////////////////////////////////////////////////////////
 #define SET_SOURCE(BenchmarkName, DirName, NumTxn) \
-	BenchmarkName##Source source(#DirName"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, RANDOM_SOURCE); \
+	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, RANDOM_SOURCE); \
 	source.Start();
 
 #define SET_SOURCE_PARTITION(BenchmarkName, DirName, NumTxn, NumPartition, DistRatio) \
-	BenchmarkName##Source source(#DirName"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, PARTITION_SOURCE, NumPartition, DistRatio); \
+	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, PARTITION_SOURCE, NumPartition, DistRatio); \
 	source.Start();
 
 ///////////////////////////////////////////////////////////
 #define RELOAD_STORAGE(BenchmarkName, DirName, ThreadSafe) \
-	ShareStorageManager storage_manager(#DirName"/"#BenchmarkName"/Checkpoint", ThreadSafe); \
+	ShareStorageManager storage_manager(DirName+"/"#BenchmarkName"/Checkpoint", ThreadSafe); \
 	BenchmarkName##TableInitiator initiator; \
 	initiator.Initialize(&storage_manager); \
 	storage_manager.ReloadCheckpoint();
@@ -55,7 +55,7 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 
 ////////////////////////////////////////////////////////////
 #define RELOAD_STORAGE_PARTITION(BenchmarkName, DirName, ThreadSafe) \
-	BenchmarkName##ShardStorageManager storage_manager(#DirName"/"#BenchmarkName"/Checkpoint", configure.GetTableLocations(), ThreadSafe); \
+	BenchmarkName##ShardStorageManager storage_manager(DirName+"/"#BenchmarkName"/Checkpoint", configure.GetTableLocations(), ThreadSafe); \
 	BenchmarkName##TableInitiator initiator; \
 	initiator.Initialize(&storage_manager); \
 	storage_manager.ReloadCheckpoint();
@@ -78,11 +78,11 @@ if (boost::filesystem::exists(#BenchmarkName) == false){ \
 
 ////////////////////////////////////////////////////////////
 #define COMMAND_REPLAY(BenchmarkName, DirName, NumCore) \
-	BenchmarkName##CommandReplayer replayer(#DirName"/"#BenchmarkName"/", &storage_manager, NumCore); \
+	BenchmarkName##CommandReplayer replayer(DirName+"/"#BenchmarkName"/", &storage_manager, NumCore); \
 	replayer.Start();
 
 #define VALUE_REPLAY(BenchmarkName, DirName, NumCore) \
-	ValueReplayer replayer(#DirName"/"#BenchmarkName"/", &storage_manager, NumCore); \
+	ValueReplayer replayer(DirName+"/"#BenchmarkName"/", &storage_manager, NumCore); \
 	replayer.Start();
 
 #endif
