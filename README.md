@@ -1,5 +1,5 @@
 #Cavalia
-A transactional multicore main-memory database.
+A transactional main-memory database on multicores.
 
 ##Features
 
