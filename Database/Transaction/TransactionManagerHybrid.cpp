@@ -29,8 +29,8 @@ namespace Cavalia{
 					access->access_record_ = t_record;
 					// copy data
 					BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-					char *local_data = allocator_->Alloc(t_record->record_->schema_ptr_->GetSchemaSize());
-					SchemaRecord *local_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+					char *local_data = MemAllocator::Alloc(t_record->record_->schema_ptr_->GetSchemaSize());
+					SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 					new(local_record)SchemaRecord(t_record->record_->schema_ptr_, local_data);
 					END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					access->timestamp_ = t_record->content_.GetTimestamp();
@@ -71,8 +71,8 @@ namespace Cavalia{
 						return false;
 					}
 					else {
-						char *local_data = allocator_->Alloc(t_record->record_->schema_ptr_->GetSchemaSize());
-						SchemaRecord *local_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+						char *local_data = MemAllocator::Alloc(t_record->record_->schema_ptr_->GetSchemaSize());
+						SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 						new(local_record)SchemaRecord(t_record->record_->schema_ptr_, local_data);
 						t_record->record_->CopyTo(local_record);
 						Access *access = access_list_.NewAccess();
@@ -183,9 +183,9 @@ namespace Cavalia{
 						else if (access_ptr->access_type_ == READ_WRITE) {
 							access_ptr->access_record_->content_.ReleaseWriteLock();
 							BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-							allocator_->Free(access_ptr->local_record_->data_ptr_);
+							MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 							access_ptr->local_record_->~SchemaRecord();
-							allocator_->Free((char*)access_ptr->local_record_);
+							MemAllocator::Free((char*)access_ptr->local_record_);
 							END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 						}
 						else if (access_ptr->access_type_ == DELETE_ONLY) {
@@ -208,9 +208,9 @@ namespace Cavalia{
 						else if (access_ptr->access_type_ == READ_WRITE) {
 							access_ptr->access_record_->content_.ReleaseWriteLock();
 							BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-							allocator_->Free(access_ptr->local_record_->data_ptr_);
+							MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 							access_ptr->local_record_->~SchemaRecord();
-							allocator_->Free((char*)access_ptr->local_record_);
+							MemAllocator::Free((char*)access_ptr->local_record_);
 							END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 						}
 						else {
@@ -225,9 +225,9 @@ namespace Cavalia{
 					for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
 						Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
 						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						allocator_->Free(insertion_ptr->local_record_->data_ptr_);
+						MemAllocator::Free(insertion_ptr->local_record_->data_ptr_);
 						insertion_ptr->local_record_->~SchemaRecord();
-						allocator_->Free((char*)insertion_ptr->local_record_);
+						MemAllocator::Free((char*)insertion_ptr->local_record_);
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
 				}
@@ -286,9 +286,9 @@ namespace Cavalia{
 					}
 					else if (access_ptr->access_type_ == READ_WRITE){
 						access_ptr->access_record_->content_.ReleaseWriteLock();
-						allocator_->Free(access_ptr->local_record_->data_ptr_);
+						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 						access_ptr->local_record_->~SchemaRecord();
-						allocator_->Free((char*)access_ptr->local_record_);
+						MemAllocator::Free((char*)access_ptr->local_record_);
 					}
 					else{
 						assert(access_ptr->access_type_ == DELETE_ONLY);
@@ -308,9 +308,9 @@ namespace Cavalia{
 			// recover updated data and release locks.
 			for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
 				Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-				allocator_->Free(insertion_ptr->local_record_->data_ptr_);
+				MemAllocator::Free(insertion_ptr->local_record_->data_ptr_);
 				insertion_ptr->local_record_->~SchemaRecord();
-				allocator_->Free((char*)insertion_ptr->local_record_);
+				MemAllocator::Free((char*)insertion_ptr->local_record_);
 			}
 
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
@@ -321,9 +321,9 @@ namespace Cavalia{
 				else if (access_ptr->access_type_ == READ_WRITE){
 					access_ptr->access_record_->record_->CopyFrom(access_ptr->local_record_);
 					access_ptr->access_record_->content_.ReleaseWriteLock();
-					allocator_->Free(access_ptr->local_record_->data_ptr_);
+					MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 					access_ptr->local_record_->~SchemaRecord();
-					allocator_->Free((char*)access_ptr->local_record_);
+					MemAllocator::Free((char*)access_ptr->local_record_);
 				}
 				else{
 					assert(access_ptr->access_type_ == DELETE_ONLY);

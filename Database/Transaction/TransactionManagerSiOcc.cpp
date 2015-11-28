@@ -32,7 +32,7 @@ namespace Cavalia{
 			++access_offset_;
 			access->access_type_ = access_type;
 			access->access_record_ = record;
-			SchemaRecord *local_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+			SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 			if (access_type == READ_ONLY) {
 				// directly return the versioned copy.
 				new(local_record)SchemaRecord(record->schema_ptr_, tmp_data);
@@ -40,7 +40,7 @@ namespace Cavalia{
 			else {
 				// write in local copy
 				size_t size = record->schema_ptr_->GetSchemaSize();
-				char* local_data = allocator_->Alloc(size);
+				char* local_data = MemAllocator::Alloc(size);
 				memcpy(local_data, tmp_data, size);
 				new(local_record)SchemaRecord(record->schema_ptr_, local_data);
 			}
@@ -115,7 +115,7 @@ namespace Cavalia{
 						if (entry.second->access_type_ != INSERT_ONLY){
 							entry.second->local_record_->data_ptr_ = NULL;
 							entry.second->local_record_->~SchemaRecord();
-							allocator_->Free((char*)entry.second->local_record_);
+							MemAllocator::Free((char*)entry.second->local_record_);
 						}
 					}
 					access_set_[tid].clear();
@@ -131,10 +131,10 @@ namespace Cavalia{
 							entry.second->local_record_->data_ptr_ = NULL;
 						}
 						else{
-							allocator_->Free(entry.second->local_record_->data_ptr_);
+							MemAllocator::Free(entry.second->local_record_->data_ptr_);
 						}
 						entry.second->local_record_->~SchemaRecord();
-						allocator_->Free((char*)entry.second->local_record_);
+						MemAllocator::Free((char*)entry.second->local_record_);
 					}
 					access_set_[tid].clear();
 				}

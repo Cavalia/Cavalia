@@ -36,8 +36,8 @@ namespace Cavalia{
 				rtm_lock_->Unlock();
 				// copy data
 				BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-				char *local_data = allocator_->Alloc(tmp_record->schema_ptr_->GetSchemaSize());
-				SchemaRecord *local_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+				char *local_data = MemAllocator::Alloc(tmp_record->schema_ptr_->GetSchemaSize());
+				SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 				new(local_record)SchemaRecord(tmp_record->schema_ptr_, local_data);
 				END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 				local_record->CopyFrom(tmp_record);
@@ -64,7 +64,7 @@ namespace Cavalia{
 			// allocate memory outside rtm region
 			for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
 				Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-				TableRecord* t_record = (TableRecord*)allocator_->Alloc(sizeof(TableRecord));
+				TableRecord* t_record = (TableRecord*)MemAllocator::Alloc(sizeof(TableRecord));
 				new(t_record)TableRecord(insertion_ptr->local_record_);
 				insertion_ptr->insertion_record_ = t_record;
 			}
@@ -135,20 +135,20 @@ namespace Cavalia{
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE) {
 						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						allocator_->Free(access_ptr->local_record_->data_ptr_);
+						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 						access_ptr->local_record_->~SchemaRecord();
-						allocator_->Free((char*)access_ptr->local_record_);
+						MemAllocator::Free((char*)access_ptr->local_record_);
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
 				}
 				for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
 					Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
 					BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-					allocator_->Free(insertion_ptr->local_record_->data_ptr_);
+					MemAllocator::Free(insertion_ptr->local_record_->data_ptr_);
 					insertion_ptr->local_record_->~SchemaRecord();
-					allocator_->Free((char*)insertion_ptr->local_record_);
+					MemAllocator::Free((char*)insertion_ptr->local_record_);
 					insertion_ptr->insertion_record_->~TableRecord();
-					allocator_->Free((char*)insertion_ptr->insertion_record_);
+					MemAllocator::Free((char*)insertion_ptr->insertion_record_);
 					END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 				}
 			}

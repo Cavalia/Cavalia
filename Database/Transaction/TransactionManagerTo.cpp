@@ -41,8 +41,8 @@ namespace Cavalia{
 				is_first_access_ = false;
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 			}
-			char *local_data = allocator_->Alloc(t_record->record_->schema_ptr_->GetSchemaSize());
-			SchemaRecord *local_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+			char *local_data = MemAllocator::Alloc(t_record->record_->schema_ptr_->GetSchemaSize());
+			SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 			new(local_record)SchemaRecord(t_record->record_->schema_ptr_, local_data);
 			// local_record should be allocated here.
 			if (access_type == READ_WRITE) {
@@ -58,9 +58,9 @@ namespace Cavalia{
 			// local data may be allocated in this function.
 			if (t_record->content_.RequestReadAccess(start_timestamp_, &local_record->data_ptr_, &is_ready) == false) {
 				// local record should be reclaimed here.
-				allocator_->Free(local_data);
+				MemAllocator::Free(local_data);
 				local_record->~SchemaRecord();
-				allocator_->Free((char*)local_record);
+				MemAllocator::Free((char*)local_record);
 				UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, table_id);
 				this->AbortTransaction();
 				return false;
@@ -89,14 +89,14 @@ namespace Cavalia{
 				if (access_ptr->access_type_ == READ_WRITE){
 					volatile bool is_ready = false;
 					access_ptr->access_record_->content_.RequestCommit(start_timestamp_, &is_ready);
-					allocator_->Free(access_ptr->local_record_->data_ptr_);
+					MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 					access_ptr->local_record_->~SchemaRecord();
-					allocator_->Free((char*)access_ptr->local_record_);
+					MemAllocator::Free((char*)access_ptr->local_record_);
 				}
 				else if (access_ptr->access_type_ == READ_ONLY){
-					allocator_->Free(access_ptr->local_record_->data_ptr_);
+					MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 					access_ptr->local_record_->~SchemaRecord();
-					allocator_->Free((char*)access_ptr->local_record_);
+					MemAllocator::Free((char*)access_ptr->local_record_);
 				}
 				//else {
 				//	assert(access_ptr->access_type_ == INSERT_ONLY);
@@ -119,9 +119,9 @@ namespace Cavalia{
 				if (access_ptr->access_type_ == READ_WRITE) {
 					access_ptr->access_record_->content_.RequestAbort(start_timestamp_);
 				}
-				allocator_->Free(access_ptr->local_record_->data_ptr_);
+				MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 				access_ptr->local_record_->~SchemaRecord();
-				allocator_->Free((char*)access_ptr->local_record_);
+				MemAllocator::Free((char*)access_ptr->local_record_);
 			}
 			assert(access_list_.access_count_ <= kMaxAccessNum);
 			access_list_.Clear();

@@ -43,7 +43,7 @@ namespace Cavalia{
 			Access *access = access_list_.NewAccess();
 			access->access_type_ = access_type;
 			access->access_record_ = record;
-			SchemaRecord *local_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+			SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 			if (access_type == READ_ONLY) {
 				// directly return the versioned copy.
 				new(local_record)SchemaRecord(record->schema_ptr_, tmp_data);
@@ -51,7 +51,7 @@ namespace Cavalia{
 			else {
 				// write in local copy
 				size_t size = record->schema_ptr_->GetSchemaSize();
-				char* local_data = allocator_->Alloc(size);
+				char* local_data = MemAllocator::Alloc(size);
 				memcpy(local_data, tmp_data, size);
 				new(local_record)SchemaRecord(record->schema_ptr_, local_data);
 			}
@@ -91,7 +91,7 @@ namespace Cavalia{
 					// data_ptr in local records of both read and write should be alive
 					access_ptr->local_record_->data_ptr_ = NULL;
 					access_ptr->local_record_->~SchemaRecord();
-					allocator_->Free((char*)access_ptr->local_record_);
+					MemAllocator::Free((char*)access_ptr->local_record_);
 				}
 			}
 			assert(access_list_.access_count_ <= kMaxAccessNum);
@@ -110,13 +110,13 @@ namespace Cavalia{
 				}
 				else if (access_ptr->access_type_ == READ_WRITE){
 					access_ptr->access_record_->content_.ReleaseWriteLock();
-					allocator_->Free(access_ptr->local_record_->data_ptr_);
+					MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 				}
 				else{
-					allocator_->Free(access_ptr->local_record_->data_ptr_);
+					MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 				}
 				access_ptr->local_record_->~SchemaRecord();
-				allocator_->Free((char*)access_ptr->local_record_);
+				MemAllocator::Free((char*)access_ptr->local_record_);
 			}
 			assert(access_list_.access_count_ <= kMaxAccessNum);
 			access_list_.Clear();

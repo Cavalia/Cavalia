@@ -64,8 +64,8 @@ namespace Cavalia{
 						int payment_cnt = *(int*)(customer_record->GetColumn(18)) + 1;
 						customer_record->UpdateColumn(18, (char*)(&payment_cnt));
 
-						char *history_data = allocator_->Alloc(TpccSchema::GenerateHistorySchema()->GetSchemaSize());
-						SchemaRecord *history_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+						char *history_data = MemAllocator::Alloc(TpccSchema::GenerateHistorySchema()->GetSchemaSize());
+						SchemaRecord *history_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 						new(history_record)SchemaRecord(TpccSchema::GenerateHistorySchema(), history_data);
 						history_record->SetColumn(0, (char*)(&payment_param->c_id_));
 						history_record->SetColumn(1, (char*)(&payment_param->c_d_id_));

@@ -12,10 +12,10 @@ namespace Cavalia{
 				class NewOrderProcedure : public StoredProcedure{
 				public:
 					NewOrderProcedure(const size_t &txn_type) : StoredProcedure(txn_type){
-						ol_amounts = (double*)allocator_->Alloc(15 * sizeof(double));
+						ol_amounts = (double*)MemAllocator::Alloc(15 * sizeof(double));
 					}
 					virtual ~NewOrderProcedure(){
-						allocator_->Free((char*)ol_amounts);
+						MemAllocator::Free((char*)ol_amounts);
 					}
 
 					virtual bool Execute(TxnParam *param, CharArray &ret, const ExeContext &exe_context){
@@ -106,8 +106,8 @@ namespace Cavalia{
 						assert(customer_record != NULL);
 						double c_discount = *(double*)(customer_record->GetColumn(15));
 
-						char *new_order_data = allocator_->Alloc(TpccSchema::GenerateNewOrderSchema()->GetSchemaSize());
-						SchemaRecord *new_order_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+						char *new_order_data = MemAllocator::Alloc(TpccSchema::GenerateNewOrderSchema()->GetSchemaSize());
+						SchemaRecord *new_order_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 						new(new_order_record)SchemaRecord(TpccSchema::GenerateNewOrderSchema(), new_order_data);
 						new_order_record->SetColumn(0, (char*)(&d_next_o_id));
 						new_order_record->SetColumn(1, (char*)(&new_order_param->d_id_));
@@ -122,8 +122,8 @@ namespace Cavalia{
 						for (auto & w_id : new_order_param->i_w_ids_){
 							all_local = (all_local && (new_order_param->w_id_ == w_id));
 						}
-						char *order_data = allocator_->Alloc(TpccSchema::GenerateOrderSchema()->GetSchemaSize());
-						SchemaRecord *order_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+						char *order_data = MemAllocator::Alloc(TpccSchema::GenerateOrderSchema()->GetSchemaSize());
+						SchemaRecord *order_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 						new(order_record)SchemaRecord(TpccSchema::GenerateOrderSchema(), order_data);
 						order_record->SetColumn(0, (char*)(&d_next_o_id));
 						order_record->SetColumn(1, (char*)(&new_order_param->c_id_));
@@ -141,8 +141,8 @@ namespace Cavalia{
 							int ol_i_id = new_order_param->i_ids_[i];
 							int ol_supply_w_id = new_order_param->i_w_ids_[i];
 							int ol_quantity = new_order_param->i_qtys_[i];
-							char *order_line_data = allocator_->Alloc(TpccSchema::GenerateOrderLineSchema()->GetSchemaSize());
-							SchemaRecord *order_line_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+							char *order_line_data = MemAllocator::Alloc(TpccSchema::GenerateOrderLineSchema()->GetSchemaSize());
+							SchemaRecord *order_line_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 							new(order_line_record)SchemaRecord(TpccSchema::GenerateOrderLineSchema(), order_line_data);
 							order_line_record->SetColumn(0, (char*)(&d_next_o_id));
 							order_line_record->SetColumn(1, (char*)(&new_order_param->d_id_));

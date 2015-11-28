@@ -52,9 +52,6 @@ namespace Cavalia{
 			std::vector<size_t> core_ids_;
 			size_t node_count_;
 		};
-
-		extern MemAllocator *allocator_;
-		
 	}
 }
 

@@ -49,7 +49,6 @@ namespace Cavalia{
 			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
 
 			virtual void ProcessQuery(){
-				allocator_->Init(thread_count_);
 				boost::thread_group thread_group;
 				for (size_t i = 0; i < this->thread_count_; ++i){
 					size_t core_id = GetCoreId(i);
@@ -87,7 +86,6 @@ namespace Cavalia{
 			void ProcessQueryThread(const size_t &thread_id, const size_t &core_id){
 				// note that core_id is not equal to thread_id.
 				PinToCore(core_id);
-				allocator_->RegisterThread(thread_id, core_id);
 				/////////////copy parameter to each core.
 				std::vector<ParamBatch*> execution_batches;
 				std::vector<ParamBatch*> *input_batches = redirector_ptr_->GetParameterBatches(thread_id);

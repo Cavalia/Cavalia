@@ -37,8 +37,8 @@ namespace Cavalia{
 				}
 				else {
 					// return local copy.
-					char *local_data = allocator_->Alloc(t_record->record_->schema_ptr_->GetSchemaSize());
-					SchemaRecord *local_record = (SchemaRecord*)allocator_->Alloc(sizeof(SchemaRecord));
+					char *local_data = MemAllocator::Alloc(t_record->record_->schema_ptr_->GetSchemaSize());
+					SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 					new(local_record)SchemaRecord(t_record->record_->schema_ptr_, local_data);
 					t_record->record_->CopyTo(local_record);
 					Access *access = access_list_.NewAccess();
@@ -107,9 +107,9 @@ namespace Cavalia{
 				for (size_t i = 0; i < access_list_.access_count_; ++i){
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE){
-						allocator_->Free(access_ptr->local_record_->data_ptr_);
+						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 						access_ptr->local_record_->~SchemaRecord();
-						allocator_->Free((char*)access_ptr->local_record_);
+						MemAllocator::Free((char*)access_ptr->local_record_);
 					}
 				}
 				assert(access_list_.access_count_ <= kMaxAccessNum);
@@ -119,9 +119,9 @@ namespace Cavalia{
 				for (size_t i = 0; i < access_list_.access_count_; ++i){
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ != READ_ONLY){
-						allocator_->Free(access_ptr->local_record_->data_ptr_);
+						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 						access_ptr->local_record_->~SchemaRecord();
-						allocator_->Free((char*)access_ptr->local_record_);
+						MemAllocator::Free((char*)access_ptr->local_record_);
 					}
 				}
 				assert(access_list_.access_count_ <= kMaxAccessNum);
@@ -140,15 +140,15 @@ namespace Cavalia{
 				}
 				else if (access_ptr->access_type_ == READ_WRITE){
 					access_ptr->access_record_->content_.ReleaseWriteLock();
-					allocator_->Free(access_ptr->local_record_->data_ptr_);
+					MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 					access_ptr->local_record_->~SchemaRecord();
-					allocator_->Free((char*)access_ptr->local_record_);
+					MemAllocator::Free((char*)access_ptr->local_record_);
 				}
 				//else{
 				//	assert(access_ptr->access_type_ == INSERT_ONLY);
-				//	allocator_->Free(access_ptr->local_record_->data_ptr_);
+				//	MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 				//	access_ptr->local_record_->~SchemaRecord();
-				//	allocator_->Free((char*)access_ptr->local_record_);
+				//	MemAllocator::Free((char*)access_ptr->local_record_);
 				//}
 			}
 			assert(access_list_.access_count_ <= kMaxAccessNum);
