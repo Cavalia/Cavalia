@@ -27,9 +27,9 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * LOCK_WAIT: two-phase locking with wait-die strategy.
 * OCC: optimistic concurrency control.
 * HYBRID: a combination of 2PL and OCC.
-* NOVALID: mute validation (requires OCC or SILO enabled).
 * SILO: an implementation following silo's design. (see http://dl.acm.org/citation.cfm?id=2522713)
 * DBX: an implementation following DBX's design. (see http://dl.acm.org/citation.cfm?id=2592815)
+* NOVALID: mute validation (requires OCC or SILO enabled).
 
 ###Index
 * CUCKOO_INDEX: enable cuckoo index.
