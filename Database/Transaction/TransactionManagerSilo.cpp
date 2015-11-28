@@ -72,7 +72,6 @@ namespace Cavalia{
 
 			// setp 2: validate read.
 			bool is_success = true;
-#if !defined(NOVALID)
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
 				if (access_ptr->access_type_ == READ_WRITE){
@@ -89,7 +88,6 @@ namespace Cavalia{
 					}
 				}
 			}
-#endif
 
 			// step 3: if success, then overwrite and commit
 			if (is_success == true){

@@ -63,14 +63,12 @@ namespace Cavalia {
 				if (access_ptr->access_type_ == READ_ONLY) {
 					// acquire read lock
 					access_ptr->access_record_->content_.AcquireReadLock();
-#if !defined(NOVALID)
 					// whether someone has changed the tuple after my read
 					if (access_ptr->access_record_->content_.GetTimestamp() != access_ptr->timestamp_) {
 						UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->access_record_->GetTableId());
 						is_success = false;
 						break;
 					}
-#endif
 					if (access_ptr->timestamp_ > max_rw_ts){
 						max_rw_ts = access_ptr->timestamp_;
 					}
@@ -78,14 +76,12 @@ namespace Cavalia {
 				else if (access_ptr->access_type_ == READ_WRITE) {
 					// acquire write lock
 					access_ptr->access_record_->content_.AcquireWriteLock();
-#if !defined(NOVALID)
 					// whether someone has changed the tuple after my read
 					if (access_ptr->access_record_->content_.GetTimestamp() != access_ptr->timestamp_) {
 						UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->access_record_->GetTableId());
 						is_success = false;
 						break;
 					}
-#endif
 					if (access_ptr->timestamp_ > max_rw_ts){
 						max_rw_ts = access_ptr->timestamp_;
 					}
