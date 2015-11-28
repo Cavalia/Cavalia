@@ -3,10 +3,10 @@
 #define __CAVALIA_DATABASE_MVTO_CONTENT_H__
 
 #include <boost/thread/mutex.hpp>
-#include "GlobalContent.h"
+#include <cstdlib>
+#include "../Transaction/GlobalTimestamp.h"
 #include "../Meta/MetaTypes.h"
 #include "ContentCommon.h"
-#include <cstdlib>
 
 namespace Cavalia {
 	namespace Database {
@@ -59,15 +59,12 @@ namespace Cavalia {
 			}
 
 			void RequestReadAccess(const uint64_t &timestamp, char **data, volatile bool *is_ready) {
-				//std::cout << "ts " << timestamp << " issue a read:";
 				spinlock_.lock();
 				if (IsReadConflict(timestamp) == true) {
-					//std::cout << "buffer" << std::endl;
 					BufferReadRequest(timestamp, data, is_ready);
 				}
 				else {
 					// read immediately
-					//std::cout << "return result" << std::endl;
 					MvHistoryEntry* entry = write_history_head_;
 					while (entry != NULL && entry->timestamp_ > timestamp) {
 						entry = entry->next_;
@@ -87,15 +84,12 @@ namespace Cavalia {
 			}
 
 			bool RequestWriteAccess(const uint64_t &timestamp, char **data) {
-				//std::cout << "ts " << timestamp << " write:";
 				spinlock_.lock();
 				bool is_success = true;
 				if (IsWriteConflict(timestamp) == true) {
-					//std::cout << " abort" << std::endl;
 					is_success = false;
 				}
 				else {
-					//std::cout << " buffer" << std::endl;
 					BufferWriteRequest(timestamp, data);
 				}
 				spinlock_.unlock();
@@ -103,7 +97,6 @@ namespace Cavalia {
 			}
 
 			void RequestCommit(const uint64_t &timestamp, char* data_ptr){
-				//std::cout << "ts " << timestamp << " commit" << std::endl;
 				spinlock_.lock();
 				MvRequestEntry* entry = DebufferWriteRequest(timestamp);
 				InsertWriteHistory(timestamp, data_ptr);
@@ -116,7 +109,6 @@ namespace Cavalia {
 			}
 
 			void RequestAbort(const uint64_t &timestamp) {
-				//std::cout << "ts " << timestamp << " abort" << std::endl;
 				spinlock_.lock();
 				MvRequestEntry* entry = DebufferWriteRequest(timestamp);
 				UpdateBuffer();
@@ -397,11 +389,11 @@ namespace Cavalia {
 
 			void CollectGarbage(){
 				if (read_history_length_ > kRecycleLength * 1000){
-					uint64_t min_thread_ts = GlobalContent::GetMinTimestamp();
+					uint64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
 					ClearReadHistory(min_thread_ts);
 				}
 				if (write_history_length_ > kRecycleLength){
-					uint64_t min_thread_ts = GlobalContent::GetMinTimestamp();
+					uint64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
 					ClearWriteHistory(min_thread_ts);
 				}
 			}

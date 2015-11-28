@@ -4,9 +4,9 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/atomic.hpp>
-#include "GlobalContent.h"
+#include <RWLock.h>
+#include "../Transaction/GlobalTimestamp.h"
 #include "ContentCommon.h"
-#include "../Lock/RWLock.h"
 
 namespace Cavalia {
 	namespace Database {
@@ -17,7 +17,6 @@ namespace Cavalia {
 				history_tail_ = NULL;
 				history_length_ = 0;
 				memset(&wait_lock_, 0, sizeof(wait_lock_));
-				//memset(&spinlock_, 0, sizeof(spinlock_));
 			}
 			~MvLockContent(){
 				MvHistoryEntry* his, *prev_his;
@@ -31,7 +30,6 @@ namespace Cavalia {
 			}
 
 			void ReadAccess(char *&data_ptr){
-				//spinlock_.lock();
 				spinlock_.AcquireReadLock();
 				if (history_head_ == NULL){
 					data_ptr = data_ptr_;
@@ -39,12 +37,10 @@ namespace Cavalia {
 				else{
 					data_ptr = history_head_->data_ptr_;
 				}
-				//spinlock_.unlock();
 				spinlock_.ReleaseReadLock();
 			}
 
 			void ReadAccess(const int64_t &timestamp, char *&data_ptr){
-				//spinlock_.lock();
 				spinlock_.AcquireReadLock();
 				MvHistoryEntry* entry = history_head_;
 				while (entry != NULL){
@@ -59,12 +55,10 @@ namespace Cavalia {
 				else{
 					data_ptr = entry->data_ptr_;
 				}
-				//spinlock_.unlock();
 				spinlock_.ReleaseReadLock();
 			}
 
 			void WriteAccess(const int64_t &commit_timestamp, char* data_ptr){
-				//spinlock_.lock();
 				spinlock_.AcquireWriteLock();
 				MvHistoryEntry* entry = new MvHistoryEntry();
 				entry->data_ptr_ = data_ptr;
@@ -80,7 +74,6 @@ namespace Cavalia {
 				}
 				++history_length_;
 				CollectGarbage();
-				//spinlock_.unlock();
 				spinlock_.ReleaseWriteLock();
 			}
 
@@ -150,7 +143,7 @@ namespace Cavalia {
 		private:
 			void CollectGarbage(){
 				if (history_length_ > kRecycleLength){
-					int64_t min_thread_ts = GlobalContent::GetMinTimestamp();
+					int64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
 					ClearHistory(min_thread_ts);
 				}
 			}

@@ -17,7 +17,7 @@ namespace Cavalia{
 			if (context->is_read_only_ == true){
 				if (is_first_access_ == true){
 					BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-					start_timestamp_ = GlobalContent::GetMaxTimestamp();
+					start_timestamp_ = GlobalTimestamp::GetMaxTimestamp();
 					is_first_access_ = false;
 					END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 				}
@@ -108,7 +108,7 @@ namespace Cavalia{
 			// install.
 			int64_t commit_timestamp = 0;
 			if (is_success == true){
-				commit_timestamp = GlobalContent::GetMonotoneTimestamp();
+				commit_timestamp = GlobalTimestamp::GetMonotoneTimestamp();
 				for (size_t i = 0; i < access_list_.access_count_; ++i){
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE){
@@ -150,7 +150,7 @@ namespace Cavalia{
 				}
 				assert(access_list_.access_count_ <= kMaxAccessNum);
 				access_list_.Clear();
-				GlobalContent::SetThreadTimestamp(thread_id_, commit_timestamp);
+				GlobalTimestamp::SetThreadTimestamp(thread_id_, commit_timestamp);
 			}
 			else{
 				for (size_t i = 0; i < access_list_.access_count_; ++i){

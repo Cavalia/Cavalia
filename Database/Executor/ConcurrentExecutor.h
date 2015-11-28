@@ -39,7 +39,7 @@ namespace Cavalia{
 			}
 
 			virtual void Start(){
-				GlobalContent::thread_count_ = thread_count_;
+				GlobalTimestamp::thread_count_ = thread_count_;
 				PrepareProcedures();
 				ProcessQuery();
 			}

@@ -9,11 +9,11 @@ namespace Cavalia{
 				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 #if defined(BATCH_TIMESTAMP)
 				if (!batch_ts_.IsAvailable()){
-					batch_ts_.InitTimestamp(GlobalContent::GetBatchMonotoneTimestamp());
+					batch_ts_.InitTimestamp(GlobalTimestamp::GetBatchMonotoneTimestamp());
 				}
 				start_timestamp_ = batch_ts_.GetTimestamp();
 #else
-				start_timestamp_ = GlobalContent::GetMonotoneTimestamp();
+				start_timestamp_ = GlobalTimestamp::GetMonotoneTimestamp();
 #endif
 				is_first_access_ = false;
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
@@ -31,7 +31,7 @@ namespace Cavalia{
 			if (context->is_read_only_ == true){
 				if (is_first_access_ == true){
 					BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-					start_timestamp_ = GlobalContent::GetMinTimestamp();
+					start_timestamp_ = GlobalTimestamp::GetMinTimestamp();
 					is_first_access_ = false;
 					END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 				}
@@ -54,11 +54,11 @@ namespace Cavalia{
 				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 #if defined(BATCH_TIMESTAMP)
 				if (!batch_ts_.IsAvailable()){
-					batch_ts_.InitTimestamp(GlobalContent::GetBatchMonotoneTimestamp());
+					batch_ts_.InitTimestamp(GlobalTimestamp::GetBatchMonotoneTimestamp());
 				}
 				start_timestamp_ = batch_ts_.GetTimestamp();
 #else
-				start_timestamp_ = GlobalContent::GetMonotoneTimestamp();
+				start_timestamp_ = GlobalTimestamp::GetMonotoneTimestamp();
 #endif
 				is_first_access_ = false;
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
@@ -141,7 +141,7 @@ namespace Cavalia{
 			access_list_.Clear();
 
 			//logger_->CommitTransaction(txn_type, param);
-			GlobalContent::SetThreadTimestamp(thread_id_, start_timestamp_);
+			GlobalTimestamp::SetThreadTimestamp(thread_id_, start_timestamp_);
 			is_first_access_ = true;
 			END_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			return true;
@@ -166,7 +166,7 @@ namespace Cavalia{
 			}
 			assert(access_list_.access_count_ <= kMaxAccessNum);
 			access_list_.Clear();
-			GlobalContent::SetThreadTimestamp(thread_id_, start_timestamp_);
+			GlobalTimestamp::SetThreadTimestamp(thread_id_, start_timestamp_);
 			is_first_access_ = true;
 		}
 	}

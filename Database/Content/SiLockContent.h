@@ -4,9 +4,8 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/atomic.hpp>
-#include "MetaTypes.h"
+#include "../Transaction/GlobalTimestamp.h"
 #include "ContentCommon.h"
-#include "GlobalContent.h"
 
 namespace Cavalia{
 	namespace Database{
@@ -92,7 +91,7 @@ namespace Cavalia{
 		private:
 			void CollectGarbage(){
 				if (history_length_ > kRecycleLength){
-					int64_t min_thread_ts = GlobalContent::GetMinTimestamp();
+					int64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
 					ClearHistory(min_thread_ts);
 				}
 			}
@@ -116,8 +115,6 @@ namespace Cavalia{
 			// the latest version
 			int64_t timestamp_;
 			// for synchronization
-			//boost::mutex latch_;
-			//boost::mutex lock_;
 			boost::detail::spinlock latch_;
 			boost::detail::spinlock lock_;
 

@@ -6,7 +6,7 @@ namespace Cavalia{
 		bool TransactionManager::InsertRecord(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *record){
 			BEGIN_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			if (is_first_access_ == true){
-				start_timestamp_ = GlobalContent::GetMaxTimestamp();
+				start_timestamp_ = GlobalTimestamp::GetMaxTimestamp();
 				is_first_access_ = false;
 			}
 			//storage_manager_->tables_[table_id]->InsertRecord(record);
@@ -22,7 +22,7 @@ namespace Cavalia{
 
 		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *&record, const AccessType access_type) {
 			if (is_first_access_ == true) {
-				start_timestamp_ = GlobalContent::GetMaxTimestamp();
+				start_timestamp_ = GlobalTimestamp::GetMaxTimestamp();
 				is_first_access_ = false;
 			}
 			// acquire write lock.
@@ -62,7 +62,7 @@ namespace Cavalia{
 
 		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param){
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
-			int64_t commit_timestamp = GlobalContent::GetMonotoneTimestamp();
+			int64_t commit_timestamp = GlobalTimestamp::GetMonotoneTimestamp();
 			//install writes
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
@@ -96,7 +96,7 @@ namespace Cavalia{
 			}
 			assert(access_list_.access_count_ <= kMaxAccessNum);
 			access_list_.Clear();
-			GlobalContent::SetThreadTimestamp(thread_id_, commit_timestamp);
+			GlobalTimestamp::SetThreadTimestamp(thread_id_, commit_timestamp);
 			is_first_access_ = true;
 			END_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			return true;

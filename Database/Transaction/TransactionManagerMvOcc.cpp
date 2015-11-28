@@ -17,7 +17,7 @@ namespace Cavalia{
 			if (context->is_read_only_ == true){
 				if (is_first_access_ == true){
 					BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-					start_timestamp_ = GlobalContent::GetMaxTimestamp();
+					start_timestamp_ = GlobalTimestamp::GetMaxTimestamp();
 					is_first_access_ = false;
 					END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 				}
@@ -190,7 +190,7 @@ namespace Cavalia{
 					access_ptr->local_record_->~SchemaRecord();
 					MemAllocator::Free((char*)access_ptr->local_record_);
 				}
-				GlobalContent::SetThreadTimestamp(thread_id_, commit_ts);
+				GlobalTimestamp::SetThreadTimestamp(thread_id_, commit_ts);
 			}
 			else{
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {

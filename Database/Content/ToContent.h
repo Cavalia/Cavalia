@@ -4,7 +4,6 @@
 
 #include <SpinLock.h>
 #include <vector>
-#include "MetaTypes.h"
 #include "ContentCommon.h"
 
 namespace Cavalia{

@@ -9,7 +9,7 @@
 
 namespace Cavalia{
 	namespace Database{
-		class GlobalContent{
+		class GlobalTimestamp{
 		public:
 			///////////////////////
 			static uint64_t GetMonotoneTimestamp(){

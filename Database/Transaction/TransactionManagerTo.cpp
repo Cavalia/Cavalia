@@ -9,11 +9,11 @@ namespace Cavalia{
 				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 #if defined(BATCH_TIMESTAMP)
 				if (!batch_ts_.IsAvailable()){
-					batch_ts_.InitTimestamp(GlobalContent::GetBatchMonotoneTimestamp());
+					batch_ts_.InitTimestamp(GlobalTimestamp::GetBatchMonotoneTimestamp());
 				}
 				start_timestamp_ = batch_ts_.GetTimestamp();
 #else
-				start_timestamp_ = GlobalContent::GetMonotoneTimestamp();
+				start_timestamp_ = GlobalTimestamp::GetMonotoneTimestamp();
 #endif
 				is_first_access_ = false;
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
@@ -32,11 +32,11 @@ namespace Cavalia{
 				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 #if defined(BATCH_TIMESTAMP)
 				if (!batch_ts_.IsAvailable()){
-					batch_ts_.InitTimestamp(GlobalContent::GetBatchMonotoneTimestamp());
+					batch_ts_.InitTimestamp(GlobalTimestamp::GetBatchMonotoneTimestamp());
 				}
 				start_timestamp_ = batch_ts_.GetTimestamp();
 #else
-				start_timestamp_ = GlobalContent::GetMonotoneTimestamp();
+				start_timestamp_ = GlobalTimestamp::GetMonotoneTimestamp();
 #endif
 				is_first_access_ = false;
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);

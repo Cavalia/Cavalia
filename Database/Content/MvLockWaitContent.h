@@ -4,16 +4,15 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/atomic.hpp>
-#include "GlobalContent.h"
+#include <RWLock.h>
+#include "../Transaction/GlobalTimestamp.h"
 #include "ContentCommon.h"
-#include "../Lock/RWLock.h"
 
 namespace Cavalia {
 	namespace Database {
 		class MvLockWaitContent {
 		public:
 			MvLockWaitContent(char* data_str) : data_ptr_(data_str){
-				//memset(&spinlock_, 0, sizeof(spinlock_));
 				memset(&wait_lock_, 0, sizeof(wait_lock_));
 
 				history_head_ = NULL;
@@ -49,7 +48,6 @@ namespace Cavalia {
 			}
 
 			void WriteAccess(const int64_t& commit_timestamp, char* data_str){
-				//spinlock_.lock();
 				spinlock_.AcquireWriteLock();
 				MvHistoryEntry* en = new MvHistoryEntry();
 				en->data_ptr_ = data_str;
@@ -64,11 +62,9 @@ namespace Cavalia {
 				}
 				++history_length_;
 				//CollectGarbage();
-				//spinlock_.unlock();
 				spinlock_.ReleaseWriteLock();
 			}
 			void ReadAccess(char*& data_ptr){
-				//spinlock_.lock();
 				spinlock_.AcquireReadLock();
 				if (history_head_ != NULL){
 					data_ptr = history_head_->data_ptr_;
@@ -76,11 +72,9 @@ namespace Cavalia {
 				else{
 					data_ptr = data_ptr_;
 				}
-				//spinlock_.unlock();
 				spinlock_.ReleaseReadLock();
 			}
 			void ReadAccess(const int64_t& timestamp, char*& data_ptr){
-				//spinlock_.lock();
 				spinlock_.AcquireReadLock();
 				MvHistoryEntry* en = history_head_;
 				while (en != NULL && en->timestamp_ > timestamp){
@@ -92,21 +86,18 @@ namespace Cavalia {
 				else{
 					data_ptr = data_ptr_;
 				}
-				//spinlock_.unlock();
 				spinlock_.ReleaseReadLock();
 			}
 			bool AcquireLock(const int64_t& timestamp, const LockType& lock_type, volatile bool* lock_ready){
 				bool ret = true;
 				wait_lock_.lock();
 				bool is_conflict = IsConflict(lock_type);
-				//std::cout << "timestamp=" << timestamp << " lock_type=" << lock_type << " is_conflict=" << is_conflict << " is_certify=" << is_certifying_ << " is_writing=" << is_writing_ << " read_count=" << read_count_ << std::endl;
 				if (is_conflict){
 					bool can_wait = true;
 					LockEntry* en = owners_;
 					while (en != NULL){
 						if (en->timestamp_ < timestamp){
 							can_wait = false;
-							//std::cout << "cannot wait: timestamp=" << en->timestamp_ << " lock_type=" << en->lock_type_ << std::endl;
 							break;
 						}
 						en = en->next_;
@@ -214,7 +205,7 @@ namespace Cavalia {
 		private:
 			void CollectGarbage(){
 				if (history_length_ > kRecycleLength){
-					int64_t min_thread_ts = GlobalContent::GetMinTimestamp();
+					int64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
 					ClearHistory(min_thread_ts);
 				}
 			}
@@ -259,7 +250,6 @@ namespace Cavalia {
 			}
 			
 			void BufferWaiter(const int64_t& timestamp, const LockType& lock_type, volatile bool* lock_ready){
-				//std::cout << "buffer waiter:" << "timestamp=" << timestamp << " lock_type=" << lock_type << std::endl;
 				LockEntry* entry = waiters_;
 				LockEntry* pre = NULL;
 				while (entry != NULL && timestamp < entry->timestamp_){
@@ -323,8 +313,7 @@ namespace Cavalia {
 				}
 			}
 
-			//boost::detail::spinlock spinlock_;
-			RWWaitLock spinlock_;
+			RWLock spinlock_;
 			char* data_ptr_;
 			MvHistoryEntry* history_head_;
 			MvHistoryEntry* history_tail_;

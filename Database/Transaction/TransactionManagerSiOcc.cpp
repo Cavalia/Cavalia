@@ -6,7 +6,7 @@ namespace Cavalia{
 		bool TransactionManager::InsertRecord(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *record){
 			BEGIN_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			if (is_first_access_ == true){
-				start_timestamp_ = GlobalContent::GetMaxTimestamp();
+				start_timestamp_ = GlobalTimestamp::GetMaxTimestamp();
 				is_first_access_ = false;
 			}
 			Access *access = &(accesses_[access_offset_]);
@@ -22,7 +22,7 @@ namespace Cavalia{
 
 		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *&record, const AccessType access_type) {
 			if (is_first_access_ == true) {
-				start_timestamp_ = GlobalContent::GetMaxTimestamp();
+				start_timestamp_ = GlobalTimestamp::GetMaxTimestamp();
 				is_first_access_ = false;
 			}
 			char* tmp_data = NULL;
@@ -75,7 +75,7 @@ namespace Cavalia{
 				// generate commit timestamp after acquiring all locks for 2 reasons
 				// 1. if validation fails, we don't need to waste the effort to generate a timestamp that would not be used
 				// 2. if generating commit timestamp before acquiring all locks, reads of other concurrent txn with a bigger ts will not read this new update, though SI doesn't have to respect the timestamp order
-				commit_timestamp = GlobalContent::GetMonotoneTimestamp();
+				commit_timestamp = GlobalTimestamp::GetMonotoneTimestamp();
 				//install writes
 				for (size_t tid = 0; tid < table_count_; ++tid){
 					for (auto &entry : access_set_[tid]){
@@ -122,7 +122,7 @@ namespace Cavalia{
 				}
 				assert(access_offset_ <= kMaxAccessNum);
 				access_offset_ = 0;
-				GlobalContent::SetThreadTimestamp(thread_id_, commit_timestamp);
+				GlobalTimestamp::SetThreadTimestamp(thread_id_, commit_timestamp);
 			}
 			else{
 				for (size_t tid = 0; tid < table_count_; ++tid){

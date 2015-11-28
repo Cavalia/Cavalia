@@ -3,10 +3,9 @@
 #define __CAVALIA_DATABASE_MVOCC_CONTENT_H__
 
 #include <atomic>
-#include "MetaTypes.h"
+#include <RWLock.h>
 #include "ContentCommon.h"
-#include "GlobalContent.h"
-#include "RWWaitLock.h"
+#include "../Transaction/GlobalTimestamp.h"
 
 namespace Cavalia{
 	namespace Database{
@@ -106,7 +105,7 @@ namespace Cavalia{
 		private:
 			void CollectGarbage(){
 				if (history_length_ > kRecycleLength){
-					uint64_t min_thread_ts = GlobalContent::GetMinTimestamp();
+					uint64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
 					ClearHistory(min_thread_ts);
 				}
 			}
@@ -129,8 +128,8 @@ namespace Cavalia{
 		private:
 			char* data_ptr_;
 			std::atomic<uint64_t> timestamp_;
-			RWWaitLock spinlock_;
-			RWWaitLock wait_lock_;
+			RWLock spinlock_;
+			RWLock wait_lock_;
 			// history list is sorted by timestamp
 			MvHistoryEntry* history_head_;
 			MvHistoryEntry* history_tail_;
