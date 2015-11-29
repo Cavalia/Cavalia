@@ -13,7 +13,19 @@ namespace Cavalia{
 			virtual ~ValueReplayer(){}
 
 			virtual void Start(){
+				boost::thread_group reloaders;
+				for (size_t i = 0; i < thread_count_; ++i){
+					reloaders.create_thread(boost::bind(&ValueReplayer::ReloadLog, this, i));
+				}
+				reloaders.join_all();
+			}
 
+			void ReloadLog(const size_t &thread_id){
+				
+			}
+
+			void ProcessLog(const size_t &thread_id){
+				
 			}
 
 		private:

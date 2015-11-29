@@ -2,6 +2,8 @@
 #ifndef __CAVALIA_DATABASE_SHARD_TABLE_H__
 #define __CAVALIA_DATABASE_SHARD_TABLE_H__
 
+#include <NumaHelper.h>
+#include <ThreadHelper.h>
 #include "BaseTable.h"
 #include "../Index/StdUnorderedIndex.h"
 #include "../Index/StdUnorderedIndexMT.h"
@@ -222,7 +224,8 @@ namespace Cavalia {
 
 				for (size_t part_id = 0; part_id < partition_count_; ++part_id){
 					size_t numa_node_id = table_location_.node_ids_.at(part_id);
-
+					size_t core_id = GetCoreInNode(numa_node_id);
+					PinToCore(core_id);
 					in_stream.seekg(0, std::ios::end);
 					size_t file_size = static_cast<size_t>(in_stream.tellg());
 					in_stream.seekg(0, std::ios::beg);
@@ -231,11 +234,11 @@ namespace Cavalia {
 						in_stream.read(tmp_entry, record_size);
 						tmp_record->data_ptr_ = tmp_entry;
 						if (IsReplication() == true){
-							char *entry = MemAllocator::AllocNode(record_size, numa_node_id);
+							char *entry = MemAllocator::Alloc(record_size);
 							memcpy(entry, tmp_entry, record_size);
-							SchemaRecord *s_record = (SchemaRecord*)MemAllocator::AllocNode(sizeof(SchemaRecord), numa_node_id);
+							SchemaRecord *s_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 							new(s_record)SchemaRecord(schema_ptr_, entry);
-							TableRecord *t_record = (TableRecord*)MemAllocator::AllocNode(sizeof(TableRecord), numa_node_id);
+							TableRecord *t_record = (TableRecord*)MemAllocator::Alloc(sizeof(TableRecord));
 							new(t_record)TableRecord(s_record);
 							InsertRecord(part_id, t_record);
 						}
@@ -244,9 +247,9 @@ namespace Cavalia {
 							if (partition_id == part_id){
 								char *entry = MemAllocator::AllocNode(record_size, numa_node_id);
 								memcpy(entry, tmp_entry, record_size);
-								SchemaRecord *s_record = (SchemaRecord*)MemAllocator::AllocNode(sizeof(SchemaRecord), numa_node_id);
+								SchemaRecord *s_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 								new(s_record)SchemaRecord(schema_ptr_, entry);
-								TableRecord *t_record = (TableRecord*)MemAllocator::AllocNode(sizeof(TableRecord), numa_node_id);
+								TableRecord *t_record = (TableRecord*)MemAllocator::Alloc(sizeof(TableRecord));
 								new(t_record)TableRecord(s_record);
 								InsertRecord(t_record);
 							}

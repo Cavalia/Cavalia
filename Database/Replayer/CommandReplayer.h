@@ -37,7 +37,7 @@ namespace Cavalia{
 			virtual void PrepareProcedures() = 0;
 			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
 
-			virtual void ReloadLog(const size_t &thread_id){
+			void ReloadLog(const size_t &thread_id){
 				std::ifstream &infile_ref = infiles_[thread_id];
 				ParamBatch &input_batch = input_batches_[thread_id];
 				infile_ref.seekg(0, std::ios::end);
@@ -67,7 +67,7 @@ namespace Cavalia{
 				entry.Release();
 			}
 
-			virtual void ProcessLog(){
+			void ProcessLog(){
 				//std::string ret;
 				//for (auto &log_pair : log_buffer_){
 				//	procedures_[log_pair.first]->Execute(log_pair.second, ret);
