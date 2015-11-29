@@ -15,7 +15,7 @@ namespace Cavalia{
 	namespace Database{
 		class ShareTable : public BaseTable {
 		public:
-			ShareTable(const RecordSchema * const schema_ptr, bool is_thread_safe) : BaseTable(schema_ptr), partition_count_(kTablePartitionNum){
+			ShareTable(const RecordSchema * const schema_ptr, bool is_thread_safe) : BaseTable(schema_ptr){
 				if (is_thread_safe == true){
 #if defined(CUCKOO_INDEX)
 					primary_index_ = new CuckooIndex();
@@ -164,7 +164,6 @@ namespace Cavalia{
 			ShareTable & operator=(const ShareTable&);
 
 		protected:
-			const size_t partition_count_;
 			BaseUnorderedIndex *primary_index_;
 			BaseOrderedIndex **secondary_indexes_;
 		};

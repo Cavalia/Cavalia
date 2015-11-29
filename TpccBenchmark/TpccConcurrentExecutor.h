@@ -4,9 +4,6 @@
 
 #include <Executor/ConcurrentExecutor.h>
 
-#if defined(HEALING)
-#include "TpccHealingTransactionManager.h"
-#endif
 #include "AtomicProcedures/DeliveryProcedure.h"
 #include "AtomicProcedures/NewOrderProcedure.h"
 #include "AtomicProcedures/PaymentProcedure.h"
@@ -24,13 +21,6 @@ namespace Cavalia{
 
 				private:
 					virtual void PrepareProcedures(){
-#if defined(HEALING)
-						manager_generator_ = [this](BaseStorageManager* storage_manager, BaseLogger* logger, size_t thread_id, size_t node_id){
-							TpccRepairTransactionManager *manager = (TpccRepairTransactionManager*)MemAllocator::AllocNode(sizeof(TpccRepairTransactionManager), node_id);
-							new(manager)TpccRepairTransactionManager(storage_manager, logger, thread_id, this->thread_count_);
-							return manager;
-						};
-#endif
 						using namespace AtomicProcedures;
 						registers_[TupleType::DELIVERY] = [](size_t node_id) {
 							DeliveryProcedure *procedure = (DeliveryProcedure*)MemAllocator::AllocNode(sizeof(DeliveryProcedure), node_id);

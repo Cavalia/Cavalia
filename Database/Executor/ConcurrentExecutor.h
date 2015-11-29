@@ -67,8 +67,8 @@ namespace Cavalia{
 					}
 					is_all_ready = true;
 				}
-#if defined(LOCK) || defined(OCC) || defined(HEALING) || defined(SILO) || defined(HYBRID)
-				ScalableTimestamp scalable_ts(thread_count_);
+#if defined(LOCK) || defined(OCC) || defined(SILO) || defined(HYBRID)
+				ScalableTimestamp scalable_ts;
 #endif
 				std::cout << "start processing..." << std::endl;
 				BEGIN_CACHE_MISS_PROFILE;
@@ -111,14 +111,9 @@ namespace Cavalia{
 				/////////////////////////////////////////////////
 				// prepare local managers.
 				size_t node_id = GetNumaNodeId(core_id);
-
-#if defined(HEALING)
-				TransactionManager *txn_manager = manager_generator_(storage_manager_, logger_, thread_id, node_id);
-#else
 				TransactionManager *txn_manager = new TransactionManager(storage_manager_, logger_, thread_id, this->thread_count_);
 #if defined(DBX)
 				txn_manager->SetRtmLock(&rtm_lock_);
-#endif
 #endif
 				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
 				for (auto &entry : registers_){
@@ -205,9 +200,6 @@ namespace Cavalia{
 		protected:
 			std::unordered_map<size_t, std::function<StoredProcedure*(size_t)>> registers_;
 			std::unordered_map<size_t, std::function<void(char*)>> deregisters_;
-#if defined(HEALING)
-			std::function<TransactionManager*(BaseStorageManager*const, BaseLogger*const, size_t, size_t)> manager_generator_;
-#endif
 
 		private:
 			BaseStorageManager *const storage_manager_;

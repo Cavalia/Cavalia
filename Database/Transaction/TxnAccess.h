@@ -11,48 +11,15 @@
 namespace Cavalia{
 	namespace Database{
 		struct Access{
-			Access() : access_record_(NULL), local_record_(NULL){
-#if defined(HEALING)
-				table_id_ = SIZE_MAX;
-				access_id_ = SIZE_MAX;
-				is_locked_ = false;
-				is_affected_ = false;
-#endif
-			}
+			Access() : access_record_(NULL), local_record_(NULL){}
 			AccessType access_type_;
 			TableRecord *access_record_;
 			SchemaRecord *local_record_;
-
-#if defined(LOCK) || defined(OCC) || defined(SILO) || defined(HEALING) || defined(MVOCC) || defined(HYBRID) || defined(DBX)
+#if defined(LOCK) || defined(OCC) || defined(SILO) || defined(MVOCC) || defined(HYBRID) || defined(DBX)
 			uint64_t timestamp_;
 #endif
-#if defined(HEALING)
-			size_t table_id_;
-			size_t access_id_;
-			bool is_locked_;
-			bool is_affected_;
-
-			void CopyToLocal(){
-				local_record_->CopyFrom(access_record_->record_);
-			}
-
-			char* GetGlobalColumn(const size_t &column_id){
-				return access_record_->record_->GetColumn(column_id);
-			}
-
-			char* GetLocalColumn(const size_t &column_id){
-				return local_record_->GetColumn(column_id);
-			}
-
-			void GetLocalColumn(const size_t &column_id, std::string &data){
-				local_record_->GetColumn(column_id, data);
-			}
-
-			void UpdateLocalColumn(const size_t &column_id, const char* data){
-				local_record_->UpdateColumn(column_id, data);
-			}
-#endif
 		};
+
 
 		template<int N>
 		struct AccessList{
@@ -61,10 +28,6 @@ namespace Cavalia{
 			Access *NewAccess(){
 				assert(access_count_ < N);
 				Access *ret = &(accesses_[access_count_]);
-#if defined(HEALING)
-				ret->is_locked_ = false;
-				ret->is_affected_ = false;
-#endif
 				++access_count_;
 				return ret;
 			}
@@ -154,67 +117,6 @@ namespace Cavalia{
 			Access* accesses_[N][M];
 			size_t access_counts_[N]; // how many items touched by each access.
 		};
-
-		struct Insertion{
-			Insertion() : insertion_record_(NULL){}
-
-			TableRecord *insertion_record_;
-			SchemaRecord *local_record_;
-			size_t table_id_;
-			std::string primary_key_;
-
-#if defined(HEALING)
-			void SetColumn(const size_t &column_id, const char *data){
-				local_record_->SetColumn(column_id, data);
-			}
-
-			void SetColumn(const size_t &column_id, const std::string &data){
-				local_record_->SetColumn(column_id, data);
-			}
-#endif
-		};
-
-		template<int N>
-		struct InsertionList{
-			InsertionList() : insertion_count_(0){}
-
-			Insertion *NewInsertion(){
-				assert(insertion_count_ < N);
-				Insertion *ret = &(insertions_[insertion_count_]);
-				++insertion_count_;
-				return ret;
-			}
-
-			Insertion *GetInsertion(const size_t &index){
-				return &(insertions_[index]);
-			}
-
-			void Clear(){
-				insertion_count_ = 0;
-			}
-
-			Insertion insertions_[N];
-			size_t insertion_count_;
-		};
-
-		template<int N>
-		struct InsertionPtrList {
-			InsertionPtrList() : insertion_count_(0) {}
-
-			void Add(Insertion *insertion) {
-				assert(insertion_count_ < N);
-				insertions_[insertion_count_] = insertion;
-				++insertion_count_;
-			}
-
-			void Clear() {
-				insertion_count_ = 0;
-			}
-
-			Insertion *insertions_[N];
-			size_t insertion_count_;
-		};
-
 	}
 }
 

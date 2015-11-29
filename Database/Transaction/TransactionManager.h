@@ -31,13 +31,6 @@ namespace Cavalia{
 				is_first_access_ = true;
 				global_ts_ = 0;
 				local_ts_ = 0;
-				
-#if defined(HEALING)
-				access_caches_ = new AccessPtrList<kMaxAccessPerTableNum>[table_count_];
-				accesses_caches_ = new AccessPtrsList<kMaxOptPerTableNum, kMaxAccessPerOptNum>[table_count_];
-				access_lists_ = new AccessList<kMaxAccessPerTableNum>[table_count_];
-				insertion_lists_ = new InsertionList<kMaxAccessPerTableNum>[table_count_];
-#endif
 				t_records_ = new TableRecords(64);
 			}
 
@@ -45,18 +38,7 @@ namespace Cavalia{
 			TransactionManager(BaseStorageManager *const storage_manager, BaseLogger *const logger) : storage_manager_(storage_manager), logger_(logger){}
 
 			// destruction.
-			virtual ~TransactionManager(){
-#if defined(HEALING)
-				delete[] access_caches_;
-				access_caches_ = NULL;
-				delete[] accesses_caches_;
-				accesses_caches_ = NULL;
-				delete[] access_lists_;
-				access_lists_ = NULL;
-				delete[] insertion_lists_;
-				insertion_lists_ = NULL;
-#endif
-			}
+			virtual ~TransactionManager(){}
 
 #if defined(DBX)
 			void SetRtmLock(RtmLock *rtm_lock){
@@ -77,11 +59,7 @@ namespace Cavalia{
 				END_INDEX_TIME_MEASURE(thread_id_);
 				if (t_record != NULL){
 					BEGIN_PHASE_MEASURE(thread_id_, SELECT_PHASE);
-#if defined(HEALING)
-					bool rt = SelectRecordCC(context, table_id, t_record, record, access_type, access_id, true);
-#else
 					bool rt = SelectRecordCC(context, table_id, t_record, record, access_type);
-#endif
 					END_PHASE_MEASURE(thread_id_, SELECT_PHASE);
 					return rt;
 				}
@@ -111,11 +89,7 @@ namespace Cavalia{
 				END_INDEX_TIME_MEASURE(thread_id_);
 				if (t_record != NULL){
 					BEGIN_PHASE_MEASURE(thread_id_, SELECT_PHASE);
-#if defined(HEALING)
-					bool rt = SelectRecordCC(context, table_id, t_record, record, access_type, access_id, true);
-#else
 					bool rt = SelectRecordCC(context, table_id, t_record, record, access_type);
-#endif
 					END_PHASE_MEASURE(thread_id_, SELECT_PHASE);
 					return rt;
 				}
@@ -143,11 +117,7 @@ namespace Cavalia{
 				storage_manager_->tables_[table_id]->SelectRecords(idx_id, secondary_key, t_records_);
 				END_INDEX_TIME_MEASURE(thread_id_);
 				BEGIN_PHASE_MEASURE(thread_id_, SELECT_PHASE);
-#if defined(HEALING)
-				bool rt = SelectRecordsCC(context, table_id, t_records_, records, access_type, access_id);
-#else
 				bool rt = SelectRecordsCC(context, table_id, t_records_, records, access_type);
-#endif
 				t_records_->Clear();
 				END_PHASE_MEASURE(thread_id_, SELECT_PHASE);
 				return rt;
@@ -179,24 +149,12 @@ namespace Cavalia{
 				for (size_t i = 0; i < t_records->curr_size_; ++i) {
 					SchemaRecord **s_record = &(records->records_[i]);
 					TableRecord *t_record = t_records->records_[i];
-#if defined(HEALING)
-					if (SelectRecordCC(context, table_id, t_record, *s_record, access_type, access_id, false) == false) {
-						return false;
-					}
-#else
 					if (SelectRecordCC(context, table_id, t_record, *s_record, access_type) == false) {
 						return false;
 					}
-#endif
 				}
 				return true;
 			}
-
-#if defined(HEALING)
-			virtual bool CommitAdhocTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str);
-			virtual bool ReConstruct(TxnContext *context, TxnParam *param, Access *access){ return false; }
-			virtual bool ReExecute(TxnContext *context, TxnParam *param, Access *accesss, CharArray &ret_str){ return false; }
-#endif
 
 			uint64_t GenerateTimestamp(const uint64_t curr_ts, const uint64_t &max_write_ts){
 				uint64_t max_global_ts = max_write_ts >> 32;
@@ -239,7 +197,6 @@ namespace Cavalia{
 			uint64_t global_ts_;
 			uint32_t local_ts_;
 			AccessList<kMaxAccessNum> access_list_;
-			InsertionList<kMaxAccessNum> insertion_list_;
 			TableRecords *t_records_;
 
 #if defined(BATCH_TIMESTAMP)
@@ -247,13 +204,6 @@ namespace Cavalia{
 #endif
 #if defined(SILO)
 			WritePtrList<kMaxAccessNum> write_list_;
-#endif
-#if defined(HEALING)
-			AccessPtrList<kMaxAccessPerTableNum> *access_caches_;
-			AccessPtrsList<kMaxOptPerTableNum, kMaxAccessPerOptNum> *accesses_caches_;
-			AccessList<kMaxAccessPerTableNum> *access_lists_;
-			InsertionList<kMaxAccessPerTableNum> *insertion_lists_;
-#else
 #endif
 #if defined(MVTO) || defined(MVLOCK) || defined(MVLOCK_WAIT) || defined(MVOCC)
 			std::vector<SchemaRecord*> read_only_set_;

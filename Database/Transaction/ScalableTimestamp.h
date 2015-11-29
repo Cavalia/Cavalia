@@ -16,9 +16,8 @@ namespace Cavalia {
 	namespace Database {
 		class ScalableTimestamp {
 		public:
-			ScalableTimestamp(const size_t &thread_count) {
+			ScalableTimestamp() {
 				ts_thread_ = new boost::thread(boost::bind(&ScalableTimestamp::Start, this));
-				thread_count_ = thread_count;
 			}
 
 			~ScalableTimestamp() {
@@ -35,7 +34,6 @@ namespace Cavalia {
 
 		private:
 			void Start() {
-				PinToCore(thread_count_ + 1);
 				while (true) {
 					boost::this_thread::sleep(boost::posix_time::milliseconds(40));
 					++curr_ts_;
@@ -45,7 +43,6 @@ namespace Cavalia {
 		private:
 			static volatile uint64_t curr_ts_;
 			boost::thread *ts_thread_;
-			size_t thread_count_;
 		};
 	}
 }

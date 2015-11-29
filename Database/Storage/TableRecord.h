@@ -6,7 +6,7 @@
 
 #if defined(LOCK_WAIT)
 #include "../Content/LockWaitContent.h"
-#elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(HEALING) || defined(HYBRID)
+#elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(HYBRID)
 #include "../Content/LockContent.h"
 #elif defined(TO)
 #include "../Content/ToContent.h"
@@ -60,7 +60,7 @@ namespace Cavalia{
 			MvToContent content_;
 #elif defined(TO)
 			ToContent content_;
-#elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(HEALING) || defined(HYBRID)
+#elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(HYBRID)
 			LockContent content_;
 #elif defined(DBX)
 			uint64_t timestamp_;

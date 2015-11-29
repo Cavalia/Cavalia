@@ -5,10 +5,12 @@ namespace Cavalia {
 	namespace Database {
 		bool TransactionManager::InsertRecord(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *record) {
 			BEGIN_PHASE_MEASURE(thread_id_, INSERT_PHASE);
-			Insertion *insertion = insertion_list_.NewInsertion();
-			insertion->local_record_ = record;
-			insertion->table_id_ = table_id;
-			insertion->primary_key_ = primary_key;
+			TableRecord *tb_record = new TableRecord(record);
+			storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record);
+			Access *access = access_list_.NewAccess();
+			access->access_type_ = INSERT_ONLY;
+			access->access_record_ = tb_record;
+			access->local_record_ = NULL;
 			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			return true;
 		}
@@ -18,6 +20,7 @@ namespace Cavalia {
 				Access *access = access_list_.NewAccess();
 				access->access_type_ = READ_ONLY;
 				access->access_record_ = t_record;
+				access->local_record_ = NULL;
 				access->timestamp_ = t_record->content_.GetTimestamp();
 				s_record = t_record->record_;
 				return true;
@@ -45,6 +48,7 @@ namespace Cavalia {
 				Access *access = access_list_.NewAccess();
 				access->access_type_ = DELETE_ONLY;
 				access->access_record_ = t_record;
+				access->local_record_ = NULL;
 				s_record = t_record->record_;
 				return true;
 			}
@@ -87,7 +91,6 @@ namespace Cavalia {
 					}
 				}
 				else {
-					assert(access_ptr->access_type_ == DELETE_ONLY);
 					access_ptr->access_record_->content_.AcquireWriteLock();
 				}
 			}
@@ -110,6 +113,12 @@ namespace Cavalia {
 						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_record->record_->schema_ptr_->GetTableId(), access_ptr->local_record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
 #endif
 					}
+					else if (access_ptr->access_type_ == INSERT_ONLY) {
+						access_record->content_.SetTimestamp(commit_ts);
+#if defined(VALUE_LOGGING)
+						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, insertion_ptr->table_id_, insertion_ptr->insertion_record_->record_->data_ptr_, insertion_ptr->insertion_record_->record_->schema_ptr_->GetSchemaSize());
+#endif
+					}
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
 						assert(max_rw_ts >= access_ptr->timestamp_);
 						assert(commit_ts > access_ptr->timestamp_);
@@ -120,17 +129,6 @@ namespace Cavalia {
 						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_record->record_->schema_ptr_->GetTableId(), access_record->record_->GetPrimaryKey());
 #endif
 					}
-				}
-				for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
-					Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-					TableRecord *tb_record = new TableRecord(insertion_ptr->local_record_);
-					tb_record->content_.AcquireWriteLock();
-					tb_record->content_.SetTimestamp(commit_ts);
-					insertion_ptr->insertion_record_ = tb_record;
-					storage_manager_->tables_[insertion_ptr->table_id_]->InsertRecord(insertion_ptr->primary_key_, insertion_ptr->insertion_record_);
-#if defined(VALUE_LOGGING)
-					((ValueLogger*)logger_)->InsertRecord(this->thread_id_, insertion_ptr->table_id_, insertion_ptr->insertion_record_->record_->data_ptr_, insertion_ptr->insertion_record_->record_->schema_ptr_->GetSchemaSize());
-#endif
 				}
 				// commit.
 #if defined(VALUE_LOGGING)
@@ -153,13 +151,12 @@ namespace Cavalia {
 						MemAllocator::Free((char*)access_ptr->local_record_);
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
+					else if (access_ptr->access_type_ == INSERT_ONLY) {
+						access_ptr->access_record_->content_.ReleaseWriteLock();
+					}
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
 						access_ptr->access_record_->content_.ReleaseWriteLock();
 					}
-				}
-				for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
-					Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-					insertion_ptr->insertion_record_->content_.ReleaseWriteLock();
 				}
 			}
 			// if failed.
@@ -178,8 +175,10 @@ namespace Cavalia {
 						MemAllocator::Free((char*)access_ptr->local_record_);
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
-					else {
-						assert(access_ptr->access_type_ == DELETE_ONLY);
+					else if (access_ptr->access_type_ == INSERT_ONLY) {
+						access_ptr->access_record_->content_.ReleaseWriteLock();
+					}
+					else if (access_ptr->access_type_ == DELETE_ONLY) {
 						access_ptr->access_record_->content_.ReleaseWriteLock();
 					}
 					--lock_count;
@@ -187,18 +186,8 @@ namespace Cavalia {
 						break;
 					}
 				}
-				for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
-					Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-					BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-					MemAllocator::Free(insertion_ptr->local_record_->data_ptr_);
-					insertion_ptr->local_record_->~SchemaRecord();
-					MemAllocator::Free((char*)insertion_ptr->local_record_);
-					END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-				}
 			}
-			assert(insertion_list_.insertion_count_ <= kMaxAccessNum);
 			assert(access_list_.access_count_ <= kMaxAccessNum);
-			insertion_list_.Clear();
 			access_list_.Clear();
 			END_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			return is_success;
