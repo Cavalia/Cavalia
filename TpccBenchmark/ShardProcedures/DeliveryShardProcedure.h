@@ -68,22 +68,23 @@ namespace Cavalia{
 							if (no_o_ids[no_d_id - 1] == -1){
 								continue;
 							}
-							memcpy(ol_key, &(no_o_ids[no_d_id - 1]), sizeof(int));
-							memcpy(ol_key + sizeof(int), &no_d_id, sizeof(int));
-							memcpy(ol_key + sizeof(int)+sizeof(int), &delivery_param->w_id_, sizeof(int));
-							order_line_records->Clear();
-							// "updateOrderLine": "UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?"
-							// "sumOLAmount": "SELECT SUM(OL_AMOUNT) FROM ORDER_LINE WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?"
-							DB_QUERY(SelectRecords(&context_, ORDER_LINE_TABLE_ID, partition_id, 0, std::string(ol_key, sizeof(int)* 3), order_line_records, READ_WRITE));
-							assert(order_line_records != NULL);
-							double sum = 0;
-							for (size_t i = 0; i < order_line_records->curr_size_; ++i) {
-								SchemaRecord *ol_record = order_line_records->records_[i];
-								assert(ol_record != NULL);
-								ol_record->UpdateColumn(6, (char*)(&delivery_param->ol_delivery_d_));
-								sum += *(double*)(ol_record->GetColumn(8));
-							}
-							sums[no_d_id - 1] = sum;
+							//memcpy(ol_key, &(no_o_ids[no_d_id - 1]), sizeof(int));
+							//memcpy(ol_key + sizeof(int), &no_d_id, sizeof(int));
+							//memcpy(ol_key + sizeof(int)+sizeof(int), &delivery_param->w_id_, sizeof(int));
+							//order_line_records->Clear();
+							//// "updateOrderLine": "UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?"
+							//// "sumOLAmount": "SELECT SUM(OL_AMOUNT) FROM ORDER_LINE WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?"
+							//DB_QUERY(SelectRecords(&context_, ORDER_LINE_TABLE_ID, partition_id, 0, std::string(ol_key, sizeof(int)* 3), order_line_records, READ_WRITE));
+							//assert(order_line_records != NULL);
+							//double sum = 0;
+							//for (size_t i = 0; i < order_line_records->curr_size_; ++i) {
+							//	SchemaRecord *ol_record = order_line_records->records_[i];
+							//	assert(ol_record != NULL);
+							//	ol_record->UpdateColumn(6, (char*)(&delivery_param->ol_delivery_d_));
+							//	sum += *(double*)(ol_record->GetColumn(8));
+							//}
+							//sums[no_d_id - 1] = sum;
+							sums[no_d_id - 1] = 1;
 						}
 
 						for (size_t no_d_id = 1; no_d_id <= DISTRICTS_PER_WAREHOUSE; ++no_d_id){

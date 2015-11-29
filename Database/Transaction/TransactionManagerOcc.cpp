@@ -127,7 +127,7 @@ namespace Cavalia {
 					tb_record->content_.AcquireWriteLock();
 					tb_record->content_.SetTimestamp(commit_ts);
 					insertion_ptr->insertion_record_ = tb_record;
-					//storage_manager_->tables_[insertion_ptr->table_id_]->InsertRecord(insertion_ptr->primary_key_, insertion_ptr->insertion_record_);
+					storage_manager_->tables_[insertion_ptr->table_id_]->InsertRecord(insertion_ptr->primary_key_, insertion_ptr->insertion_record_);
 #if defined(VALUE_LOGGING)
 					((ValueLogger*)logger_)->InsertRecord(this->thread_id_, insertion_ptr->table_id_, insertion_ptr->insertion_record_->record_->data_ptr_, insertion_ptr->insertion_record_->record_->schema_ptr_->GetSchemaSize());
 #endif

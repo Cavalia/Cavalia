@@ -122,8 +122,8 @@ namespace Cavalia{
 						order_schema_->InsertColumns(columns);
 						size_t column_ids[] = { 0, 2, 3 };
 						order_schema_->SetPrimaryColumns(column_ids, 3);
-						size_t o_column_ids[] = { 1, 2, 3 };
-						order_schema_->AddSecondaryColumns(o_column_ids, 3);
+						//size_t o_column_ids[] = { 1, 2, 3 };
+						//order_schema_->AddSecondaryColumns(o_column_ids, 3);
 						// note that currently we do not run OrderStatus transaction.
 						size_t partition_column_ids[] = { 3 };
 						order_schema_->SetPartitionColumns(partition_column_ids, 1);
@@ -180,8 +180,8 @@ namespace Cavalia{
 						order_line_schema_->InsertColumns(columns);
 						size_t primary_column_ids[] = { 0, 1, 2, 3 };
 						order_line_schema_->SetPrimaryColumns(primary_column_ids, 4);
-						size_t column_ids[] = { 0, 1, 2 };
-						order_line_schema_->AddSecondaryColumns(column_ids, 3);
+						//size_t column_ids[] = { 0, 1, 2 };
+						//order_line_schema_->AddSecondaryColumns(column_ids, 3);
 						size_t partition_column_ids[] = { 0, 1, 2 };
 						order_line_schema_->SetPartitionColumns(partition_column_ids, 3);
 					}

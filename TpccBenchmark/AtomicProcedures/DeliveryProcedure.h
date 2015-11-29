@@ -26,7 +26,7 @@ namespace Cavalia{
 							memcpy(d_no_key, &no_d_id, sizeof(int));
 							memcpy(d_no_key + sizeof(int), &(delivery_param->w_id_), sizeof(int));
 							SchemaRecord *district_new_order_record = NULL;
-							// claim: this is an nondeterministic query. for deterministic databases, nondeterministic queries are not allowed.
+							// declaration: this is an nondeterministic query. for deterministic databases, nondeterministic queries are not allowed.
 							// see https://docs.voltdb.com/UsingVoltDB/DesignProc.php Section 5.1.2.
 							// to enable comparison with deterministic databases, we modified this query and add a new table DISTRICT_NEW_ORDER_TABLE.
 							// this table maintains the minimum new order id. to eliminate the nondeterminism, we require the transaction to access new orders sequentially. This strategy is also adopted in H-Store.
@@ -74,21 +74,22 @@ namespace Cavalia{
 							if (no_o_ids[no_d_id - 1] == -1){
 								continue;
 							}
-							memcpy(ol_key, &(no_o_ids[no_d_id - 1]), sizeof(int));
-							memcpy(ol_key + sizeof(int), &no_d_id, sizeof(int));
-							memcpy(ol_key + sizeof(int)+sizeof(int), &delivery_param->w_id_, sizeof(int));
-							order_line_records->Clear();
-							// "updateOrderLine": "UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?"
-							// "sumOLAmount": "SELECT SUM(OL_AMOUNT) FROM ORDER_LINE WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?"
-							DB_QUERY(SelectRecords(&context_, ORDER_LINE_TABLE_ID, 0, std::string(ol_key, sizeof(int)* 3), order_line_records, READ_WRITE, no_d_id - 1));
-							double sum = 0;
-							for (size_t i = 0; i < order_line_records->curr_size_; ++i) {
-								SchemaRecord *ol_record = order_line_records->records_[i];
-								assert(ol_record != NULL);
-								ol_record->UpdateColumn(6, (char*)(&delivery_param->ol_delivery_d_));
-								sum += *(double*)(ol_record->GetColumn(8));
-							}
-							sums[no_d_id - 1] = sum;
+							//memcpy(ol_key, &(no_o_ids[no_d_id - 1]), sizeof(int));
+							//memcpy(ol_key + sizeof(int), &no_d_id, sizeof(int));
+							//memcpy(ol_key + sizeof(int)+sizeof(int), &delivery_param->w_id_, sizeof(int));
+							//order_line_records->Clear();
+							//// "updateOrderLine": "UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?"
+							//// "sumOLAmount": "SELECT SUM(OL_AMOUNT) FROM ORDER_LINE WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?"
+							//DB_QUERY(SelectRecords(&context_, ORDER_LINE_TABLE_ID, 0, std::string(ol_key, sizeof(int)* 3), order_line_records, READ_WRITE, no_d_id - 1));
+							//double sum = 0;
+							//for (size_t i = 0; i < order_line_records->curr_size_; ++i) {
+							//	SchemaRecord *ol_record = order_line_records->records_[i];
+							//	assert(ol_record != NULL);
+							//	ol_record->UpdateColumn(6, (char*)(&delivery_param->ol_delivery_d_));
+							//	sum += *(double*)(ol_record->GetColumn(8));
+							//}
+							//sums[no_d_id - 1] = sum;
+							sums[no_d_id - 1] = 1;
 						}
 
 						for (size_t no_d_id = 1; no_d_id <= DISTRICTS_PER_WAREHOUSE; ++no_d_id){
@@ -122,7 +123,7 @@ namespace Cavalia{
 				private:
 					char d_no_key[sizeof(int)+sizeof(int)];
 					char no_key[sizeof(int)+sizeof(int)+sizeof(int)];
-					char ol_key[sizeof(int)+sizeof(int)+sizeof(int)];
+					char ol_key[sizeof(int)+sizeof(int)+sizeof(int)+sizeof(int)];
 					char o_key[sizeof(int)+sizeof(int)+sizeof(int)];
 					char c_key[sizeof(int)+sizeof(int)+sizeof(int)];
 
