@@ -105,9 +105,9 @@ namespace Cavalia {
 			// step 2: if success, then overwrite and commit
 			if (is_success == true) {
 				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-				uint64_t curr_ts = ScalableTimestamp::GetTimestamp();
+				uint64_t global_ts = ScalableTimestamp::GetTimestamp();
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-				uint64_t commit_ts = GenerateTimestamp(curr_ts, max_rw_ts);
+				uint64_t commit_ts = GenerateTimestamp(global_ts, max_rw_ts);
 
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
@@ -142,9 +142,9 @@ namespace Cavalia {
 				}
 				// commit.
 #if defined(VALUE_LOGGING)
-				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, commit_ts);
+				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts);
 #elif defined(COMMAND_LOGGING)
-				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, commit_ts, context->txn_type_, param);
+				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, context->txn_type_, param);
 #endif
 
 				// step 3: release locks and clean up.
