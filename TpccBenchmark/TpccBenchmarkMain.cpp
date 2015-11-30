@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 			IORedirector io_redirector(num_core);
 			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, (int)(scale_factors[0]), dist_ratio);
 			INIT_PROFILERS;
-			RELOAD_STORAGE(Tpcc, dir_name, false);
+			RELOAD_STORAGE(Tpcc, dir_name, true);
 			PRINT_STORAGE_STATUS;
 			EXECUTE_TRANSACTIONS_CONCURRENT(Tpcc, num_core);
 			PRINT_STORAGE_STATUS;

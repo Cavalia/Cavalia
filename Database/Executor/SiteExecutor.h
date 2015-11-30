@@ -63,7 +63,7 @@ namespace Cavalia {
 					is_all_ready = true;
 				}
 #if defined(LOCK) || defined(OCC) || defined(SILO) || defined(HYBRID)
-				ScalableTimestamp scalable_ts(thread_count_);
+				ScalableTimestamp scalable_ts;
 #endif
 				std::cout << "start processing..." << std::endl;
 				is_begin_ = true;

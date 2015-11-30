@@ -55,9 +55,10 @@ static size_t GetNumaNodeId(const size_t &core_id){
 
 static size_t GetCoreInNode(const size_t &numa_node_id){
 #if defined(__linux__)
-	bitmask *bm = numa_bitmask_alloc(max_core_count_);
+	size_t max_core_count = numa_num_task_cpus();
+	bitmask *bm = numa_bitmask_alloc(max_core_count);
 	numa_node_to_cpus(numa_node_id, bm);
-	for (size_t i = 0; i < numa_num_task_cpus(); ++i){
+	for (size_t i = 0; i < max_core_count; ++i){
 		if (numa_bitmask_isbitset(bm, i)){
 			return i;
 		}
