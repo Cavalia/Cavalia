@@ -7,6 +7,7 @@
 #if defined(__linux__)
 #include <unistd.h>
 #endif
+#include "../Meta/MetaTypes.h"
 
 namespace Cavalia{
 	namespace Database{

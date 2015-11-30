@@ -10,54 +10,54 @@ namespace Cavalia {
 		class CommandLogger : public BaseLogger {
 		public:
 			CommandLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, false) {
-				buffers_ = new CharArray[thread_count_];
+				buffers_ = new char*[thread_count_];
+				buffer_offsets_ = new size_t[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
-					buffers_[i].Allocate(kCommandLogBufferSize);
+					buffers_[i] = new char[kCommandLogBufferSize];
+					buffer_offsets_[i] = 0;
 				}
 				last_timestamps_ = new uint64_t[thread_count_];
-				counts_ = new size_t[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
 					last_timestamps_[i] = 0;
-					counts_[i] = 0;
 				}
 			}
 			virtual ~CommandLogger() {
 				for (size_t i = 0; i < thread_count_; ++i){
-					buffers_[i].Clear();
+					delete[] buffers_[i];
+					buffers_[i] = NULL;
 				}
 				delete[] buffers_;
 				buffers_ = NULL;
+				delete[] buffer_offsets_;
+				buffer_offsets_ = NULL;
 				delete[] last_timestamps_;
 				last_timestamps_ = NULL;
-				delete[] counts_;
-				counts_ = NULL;
 			}
 
 			void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts, const size_t &txn_type, TxnParam *param) {
-				++counts_[thread_id];
-				if (global_ts != last_timestamps_[thread_id]){
-					last_timestamps_[thread_id] = global_ts;
-					std::cout << "count=" << counts_[thread_id] << std::endl;
-					counts_[thread_id] = 0;
-				}
-				else{
-					// write stored procedure type.
-					memcpy(buffers_[thread_id].char_ptr_, (char*)(&txn_type), sizeof(txn_type));
-					size_t tmp_size = 0;
-					// write parameters. get tmp_size first.
-					param->Serialize(buffers_[thread_id].char_ptr_ + sizeof(txn_type)+sizeof(tmp_size), tmp_size);
-					// write parameter size.
-					memcpy(buffers_[thread_id].char_ptr_ + sizeof(txn_type), (char*)(&tmp_size), sizeof(tmp_size));
+				char *buffer_ptr = buffers_[thread_id];
+				size_t &offset_ref = buffer_offsets_[thread_id];
+				// write stored procedure type.
+				memcpy(buffer_ptr + offset_ref, (char*)(&txn_type), sizeof(txn_type));
+				size_t tmp_size = 0;
+				// write parameters. get tmp_size first.
+				param->Serialize(buffer_ptr + offset_ref + sizeof(txn_type)+sizeof(tmp_size), tmp_size);
+				// write parameter size.
+				memcpy(buffer_ptr + offset_ref + sizeof(txn_type), (char*)(&tmp_size), sizeof(tmp_size));
 
-					size_t buffer_offset = sizeof(txn_type)+sizeof(tmp_size)+tmp_size;
-					fwrite(buffers_[thread_id].char_ptr_, sizeof(char), buffer_offset, outfiles_[thread_id]);
+				offset_ref += sizeof(txn_type)+sizeof(tmp_size)+tmp_size;
+				if (global_ts != last_timestamps_[thread_id]){
+					FILE *file_ptr = outfiles_[thread_id];
+					last_timestamps_[thread_id] = global_ts;
+					fwrite(buffer_ptr, sizeof(char), offset_ref, file_ptr);
 					int ret;
-					ret = fflush(outfiles_[thread_id]);
+					ret = fflush(file_ptr);
 					assert(ret == 0);
 #if defined(__linux__)
-					ret = fsync(fileno(outfiles_[thread_id]));
+					ret = fsync(fileno(file_ptr));
 					assert(ret == 0);
 #endif
+					offset_ref = 0;
 				}
 			}
 
@@ -66,9 +66,9 @@ namespace Cavalia {
 			CommandLogger& operator=(const CommandLogger &);
 
 		private:
-			CharArray *buffers_;
+			char **buffers_;
+			size_t *buffer_offsets_;
 			uint64_t *last_timestamps_;
-			size_t *counts_;
 		};
 	}
 }
