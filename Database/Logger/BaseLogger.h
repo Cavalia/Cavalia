@@ -4,6 +4,9 @@
 
 #include <string>
 #include <cstdio>
+#if defined(__linux__)
+#include <unistd.h>
+#endif
 
 namespace Cavalia{
 	namespace Database{
