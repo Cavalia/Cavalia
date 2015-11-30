@@ -15,6 +15,7 @@ namespace Cavalia{
 			AccessType access_type_;
 			TableRecord *access_record_;
 			SchemaRecord *local_record_;
+			size_t table_id_;
 #if defined(LOCK) || defined(OCC) || defined(SILO) || defined(MVOCC) || defined(HYBRID) || defined(DBX)
 			uint64_t timestamp_;
 #endif

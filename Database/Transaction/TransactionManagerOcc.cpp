@@ -13,6 +13,7 @@ namespace Cavalia {
 			access->access_type_ = INSERT_ONLY;
 			access->access_record_ = tb_record;
 			access->local_record_ = NULL;
+			access->table_id_ = table_id;
 			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			return true;
 		}
@@ -23,6 +24,7 @@ namespace Cavalia {
 				access->access_type_ = READ_ONLY;
 				access->access_record_ = t_record;
 				access->local_record_ = NULL;
+				access->table_id_ = table_id;
 				access->timestamp_ = t_record->content_.GetTimestamp();
 				s_record = t_record->record_;
 				return true;
@@ -42,6 +44,7 @@ namespace Cavalia {
 				COMPILER_MEMORY_FENCE;
 				local_record->CopyFrom(t_record->record_);
 				access->local_record_ = local_record;
+				access->table_id_ = table_id;
 				// reset returned record.
 				s_record = local_record;
 				return true;
@@ -52,6 +55,7 @@ namespace Cavalia {
 				access->access_type_ = DELETE_ONLY;
 				access->access_record_ = t_record;
 				access->local_record_ = NULL;
+				access->table_id_ = table_id;
 				s_record = t_record->record_;
 				return true;
 			}
@@ -114,7 +118,7 @@ namespace Cavalia {
 						COMPILER_MEMORY_FENCE;
 						access_record->content_.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_record->record_->schema_ptr_->GetTableId(), access_ptr->local_record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, access_ptr->local_record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
 #endif
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY) {
@@ -123,7 +127,7 @@ namespace Cavalia {
 						COMPILER_MEMORY_FENCE;
 						access_record->content_.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, insertion_ptr->table_id_, insertion_ptr->insertion_record_->record_->data_ptr_, insertion_ptr->insertion_record_->record_->schema_ptr_->GetSchemaSize());
+						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
 #endif
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
@@ -132,7 +136,7 @@ namespace Cavalia {
 						COMPILER_MEMORY_FENCE;
 						access_record->content_.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_record->record_->schema_ptr_->GetTableId(), access_record->record_->GetPrimaryKey());
+						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->GetPrimaryKey());
 #endif
 					}
 				}
