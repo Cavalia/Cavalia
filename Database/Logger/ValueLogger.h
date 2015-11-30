@@ -68,9 +68,15 @@ namespace Cavalia{
 			}
 
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &commit_ts){
-				outfiles_[thread_id].write(reinterpret_cast<char*>(&buffer_offsets_[thread_id]), sizeof(buffer_offsets_[thread_id]));
-				outfiles_[thread_id].write(buffers_[thread_id].char_ptr_, buffer_offsets_[thread_id]);
-				outfiles_[thread_id].flush();
+				fwrite((void*)(&buffer_offsets_[thread_id]), sizeof(size_t), 1, outfiles_[thread_id]);
+				fwrite(buffers_[thread_id].char_ptr_, sizeof(char), buffer_offsets_[thread_id], outfiles_[thread_id]);
+				int ret;
+				ret = fflush(outfiles_[thread_id]);
+				assert(ret == 0);
+#if defined(__linux__)
+				ret = fsync(fileno(outfiles_[thread_id]));
+				assert(ret == 0);
+#endif
 				buffer_offsets_[thread_id] = 0;
 			}
 

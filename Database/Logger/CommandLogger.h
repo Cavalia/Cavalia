@@ -32,8 +32,14 @@ namespace Cavalia {
 				memcpy(buffers_[thread_id].char_ptr_ + sizeof(txn_type), (char*)(&tmp_size), sizeof(tmp_size));
 				
 				size_t buffer_offset = sizeof(txn_type)+sizeof(tmp_size)+tmp_size;
-				outfiles_[thread_id].write(buffers_[thread_id].char_ptr_, buffer_offset);
-				outfiles_[thread_id].flush();
+				fwrite(buffers_[thread_id].char_ptr_, sizeof(char), buffer_offset, outfiles_[thread_id]);
+				int ret;
+				ret = fflush(outfiles_[thread_id]);
+				assert(ret == 0);
+#if defined(__linux__)
+				ret = fsync(fileno(outfiles_[thread_id]));
+				assert(ret == 0);
+#endif
 			}
 
 		private:
