@@ -38,7 +38,10 @@ namespace Cavalia{
 					size_t txn_size;
 					result = fread(&txn_size, sizeof(txn_size), 1, infile_ptr);
 					assert(result == 1);
-					size_t txn_pos = 0;
+					uint64_t commit_ts;
+					result = fread(&commit_ts, sizeof(commit_ts), 1, infile_ptr);
+					assert(result == 1);
+					size_t txn_pos = sizeof(txn_size) + sizeof(commit_ts);
 					while (txn_pos < txn_size){
 						ValueStruct *vs_ptr = new ValueStruct();
 						result = fread(&vs_ptr->type_, sizeof(vs_ptr->type_), 1, infile_ptr);
@@ -57,13 +60,15 @@ namespace Cavalia{
 						value_log_.push_back(vs_ptr);
 					}
 					assert(txn_pos == txn_size);
-					file_pos += sizeof(txn_size)+txn_size;
+					file_pos += txn_size;
 				}
 				assert(file_pos == file_size);
 			}
 
 			void ProcessLog(const size_t &thread_id){
-
+				for (size_t i = 0; i < value_log_.size(); ++i){
+					
+				}
 			}
 
 		private:

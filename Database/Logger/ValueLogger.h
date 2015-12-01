@@ -79,7 +79,7 @@ namespace Cavalia{
 				offset_ref += size;
 			}
 
-			void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts){
+			void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts, const uint64_t &commit_ts){
 				if (global_ts == -1){
 					FILE *file_ptr = outfiles_[thread_id];
 					fwrite(buffers_[thread_id], sizeof(char), buffer_offsets_[thread_id], file_ptr);
@@ -94,8 +94,8 @@ namespace Cavalia{
 				
 				}
 				char *buffer_ptr = buffers_[thread_id] + buffer_offsets_[thread_id];
-				size_t tmp_size = txn_offsets_[thread_id] - sizeof(size_t);
-				memcpy(buffer_ptr, (char*)(&tmp_size), sizeof(size_t));
+				memcpy(buffer_ptr, (char*)(&txn_offsets_[thread_id]), sizeof(size_t));
+				memcpy(buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
 				buffer_offsets_[thread_id] += txn_offsets_[thread_id];
 				assert(buffer_offsets_[thread_id] < kValueLogBufferSize);
 				if (global_ts != last_timestamps_[thread_id]){
@@ -111,11 +111,11 @@ namespace Cavalia{
 #endif
 					buffer_offsets_[thread_id] = 0;
 				}
-				txn_offsets_[thread_id] = sizeof(size_t);
+				txn_offsets_[thread_id] = sizeof(size_t) + sizeof(uint64_t);
 			}
 
 			void AbortTransaction(const size_t &thread_id){
-				txn_offsets_[thread_id] = sizeof(size_t);
+				txn_offsets_[thread_id] = sizeof(size_t) + sizeof(uint64_t);
 			}
 
 		private:
