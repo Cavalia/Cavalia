@@ -142,8 +142,10 @@ namespace Cavalia{
 #if defined(VALUE_LOGGING)
 				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, -1);
 #elif defined(COMMAND_LOGGING)
+				std::cout<<"call cleanup..."<<std::endl;
 				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, -1, -1, NULL);
 #endif
+
 			}
 
 		private:

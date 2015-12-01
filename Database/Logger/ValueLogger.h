@@ -39,7 +39,7 @@ namespace Cavalia{
 				last_timestamps_ = NULL;
 			}
 
-			virtual void InsertRecord(const size_t &thread_id, const size_t &table_id, char *data, const size_t &data_size) {
+			void InsertRecord(const size_t &thread_id, const size_t &table_id, char *data, const size_t &data_size) {
 				char *buffer_ptr = buffers_[thread_id] + buffer_offsets_[thread_id];
 				size_t &offset_ref = txn_offsets_[thread_id];
 				memcpy(buffer_ptr + offset_ref, (char*)(&kInsert), sizeof(uint8_t));
@@ -52,7 +52,7 @@ namespace Cavalia{
 				offset_ref += data_size;
 			}
 
-			virtual void UpdateRecord(const size_t &thread_id, const size_t &table_id, char *data, const size_t &data_size) {
+			void UpdateRecord(const size_t &thread_id, const size_t &table_id, char *data, const size_t &data_size) {
 				char *buffer_ptr = buffers_[thread_id] + buffer_offsets_[thread_id];
 				size_t &offset_ref = txn_offsets_[thread_id];
 				memcpy(buffer_ptr + offset_ref, (char*)(&kUpdate), sizeof(uint8_t));
@@ -65,7 +65,7 @@ namespace Cavalia{
 				offset_ref += data_size;
 			}
 
-			virtual void DeleteRecord(const size_t &thread_id, const size_t &table_id, const std::string &primary_key) {
+			void DeleteRecord(const size_t &thread_id, const size_t &table_id, const std::string &primary_key) {
 				char *buffer_ptr = buffers_[thread_id] + buffer_offsets_[thread_id];
 				size_t &offset_ref = txn_offsets_[thread_id];
 				memcpy(buffer_ptr + offset_ref, (char*)(&kDelete), sizeof(uint8_t));
@@ -79,20 +79,34 @@ namespace Cavalia{
 				offset_ref += size;
 			}
 
-			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts){
+			void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts){
+				if (global_ts == -1){
+					FILE *file_ptr = outfiles_[thread_id];
+					fwrite(buffers_[thread_id], sizeof(char), buffer_offsets_[thread_id], file_ptr);
+					int ret;
+					ret = fflush(file_ptr);
+					assert(ret == 0);
+#if defined(__linux__)
+					ret = fsync(fileno(file_ptr));
+					assert(ret == 0);
+#endif
+					return;
+				
+				}
 				char *buffer_ptr = buffers_[thread_id] + buffer_offsets_[thread_id];
 				size_t tmp_size = txn_offsets_[thread_id] - sizeof(size_t);
 				memcpy(buffer_ptr, (char*)(&tmp_size), sizeof(size_t));
 				buffer_offsets_[thread_id] += txn_offsets_[thread_id];
 				assert(buffer_offsets_[thread_id] < kValueLogBufferSize);
-				if (global_ts != last_timestamps_[thread_id] || global_ts == (uint64_t)(-1)){
+				if (global_ts != last_timestamps_[thread_id]){
+					FILE *file_ptr = outfiles_[thread_id];
 					last_timestamps_[thread_id] = global_ts;
-					fwrite(buffers_[thread_id], sizeof(char), buffer_offsets_[thread_id], outfiles_[thread_id]);
+					fwrite(buffers_[thread_id], sizeof(char), buffer_offsets_[thread_id], file_ptr);
 					int ret;
-					ret = fflush(outfiles_[thread_id]);
+					ret = fflush(file_ptr);
 					assert(ret == 0);
 #if defined(__linux__)
-					ret = fsync(fileno(outfiles_[thread_id]));
+					ret = fsync(fileno(file_ptr));
 					assert(ret == 0);
 #endif
 					buffer_offsets_[thread_id] = 0;
@@ -100,7 +114,7 @@ namespace Cavalia{
 				txn_offsets_[thread_id] = sizeof(size_t);
 			}
 
-			virtual void AbortTransaction(const size_t &thread_id){
+			void AbortTransaction(const size_t &thread_id){
 				txn_offsets_[thread_id] = sizeof(size_t);
 			}
 

@@ -2,6 +2,7 @@
 #ifndef __CAVALIA_DATABASE_COMMAND_LOGGER_H__
 #define __CAVALIA_DATABASE_COMMAND_LOGGER_H__
 
+#include <iostream>
 #include "../Transaction/TxnParam.h"
 #include "BaseLogger.h"
 
@@ -35,6 +36,18 @@ namespace Cavalia {
 			}
 
 			void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts, const size_t &txn_type, TxnParam *param) {
+				if (global_ts == -1){
+					FILE *file_ptr = outfiles_[thread_id];
+					fwrite(buffers_[thread_id], sizeof(char), buffer_offsets_[thread_id], file_ptr);
+					int ret;
+					ret = fflush(file_ptr);
+					assert(ret == 0);
+#if defined(__linux__)
+					ret = fsync(fileno(file_ptr));
+					assert(ret == 0);
+#endif
+					return;
+				}
 				char *buffer_ptr = buffers_[thread_id];
 				size_t &offset_ref = buffer_offsets_[thread_id];
 				// write stored procedure type.

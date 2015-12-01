@@ -33,7 +33,7 @@ namespace Cavalia{
 					reloaders.create_thread(boost::bind(&CommandReplayer::ReloadLog, this, i));
 				}
 				reloaders.join_all();
-				ProcessLog();
+				//ProcessLog();
 			}
 
 		private:
@@ -68,6 +68,8 @@ namespace Cavalia{
 				}
 				assert(file_pos == file_size);
 				entry.Release();
+				std::cout<<"reload finished..."<<std::endl;
+				std::cout<<"size="<<input_batch.size()<<std::endl;
 			}
 
 			void ProcessLog(){
