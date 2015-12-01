@@ -2,7 +2,6 @@
 #ifndef __CAVALIA_DATABASE_COMMAND_LOGGER_H__
 #define __CAVALIA_DATABASE_COMMAND_LOGGER_H__
 
-#include <iostream>
 #include "../Transaction/TxnParam.h"
 #include "BaseLogger.h"
 

@@ -68,8 +68,6 @@ namespace Cavalia{
 				}
 				assert(file_pos == file_size);
 				entry.Release();
-				std::cout<<"reload finished..."<<std::endl;
-				std::cout<<"size="<<input_batch.size()<<std::endl;
 			}
 
 			void ProcessLog(){
