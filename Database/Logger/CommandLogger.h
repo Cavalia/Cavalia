@@ -46,7 +46,7 @@ namespace Cavalia {
 				memcpy(buffer_ptr + offset_ref + sizeof(txn_type), (char*)(&tmp_size), sizeof(tmp_size));
 
 				offset_ref += sizeof(txn_type)+sizeof(tmp_size)+tmp_size;
-				if (global_ts != last_timestamps_[thread_id]){
+				if (global_ts != last_timestamps_[thread_id] || global_ts == (uint64_t)(-1)){
 					FILE *file_ptr = outfiles_[thread_id];
 					last_timestamps_[thread_id] = global_ts;
 					fwrite(buffer_ptr, sizeof(char), offset_ref, file_ptr);

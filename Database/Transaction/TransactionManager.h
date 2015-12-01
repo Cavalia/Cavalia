@@ -138,9 +138,12 @@ namespace Cavalia{
 			bool CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str);
 			void AbortTransaction();
 
-
-			size_t GetTableSize(const size_t &table_id) const{
-				return storage_manager_->tables_[table_id]->GetTableSize();
+			void CleanUp(){
+#if defined(VALUE_LOGGING)
+				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, -1);
+#elif defined(COMMAND_LOGGING)
+				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, -1, -1, NULL);
+#endif
 			}
 
 		private:

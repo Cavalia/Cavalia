@@ -85,7 +85,7 @@ namespace Cavalia{
 				memcpy(buffer_ptr, (char*)(&tmp_size), sizeof(size_t));
 				buffer_offsets_[thread_id] += txn_offsets_[thread_id];
 				assert(buffer_offsets_[thread_id] < kValueLogBufferSize);
-				if (global_ts != last_timestamps_[thread_id]){
+				if (global_ts != last_timestamps_[thread_id] || global_ts == (uint64_t)(-1)){
 					last_timestamps_[thread_id] = global_ts;
 					fwrite(buffers_[thread_id], sizeof(char), buffer_offsets_[thread_id], outfiles_[thread_id]);
 					int ret;

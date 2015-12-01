@@ -146,6 +146,7 @@ namespace Cavalia{
 								total_count_ += count;
 								total_abort_count_ += abort_count;
 								END_TRANSACTION_TIME_MEASURE(thread_id, tuple->type_);
+								txn_manager->CleanUp();
 								return;
 							}
 							BEGIN_CC_ABORT_TIME_MEASURE(thread_id);
@@ -159,6 +160,7 @@ namespace Cavalia{
 									total_abort_count_ += abort_count;
 									END_CC_ABORT_TIME_MEASURE(thread_id);
 									END_TRANSACTION_TIME_MEASURE(thread_id, tuple->type_);
+									txn_manager->CleanUp();
 									return;
 								}
 							}
@@ -169,6 +171,7 @@ namespace Cavalia{
 						if (is_finish_ == true){
 							total_count_ += count;
 							total_abort_count_ += abort_count;
+							txn_manager->CleanUp();
 							return;
 						}
 					}
@@ -179,6 +182,8 @@ namespace Cavalia{
 				time_lock_.unlock();
 				total_count_ += count;
 				total_abort_count_ += abort_count;
+				txn_manager->CleanUp();
+				return;
 				/////////////////////////////////////////////////
 				/*for (auto &entry : deregisters_){
 					entry.second((char*)(procedures[entry.first]));
