@@ -71,7 +71,7 @@ namespace Cavalia{
 				size_t file_pos = 0;
 				CharArray entry;
 				entry.Allocate(10240);
-				ParamBatch *tuples = new ParamBatch(gTupleBatchSize);
+				ParamBatch *tuples = new ParamBatch(gParamBatchSize);
 				while (file_pos < file_size) {
 					size_t param_type;
 					log_reloader.read(reinterpret_cast<char*>(&param_type), sizeof(param_type));
@@ -83,9 +83,9 @@ namespace Cavalia{
 						TxnParam* event_tuple = DeserializeParam(param_type, entry);
 						if (event_tuple != NULL) {
 							tuples->push_back(event_tuple);
-							if (tuples->size() == gTupleBatchSize) {
+							if (tuples->size() == gParamBatchSize) {
 								redirector_ptr_->PushParameterBatch(tuples);
-								tuples = new ParamBatch(gTupleBatchSize);
+								tuples = new ParamBatch(gParamBatchSize);
 							}
 						}
 						file_pos += entry.size_;

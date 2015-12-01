@@ -23,7 +23,7 @@ namespace Cavalia{
 				}
 
 				if (source_type_ == RANDOM_SOURCE){
-					ParamBatch *tuples = new ParamBatch(gTupleBatchSize);
+					ParamBatch *tuples = new ParamBatch(gParamBatchSize);
 					for (size_t i = 0; i < num_transactions_; ++i){
 						int x = TpccRandomGenerator::GenerateInteger(1, 100);
 						if (x <= frequency_weights[0]) {
@@ -51,10 +51,10 @@ namespace Cavalia{
 							param = GenerateStockLevelParam();
 							tuples->push_back(param);
 						}
-						if ((i + 1) % gTupleBatchSize == 0){
+						if ((i + 1) % gParamBatchSize == 0){
 							DumpToDisk(tuples);
 							redirector_ptr_->PushParameterBatch(tuples);
-							tuples = new ParamBatch(gTupleBatchSize);
+							tuples = new ParamBatch(gParamBatchSize);
 						}
 					}
 					if (tuples->size() != 0){
@@ -69,7 +69,7 @@ namespace Cavalia{
 				else{
 					assert(source_type_ == PARTITION_SOURCE);
 					size_t partition_id = 0;
-					ParamBatch *tuples = new ParamBatch(gTupleBatchSize);
+					ParamBatch *tuples = new ParamBatch(gParamBatchSize);
 					for (size_t i = 0; i < num_transactions_; ++i){
 						// need to randomly generate one.
 						size_t warehouse_id = 0;
@@ -105,10 +105,10 @@ namespace Cavalia{
 							param = GenerateStockLevelParam(warehouse_id);
 							tuples->push_back(param);
 						}
-						if ((i + 1) % gTupleBatchSize == 0){
+						if ((i + 1) % gParamBatchSize == 0){
 							DumpToDisk(tuples);
 							redirector_ptr_->PushParameterBatch(tuples);
-							tuples = new ParamBatch(gTupleBatchSize);
+							tuples = new ParamBatch(gParamBatchSize);
 							partition_id = (partition_id + 1) % partition_count_;
 						}
 					}

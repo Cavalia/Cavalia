@@ -95,7 +95,7 @@ namespace Cavalia {
 				for (size_t i = 0; i < input_batches->size(); ++i) {
 					ParamBatch *tuple_batch = input_batches->at(i);
 					// copy to local memory.
-					ParamBatch *execution_batch = new ParamBatch(gTupleBatchSize);
+					ParamBatch *execution_batch = new ParamBatch(gParamBatchSize);
 					for (size_t j = 0; j < tuple_batch->size(); ++j) {
 						TxnParam *entry = tuple_batch->get(j);
 						// copy each parameter.

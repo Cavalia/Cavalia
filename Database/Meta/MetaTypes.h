@@ -12,7 +12,7 @@
 namespace Cavalia{
 	namespace Database{
 
-		extern size_t gTupleBatchSize;
+		extern size_t gParamBatchSize;
 		extern size_t gAdhocRatio;
 
 		const size_t kEventsNum = 2;

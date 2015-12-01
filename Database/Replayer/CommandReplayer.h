@@ -2,7 +2,10 @@
 #ifndef __CAVALIA_DATABASE_COMMAND_REPLAYER_H__
 #define __CAVALIA_DATABASE_COMMAND_REPLAYER_H__
 
-#include "../Storage/BaseStorageManager.h"
+#include <unordered_map>
+#include "../Transaction/TransactionManager.h"
+#include "../Transaction/StoredProcedure.h"
+#include "../Transaction/TxnParam.h"
 #include "BaseReplayer.h"
 
 namespace Cavalia{
@@ -10,7 +13,7 @@ namespace Cavalia{
 		class CommandReplayer : public BaseReplayer{
 		public:
 			CommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : BaseReplayer(filename, storage_manager, thread_count, false){
-				input_batches_ = new ParamBatch[thread_count_];
+				input_batches_ = new VariableParamBatch[thread_count_];
 			}
 			virtual ~CommandReplayer(){
 				delete[] input_batches_;
@@ -38,32 +41,32 @@ namespace Cavalia{
 			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
 
 			void ReloadLog(const size_t &thread_id){
-				std::ifstream &infile_ref = infiles_[thread_id];
-				ParamBatch &input_batch = input_batches_[thread_id];
-				infile_ref.seekg(0, std::ios::end);
-				size_t file_size = static_cast<size_t>(infile_ref.tellg());
-				infile_ref.seekg(0, std::ios::beg);
+				FILE *infile_ptr = infiles_[thread_id];
+				VariableParamBatch &input_batch = input_batches_[thread_id];
+				fseek(infile_ptr, 0L, SEEK_END);
+				size_t file_size = ftell(infile_ptr);
+				rewind(infile_ptr);
 				size_t file_pos = 0;
 				CharArray entry;
 				entry.Allocate(1024);
+				int result = 0;
 				while (file_pos < file_size){
 					size_t param_type;
-					infile_ref.read(reinterpret_cast<char*>(&param_type), sizeof(param_type));
+					result = fread(&param_type, sizeof(param_type), 1, infile_ptr);
+					assert(result == 1);
 					file_pos += sizeof(param_type);
-					infile_ref.read(reinterpret_cast<char*>(&entry.size_), sizeof(entry.size_));
+					result = fread(&entry.size_, sizeof(entry.size_), 1, infile_ptr);
+					assert(result == 1);
 					file_pos += sizeof(entry.size_);
-					if (file_size - file_pos >= entry.size_){
-						infile_ref.read(entry.char_ptr_, entry.size_);
-						TxnParam* event_tuple = DeserializeParam(param_type, entry);
-						if (event_tuple != NULL){
-							input_batch.push_back(event_tuple);
-						}
-						file_pos += entry.size_;
+					result = fread(entry.char_ptr_, 1, entry.size_, infile_ptr);
+					assert(result == entry.size_);
+					TxnParam* event_tuple = DeserializeParam(param_type, entry);
+					if (event_tuple != NULL){
+						input_batch.push_back(event_tuple);
 					}
-					else{
-						break;
-					}
+					file_pos += entry.size_;
 				}
+				assert(file_pos == file_size);
 				entry.Release();
 			}
 
@@ -83,7 +86,7 @@ namespace Cavalia{
 			std::unordered_map<size_t, std::function<void(char*)>> deregisters_;
 
 		private:
-			ParamBatch *input_batches_;
+			VariableParamBatch *input_batches_;
 		};
 	}
 }

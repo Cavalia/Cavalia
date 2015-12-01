@@ -112,7 +112,7 @@ static void ArgumentsParser(int argc, char *argv[]) {
 			replay_type = atoi(&argv[i][2]);
 		}
 		else if (argv[i][1] == 'z') {
-			Cavalia::Database::gTupleBatchSize = atoi(&argv[i][2]);
+			Cavalia::Database::gParamBatchSize = atoi(&argv[i][2]);
 		}
 		else if (argv[i][1] == 'o') {
 			Cavalia::Database::gAdhocRatio = atoi(&argv[i][2]);
