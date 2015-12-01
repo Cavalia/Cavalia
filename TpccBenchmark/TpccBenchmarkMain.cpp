@@ -35,8 +35,8 @@ using namespace Cavalia::Benchmark::Tpcc::Executor;
 using namespace Cavalia::Benchmark::Tpcc::Replayer;
 
 int main(int argc, char *argv[]) {
-	std::cout << "directory name: " << dir_name << std::endl;
 	ArgumentsParser(argc, argv);
+	std::cout << "directory name: " << dir_name << std::endl;
 	CHECK_DIRECTORY(Tpcc, dir_name);
 	if (app_type == APP_POPULATE) {
 		assert(factor_count == 2);
