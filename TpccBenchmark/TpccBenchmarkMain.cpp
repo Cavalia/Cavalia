@@ -35,7 +35,7 @@ using namespace Cavalia::Benchmark::Tpcc::Executor;
 using namespace Cavalia::Benchmark::Tpcc::Replayer;
 
 int main(int argc, char *argv[]) {
-	std::string dir_name = "/dev/shm";
+	std::cout << "directory name: " << dir_name << std::endl;
 	ArgumentsParser(argc, argv);
 	CHECK_DIRECTORY(Tpcc, dir_name);
 	if (app_type == APP_POPULATE) {

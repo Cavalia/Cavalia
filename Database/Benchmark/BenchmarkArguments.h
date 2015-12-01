@@ -9,6 +9,7 @@
 enum AppType { APP_POPULATE, APP_REPLAY, APP_CC_EXECUTE, APP_HSTORE_EXECUTE, APP_SITE_EXECUTE, kAppSize };
 enum AppReplayType { APP_COMMAND_REPLAY, APP_VALUE_REPLAY, kAppReplaySize };
 
+static std::string dir_name = ".";
 static int app_type = -1;
 static double scale_factors[2] = { -1, -1 };
 static int factor_count = 0;
@@ -95,6 +96,9 @@ static void ArgumentsParser(int argc, char *argv[]) {
 		else if (argv[i][1] == 's' && argv[i][2] == 'f') {
 			scale_factors[factor_count] = atof(&argv[i][3]);
 			++factor_count;
+		}
+		else if (argv[i][1] == 'p') {
+			dir_name = std::string(&argv[i][2]);
 		}
 		else if (argv[i][1] == 't') {
 			num_txn = atoi(&argv[i][2]);
