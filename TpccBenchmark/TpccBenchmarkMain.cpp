@@ -10,7 +10,6 @@
 #include <Redirector/IORedirector.h>
 #include <Logger/CommandLogger.h>
 #include <Logger/ValueLogger.h>
-#include <Replayer/ValueReplayer.h>
 #include <Storage/ShareStorageManager.h>
 #include <Storage/ShardStorageManager.h>
 
@@ -19,8 +18,9 @@
 #include "TpccTableInitiator.h"
 #include "TpccPopulator.h"
 #include "TpccSource.h"
-#include "TpccConcurrentExecutor.h"
 #include "TpccCommandReplayer.h"
+#include "TpccValueReplayer.h"
+#include "TpccConcurrentExecutor.h"
 
 #if defined(__linux__)
 #include "TpccHStoreConfiguration.h"

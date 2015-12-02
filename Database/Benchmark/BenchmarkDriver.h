@@ -82,7 +82,7 @@ if (boost::filesystem::exists(DirName+"/"#BenchmarkName) == false){ \
 	replayer.Start();
 
 #define VALUE_REPLAY(BenchmarkName, DirName, NumCore) \
-	ValueReplayer replayer(DirName+"/"#BenchmarkName"/", &storage_manager, NumCore); \
+	BenchmarkName##ValueReplayer replayer(DirName+"/"#BenchmarkName"/", &storage_manager, NumCore); \
 	replayer.Start();
 
 #endif

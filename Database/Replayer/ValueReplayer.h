@@ -48,6 +48,11 @@ namespace Cavalia{
 					reloaders.create_thread(boost::bind(&ValueReplayer::ReloadLog, this, i));
 				}
 				reloaders.join_all();
+				boost::thread_group processors;
+				for (size_t i = 0; i < thread_count_; ++i){
+					processors.create_thread(boost::bind(&ValueReplayer::ProcessLog, this, i));
+				}
+				processors.join_all();
 			}
 
 			void ReloadLog(const size_t &thread_id){
@@ -93,9 +98,26 @@ namespace Cavalia{
 
 			void ProcessLog(const size_t &thread_id){
 				for (size_t i = 0; i < txn_logs_.size(); ++i){
-					
+					for (size_t k = 0; k < txn_logs_.at(i)->log_count_; ++k){
+						AccessLog *log_ptr = &(txn_logs_.at(i)->logs_[k]);
+						if (log_ptr->type_ == kInsert){
+							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_ptr->table_id_), log_ptr->data_ptr_);
+							storage_manager_->tables_[log_ptr->table_id_]->InsertRecord(new TableRecord(record_ptr));
+						}
+						else if (log_ptr->type_ == kUpdate){
+							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_ptr->table_id_), log_ptr->data_ptr_);
+							TableRecord *tb_record_ptr = NULL;
+							storage_manager_->tables_[log_ptr->table_id_]->SelectKeyRecord(record_ptr->GetPrimaryKey(), tb_record_ptr);
+							tb_record_ptr->record_ = record_ptr;
+						}
+						else if (log_ptr->type_ == kDelete){
+							//storage_manager_->tables_[log_ptr->table_id_]->DeleteRecord();
+						}
+					}
 				}
 			}
+
+			virtual RecordSchema *GetRecordSchema(const size_t &table_id) = 0;
 
 		private:
 			ValueReplayer(const ValueReplayer &);
