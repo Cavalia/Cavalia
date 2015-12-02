@@ -7,11 +7,34 @@
 
 namespace Cavalia{
 	namespace Database{
-		struct ValueStruct{
+
+		struct AccessLog{
 			uint8_t type_;
 			size_t table_id_;
 			size_t data_size_;
 			char *data_ptr_;
+		};
+
+		struct TxnLog{
+			TxnLog(){
+				log_count_ = 0;
+				commit_ts_ = 0;
+			}
+
+			AccessLog* NewAccessLog(){
+				assert(log_count_ < kMaxAccessNum);
+				AccessLog *ret = &logs_[log_count_];
+				++log_count_;
+				return ret;
+			}
+
+			void Clear(){
+				log_count_ = 0;
+			}
+
+			AccessLog logs_[kMaxAccessNum];
+			size_t log_count_;
+			uint64_t commit_ts_;
 		};
 
 		class ValueReplayer : public BaseReplayer{
@@ -35,38 +58,41 @@ namespace Cavalia{
 				size_t file_pos = 0;
 				int result = 0;
 				while (file_pos < file_size){
+					TxnLog *txn_log = new TxnLog();
 					size_t txn_size;
 					result = fread(&txn_size, sizeof(txn_size), 1, infile_ptr);
 					assert(result == 1);
 					uint64_t commit_ts;
 					result = fread(&commit_ts, sizeof(commit_ts), 1, infile_ptr);
 					assert(result == 1);
+					// set commit timestamp.
+					txn_log->commit_ts_ = commit_ts;
 					size_t txn_pos = sizeof(txn_size) + sizeof(commit_ts);
 					while (txn_pos < txn_size){
-						ValueStruct *vs_ptr = new ValueStruct();
-						result = fread(&vs_ptr->type_, sizeof(vs_ptr->type_), 1, infile_ptr);
+						AccessLog *access_log = txn_log->NewAccessLog();
+						result = fread(&access_log->type_, sizeof(access_log->type_), 1, infile_ptr);
 						assert(result == 1);
-						txn_pos += sizeof(vs_ptr->type_);
-						result = fread(&vs_ptr->table_id_, sizeof(vs_ptr->table_id_), 1, infile_ptr);
+						txn_pos += sizeof(access_log->type_);
+						result = fread(&access_log->table_id_, sizeof(access_log->table_id_), 1, infile_ptr);
 						assert(result == 1);
-						txn_pos += sizeof(vs_ptr->table_id_);
-						result = fread(&vs_ptr->data_size_, sizeof(vs_ptr->data_size_), 1, infile_ptr);
+						txn_pos += sizeof(access_log->table_id_);
+						result = fread(&access_log->data_size_, sizeof(access_log->data_size_), 1, infile_ptr);
 						assert(result == 1);
-						txn_pos += sizeof(vs_ptr->data_size_);
-						vs_ptr->data_ptr_ = new char[vs_ptr->data_size_];
-						result = fread(vs_ptr->data_ptr_, 1, vs_ptr->data_size_, infile_ptr);
-						assert(result == vs_ptr->data_size_);
-						txn_pos += vs_ptr->data_size_;
-						value_log_.push_back(vs_ptr);
+						txn_pos += sizeof(access_log->data_size_);
+						access_log->data_ptr_ = new char[access_log->data_size_];
+						result = fread(access_log->data_ptr_, 1, access_log->data_size_, infile_ptr);
+						assert(result == access_log->data_size_);
+						txn_pos += access_log->data_size_;
 					}
 					assert(txn_pos == txn_size);
 					file_pos += txn_size;
+					txn_logs_.push_back(txn_log);
 				}
 				assert(file_pos == file_size);
 			}
 
 			void ProcessLog(const size_t &thread_id){
-				for (size_t i = 0; i < value_log_.size(); ++i){
+				for (size_t i = 0; i < txn_logs_.size(); ++i){
 					
 				}
 			}
@@ -76,7 +102,7 @@ namespace Cavalia{
 			ValueReplayer& operator=(const ValueReplayer &);
 
 		private:
-			std::vector<ValueStruct*> value_log_;
+			std::vector<TxnLog*> txn_logs_;
 		};
 	}
 }

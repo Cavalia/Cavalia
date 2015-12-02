@@ -55,7 +55,14 @@ static void ArgumentsChecker() {
 		}
 	}
 	else if (app_type == APP_REPLAY) {
-
+		if (factor_count == 0) {
+			std::cout << "SCALE_FACTOR (-sf) should be set." << std::endl;
+			exit(0);
+		}
+		if (num_core == -1) {
+			std::cout << "CORE_COUNT (-c) should be set." << std::endl;
+			exit(0);
+		}
 	}
 	else {
 		if (factor_count == 0) {

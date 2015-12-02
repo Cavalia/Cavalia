@@ -17,7 +17,7 @@ namespace Cavalia{
 				for (size_t i = 0; i < thread_count_; ++i){
 					buffers_[i] = new char[kValueLogBufferSize];
 					buffer_offsets_[i] = 0;
-					txn_offsets_[i] = sizeof(size_t);
+					txn_offsets_[i] = sizeof(size_t)+sizeof(uint64_t);
 				}
 				last_timestamps_ = new uint64_t[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
