@@ -63,6 +63,8 @@ static size_t GetCoreInNode(const size_t &numa_node_id){
 			return i;
 		}
 	}
+	assert(false);
+	return -1;
 #else
 	return 0;
 #endif
