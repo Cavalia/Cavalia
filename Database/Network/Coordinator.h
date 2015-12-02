@@ -9,7 +9,7 @@ namespace Cavalia{
 		class Coordinator{
 		public:
 			Coordinator(const std::string &address) : requester_(address){}
-			virtual ~Coordinator(){}
+			~Coordinator(){}
 
 		private:
 			Coordinator(const Coordinator&);

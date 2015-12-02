@@ -9,7 +9,7 @@ namespace Cavalia{
 		class Cohort{
 		public:
 			Cohort(const std::string &port) : replyer_(port){}
-			virtual ~Cohort(){}
+			~Cohort(){}
 
 		private:
 			Cohort(const Cohort&);

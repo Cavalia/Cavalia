@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
 
 #include <Benchmark/BenchmarkDriver.h>
@@ -13,8 +12,6 @@
 #include <Storage/ShareStorageManager.h>
 #include <Storage/ShardStorageManager.h>
 
-#include "TpccShardStorageManager.h"
-
 #include "TpccTableInitiator.h"
 #include "TpccPopulator.h"
 #include "TpccSource.h"
@@ -23,11 +20,14 @@
 #include "TpccConcurrentExecutor.h"
 
 #if defined(__linux__)
+#include "TpccShardStorageManager.h"
 #include "TpccHStoreConfiguration.h"
 #include "TpccHStoreExecutor.h"
 #include "TpccSiteConfiguration.h"
 #include "TpccSiteExecutor.h"
 #endif
+
+#include "TpccConfigure.h"
 
 using namespace Cavalia;
 using namespace Cavalia::Benchmark::Tpcc;
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 		}
 		PRINT_STORAGE_STATUS;
 	}
-	else {
+	else if (app_type == APP_CC_EXECUTE || app_type == APP_HSTORE_EXECUTE || app_type == APP_SITE_EXECUTE){
 		assert(factor_count == 2);
 		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
 		BaseLogger *logger = NULL;
@@ -104,6 +104,17 @@ int main(int argc, char *argv[]) {
 #endif
 		delete logger;
 		logger = NULL;
+	}
+	else if (app_type == APP_DIST_EXECUTE){
+		assert(factor_count == 2);
+		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
+		ConfigFileParser conf_parser;
+		conf_parser.LogConfigFile(server_id, true);
+		if (server_id == -1){
+			// this is client.
+		}
+		else{
+		}
 	}
 	std::cout << "finished everything..." << std::endl;
 	return 0;

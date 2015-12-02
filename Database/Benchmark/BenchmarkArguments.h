@@ -6,7 +6,7 @@
 #include <cassert>
 #include "../Meta/MetaTypes.h"
 
-enum AppType { APP_POPULATE, APP_REPLAY, APP_CC_EXECUTE, APP_HSTORE_EXECUTE, APP_SITE_EXECUTE, kAppSize };
+enum AppType { APP_POPULATE, APP_REPLAY, APP_CC_EXECUTE, APP_HSTORE_EXECUTE, APP_SITE_EXECUTE, APP_DIST_EXECUTE, kAppSize };
 enum AppReplayType { APP_COMMAND_REPLAY, APP_VALUE_REPLAY, kAppReplaySize };
 
 static std::string dir_name = ".";
@@ -18,10 +18,11 @@ static int num_txn = -1;
 static int num_core = -1; // number of cores utilized in a single numa node.
 static int num_node = -1; // number of nodes utilized.
 static int replay_type = 0; // default: command replay
+static int server_id = -1;
 
 static void PrintUsage() {
 	std::cout << "==========[USAGE]==========" << std::endl;
-	std::cout << "\t-aINT: APP_TYPE (0: POPULATE, 1: REPLAY, 2: CC_EXECUTE, 3: HSTORE_EXECUTE, 4: SITE_EXECUTE)" << std::endl;
+	std::cout << "\t-aINT: APP_TYPE (0: POPULATE, 1: REPLAY, 2: CC_EXECUTE, 3: HSTORE_EXECUTE, 4: SITE_EXECUTE, 5: DIST_EXECUTE)" << std::endl;
 	std::cout << "\t-sfDOUBLE: SCALE_FACTOR" << std::endl;
 	std::cout << "\t-tINT: TXN_COUNT" << std::endl;
 	std::cout << "\t-dINT: DIST_RATIO" << std::endl;
@@ -29,6 +30,7 @@ static void PrintUsage() {
 	std::cout << "\t-cINT: CORE_COUNT" << std::endl;
 	std::cout << "\t-nINT: NODE_COUNT" << std::endl;
 	std::cout << "\t-rINT: REPLAY_TYPE (0: COMMAND [DEFAULT])" << std::endl;
+	std::cout << "\t-vINT: SERVER_ID" << std::endl;
 	std::cout << "===========================" << std::endl;
 	std::cout << "==========[EXAMPLES]==========" << std::endl;
 	std::cout << "<POPULATE> Benchmark -a0 -sf10 -sf100" << std::endl;
@@ -36,6 +38,7 @@ static void PrintUsage() {
 	std::cout << "<CC_EXECUTE> Benchmark -a2 -sf10 -sf100 -t100000 -c32" << std::endl;
 	std::cout << "<HSTORE_EXECUTE> Benchmark -a3 -sf10 -sf100 -t100000 -c4 -n5 -d20" << std::endl;
 	std::cout << "<SITE_EXECUTE> Benchmark -a4 -sf10 -sf100 -t100000 -c4 -n5 -d20" << std::endl;
+	std::cout << "<DIST_EXECUTE> Benchmark -a5 -sf10 -sf100 -t100000 -sc1 -v0" << std::endl;
 	std::cout << "==============================" << std::endl;
 }
 
@@ -64,7 +67,7 @@ static void ArgumentsChecker() {
 			exit(0);
 		}
 	}
-	else {
+	else if (app_type == APP_CC_EXECUTE || app_type == APP_SITE_EXECUTE || app_type == APP_HSTORE_EXECUTE) {
 		if (factor_count == 0) {
 			std::cout << "SCALE_FACTOR (-sf) should be set." << std::endl;
 			exit(0);
@@ -79,9 +82,8 @@ static void ArgumentsChecker() {
 		}
 		if (app_type == APP_SITE_EXECUTE || app_type == APP_HSTORE_EXECUTE){
 			if (num_node == -1){
-			std::cout << "NODE_COUNT (-n) should be set." << std::endl;
-			exit(0);
-			
+				std::cout << "NODE_COUNT (-n) should be set." << std::endl;
+				exit(0);
 			}
 		}
 	}
@@ -121,6 +123,9 @@ static void ArgumentsParser(int argc, char *argv[]) {
 		}
 		else if (argv[i][1] == 'r') {
 			replay_type = atoi(&argv[i][2]);
+		}
+		else if (argv[i][1] == 'v') {
+			server_id = atoi(&argv[i][2]);
 		}
 		else if (argv[i][1] == 'z') {
 			Cavalia::Database::gParamBatchSize = atoi(&argv[i][2]);
