@@ -39,42 +39,42 @@ namespace Cavalia{
 				last_timestamps_ = NULL;
 			}
 
-			void InsertRecord(const size_t &thread_id, const size_t &table_id, char *data, const size_t &data_size) {
+			void InsertRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size) {
 				char *buffer_ptr = buffers_[thread_id] + buffer_offsets_[thread_id];
 				size_t &offset_ref = txn_offsets_[thread_id];
 				memcpy(buffer_ptr + offset_ref, (char*)(&kInsert), sizeof(uint8_t));
 				offset_ref += sizeof(uint8_t);
-				memcpy(buffer_ptr + offset_ref, (char*)(&table_id), sizeof(size_t));
-				offset_ref += sizeof(size_t);
-				memcpy(buffer_ptr + offset_ref, (char*)(&data_size), sizeof(size_t));
-				offset_ref += sizeof(size_t);
+				memcpy(buffer_ptr + offset_ref, (char*)(&table_id), sizeof(uint8_t));
+				offset_ref += sizeof(uint8_t);
+				memcpy(buffer_ptr + offset_ref, (char*)(&data_size), sizeof(uint8_t));
+				offset_ref += sizeof(uint8_t);
 				memcpy(buffer_ptr + offset_ref, data, data_size);
 				offset_ref += data_size;
 			}
 
-			void UpdateRecord(const size_t &thread_id, const size_t &table_id, char *data, const size_t &data_size) {
+			void UpdateRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size) {
 				char *buffer_ptr = buffers_[thread_id] + buffer_offsets_[thread_id];
 				size_t &offset_ref = txn_offsets_[thread_id];
 				memcpy(buffer_ptr + offset_ref, (char*)(&kUpdate), sizeof(uint8_t));
 				offset_ref += sizeof(uint8_t);
-				memcpy(buffer_ptr + offset_ref, (char*)(&table_id), sizeof(size_t));
-				offset_ref += sizeof(size_t);
-				memcpy(buffer_ptr + offset_ref, (char*)(&data_size), sizeof(size_t));
-				offset_ref += sizeof(size_t);
+				memcpy(buffer_ptr + offset_ref, (char*)(&table_id), sizeof(uint8_t));
+				offset_ref += sizeof(uint8_t);
+				memcpy(buffer_ptr + offset_ref, (char*)(&data_size), sizeof(uint8_t));
+				offset_ref += sizeof(uint8_t);
 				memcpy(buffer_ptr + offset_ref, data, data_size);
 				offset_ref += data_size;
 			}
 
-			void DeleteRecord(const size_t &thread_id, const size_t &table_id, const std::string &primary_key) {
+			void DeleteRecord(const size_t &thread_id, const uint8_t &table_id, const std::string &primary_key) {
 				char *buffer_ptr = buffers_[thread_id] + buffer_offsets_[thread_id];
 				size_t &offset_ref = txn_offsets_[thread_id];
 				memcpy(buffer_ptr + offset_ref, (char*)(&kDelete), sizeof(uint8_t));
 				offset_ref += sizeof(uint8_t);
-				memcpy(buffer_ptr + offset_ref, (char*)(&table_id), sizeof(size_t));
-				offset_ref += sizeof(size_t);
+				memcpy(buffer_ptr + offset_ref, (char*)(&table_id), sizeof(uint8_t));
+				offset_ref += sizeof(uint8_t);
 				size_t size = primary_key.size();
-				memcpy(buffer_ptr + offset_ref, (char*)(&size), sizeof(size_t));
-				offset_ref += sizeof(size_t);
+				memcpy(buffer_ptr + offset_ref, (char*)(&size), sizeof(uint8_t));
+				offset_ref += sizeof(uint8_t);
 				memcpy(buffer_ptr + offset_ref, primary_key.c_str(), size);
 				offset_ref += size;
 			}
