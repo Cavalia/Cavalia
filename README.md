@@ -14,21 +14,27 @@ Cavalia is a main-memory database system specifically designed for modern multic
 Please note that the project requires g++ 4.8 with C++11 enabled.
 
 ##Compile Options
-###Concurrency control
-* ST: disable cc.
+###Snapshot isolation
 * SILOCK (not ready): locking-based snapshot isolation with no-wait strategy.
 * SIOCC (not ready): optimistic snapshot isolation.
-* MVTO: multi-version timestamp ordering.
-* MVLOCK: multi-version two-phase locking with no-wait strategy.
-* MVLOCK_WAIT: multi-version two-phase locking with wait-die strategy.
-* MVOCC: multi-version optimistic concurrency control.
+
+###Multi-version concurrency control
+* MVTO (not ready): multi-version timestamp ordering.
+* MVLOCK_WAIT (not ready): multi-version two-phase locking with wait-die strategy.
+* MVLOCK (not ready): multi-version two-phase locking with no-wait strategy.
+* MVOCC (not ready): multi-version optimistic concurrency control.
+
+###Single-version concurrency control
 * TO: timestamp ordering.
-* LOCK: two-phase locking with no-wait strategy.
 * LOCK_WAIT: two-phase locking with wait-die strategy.
+* LOCK: two-phase locking with no-wait strategy.
 * OCC: optimistic concurrency control.
 * HYBRID: a combination of 2PL and OCC.
 * SILO: an implementation following silo's design. (see http://dl.acm.org/citation.cfm?id=2522713)
 * DBX: an implementation following DBX's design. (see http://dl.acm.org/citation.cfm?id=2592815)
+
+###Others
+* ST: disable cc.
 
 ###Index
 * CUCKOO_INDEX: enable cuckoo index.
