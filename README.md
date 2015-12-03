@@ -21,7 +21,7 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * MVLOCK_WAIT (not ready): multi-version two-phase locking with wait-die strategy.
 * MVLOCK (not ready): multi-version two-phase locking with no-wait strategy.
 * MVOCC (not ready): multi-version optimistic concurrency control.
-* TO (not ready): timestamp ordering.
+* TO: timestamp ordering.
 * LOCK_WAIT: two-phase locking with wait-die strategy.
 * LOCK: two-phase locking with no-wait strategy.
 * OCC: optimistic concurrency control.
