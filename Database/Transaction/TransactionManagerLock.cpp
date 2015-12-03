@@ -82,27 +82,42 @@ namespace Cavalia{
 			}
 
 			BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-			uint64_t curr_ts = ScalableTimestamp::GetTimestamp();
+			uint64_t global_ts = ScalableTimestamp::GetTimestamp();
 			END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-			uint64_t commit_ts = GenerateTimestamp(curr_ts, max_rw_ts);
+			uint64_t commit_ts = GenerateTimestamp(global_ts, max_rw_ts);
 			assert(commit_ts >= max_rw_ts);
 
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
+				TableRecord *access_record = access_ptr->access_record_;
 				if (access_ptr->access_type_ == READ_WRITE){
 					assert(commit_ts >= access_ptr->timestamp_);
-					access_ptr->access_record_->content_.SetTimestamp(commit_ts);
+					access_record->content_.SetTimestamp(commit_ts);
+#if defined(VALUE_LOGGING)
+					((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, access_ptr->local_record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+#endif
 				}
 				else if (access_ptr->access_type_ == INSERT_ONLY){
 					assert(commit_ts >= access_ptr->timestamp_);
 					access_ptr->access_record_->content_.SetTimestamp(commit_ts);
+#if defined(VALUE_LOGGING)
+					((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+#endif
 				}
 				else if (access_ptr->access_type_ == DELETE_ONLY){
 					assert(commit_ts >= access_ptr->timestamp_);
 					access_ptr->access_record_->content_.SetTimestamp(commit_ts);
+#if defined(VALUE_LOGGING)
+					((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->GetPrimaryKey());
+#endif
 				}
 			}
 			// commit.
+#if defined(VALUE_LOGGING)
+			((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts);
+#elif defined(COMMAND_LOGGING)
+			((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, context->txn_type_, param);
+#endif
 			// release locks.
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);

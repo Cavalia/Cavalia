@@ -74,7 +74,7 @@ namespace Cavalia{
 			// should also update readers' timestamps.
 
 			BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-			uint64_t curr_ts = ScalableTimestamp::GetTimestamp();
+			uint64_t global_ts = ScalableTimestamp::GetTimestamp();
 			END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 
 			// setp 2: validate read.
@@ -98,7 +98,7 @@ namespace Cavalia{
 
 			// step 3: if success, then overwrite and commit
 			if (is_success == true){
-				uint64_t commit_ts = GenerateTimestamp(curr_ts, max_rw_ts);
+				uint64_t commit_ts = GenerateTimestamp(global_ts, max_rw_ts);
 
 				for (size_t i = 0; i < write_list_.access_count_; ++i){
 					Access *access_ptr = write_list_.accesses_[i];
@@ -107,19 +107,33 @@ namespace Cavalia{
 						access_record->record_->CopyFrom(access_ptr->local_record_);
 						COMPILER_MEMORY_FENCE;
 						access_record->content_.SetTimestamp(commit_ts);
+#if defined(VALUE_LOGGING)
+						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, access_ptr->local_record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+#endif
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY){
 						access_record->record_->is_visible_ = true;
 						COMPILER_MEMORY_FENCE;
 						access_record->content_.SetTimestamp(commit_ts);
+#if defined(VALUE_LOGGING)
+						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+#endif
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY){
 						access_record->record_->is_visible_ = false;
 						COMPILER_MEMORY_FENCE;
 						access_record->content_.SetTimestamp(commit_ts);
+#if defined(VALUE_LOGGING)
+						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->GetPrimaryKey());
+#endif
 					}
 				}
 				// commit. 
+#if defined(VALUE_LOGGING)
+				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts);
+#elif defined(COMMAND_LOGGING)
+				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, context->txn_type_, param);
+#endif
 
 				// step 4: release locks and clean up.
 				for (size_t i = 0; i < write_list_.access_count_; ++i){
