@@ -5,10 +5,16 @@ namespace Cavalia{
 	namespace Database{
 		bool TransactionManager::InsertRecord(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *record) {
 			BEGIN_PHASE_MEASURE(thread_id_, INSERT_PHASE);
-			Insertion *insertion = insertion_list_.NewInsertion();
-			insertion->local_record_ = record;
-			insertion->table_id_ = table_id;
-			insertion->primary_key_ = primary_key;
+			record->is_visible_ = false;
+			TableRecord *tb_record = new TableRecord(record);
+			// upsert.
+			storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record);
+			Access *access = access_list_.NewAccess();
+			access->access_type_ = INSERT_ONLY;
+			access->access_record_ = tb_record;
+			access->local_record_ = NULL;
+			access->table_id_ = table_id;
+			access->timestamp_ = 0;
 			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			return true;
 		}
@@ -60,14 +66,6 @@ namespace Cavalia{
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			// step 1: acquire lock and validate
 			bool is_success = true;
-
-			// allocate memory outside rtm region
-			for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
-				Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-				TableRecord* t_record = (TableRecord*)MemAllocator::Alloc(sizeof(TableRecord));
-				new(t_record)TableRecord(insertion_ptr->local_record_);
-				insertion_ptr->insertion_record_ = t_record;
-			}
 
 			// begin hardware transaction.
 			rtm_lock_->Lock();
