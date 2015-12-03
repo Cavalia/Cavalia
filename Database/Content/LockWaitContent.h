@@ -2,6 +2,7 @@
 #ifndef __CAVALIA_DATABASE_LOCK_WAIT_CONTENT_H__
 #define __CAVALIA_DATABASE_LOCK_WAIT_CONTENT_H__
 
+#include <atomic>
 #include <SpinLock.h>
 #include "ContentCommon.h"
 
