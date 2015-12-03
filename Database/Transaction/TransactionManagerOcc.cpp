@@ -14,6 +14,7 @@ namespace Cavalia {
 			access->access_record_ = tb_record;
 			access->local_record_ = NULL;
 			access->table_id_ = table_id;
+			access->timestamp_ = 0;
 			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			return true;
 		}
@@ -56,6 +57,7 @@ namespace Cavalia {
 				access->access_record_ = t_record;
 				access->local_record_ = NULL;
 				access->table_id_ = table_id;
+				access->timestamp_ = t_record->content_.GetTimestamp();
 				s_record = t_record->record_;
 				return true;
 			}

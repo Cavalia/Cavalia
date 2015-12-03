@@ -33,7 +33,7 @@ namespace Cavalia{
 #else
 		struct TableRecord{
 #endif
-#if  defined(SILOCK) || defined(SIOCC) || defined(MVLOCK) || defined(MVOCC) || defined(MVTO) || defined(MVLOCK_WAIT)
+#if defined(MVLOCK_WAIT) || defined(MVLOCK) || defined(MVOCC) || defined(MVTO) || defined(SILOCK) || defined(SIOCC)
 			TableRecord(SchemaRecord *record) : record_(record), content_(record->data_ptr_) {}
 #elif defined(TO)
 			TableRecord(SchemaRecord *record) : record_(record), content_(record->data_ptr_, record->schema_ptr_->GetSchemaSize()) {}
@@ -43,8 +43,12 @@ namespace Cavalia{
 			~TableRecord(){}
 			
 			SchemaRecord *record_;
-			
-#if defined(SIOCC)
+
+#if defined(LOCK_WAIT)
+LockWaitContent content_;
+#elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(HYBRID)
+LockContent content_;
+#elif defined(SIOCC)
 			SiOccContent content_;
 #elif defined(SILOCK)
 			SiLockContent content_;
@@ -60,12 +64,8 @@ namespace Cavalia{
 			MvToContent content_;
 #elif defined(TO)
 			ToContent content_;
-#elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(HYBRID)
-			LockContent content_;
 #elif defined(DBX)
 			uint64_t timestamp_;
-#elif defined(LOCK_WAIT)
-			LockWaitContent content_;
 #endif
 		};
 	}

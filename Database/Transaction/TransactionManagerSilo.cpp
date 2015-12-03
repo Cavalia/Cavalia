@@ -13,6 +13,8 @@ namespace Cavalia{
 			access->access_type_ = INSERT_ONLY;
 			access->access_record_ = tb_record;
 			access->local_record_ = NULL;
+			access->table_id_ = table_id;
+			access->timestamp_ = 0;
 			write_list_.Add(access);
 			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			return true;
@@ -43,6 +45,7 @@ namespace Cavalia{
 				COMPILER_MEMORY_FENCE;
 				local_record->CopyFrom(t_record->record_);
 				access->local_record_ = local_record;
+				access->table_id_ = table_id;
 				write_list_.Add(access);
 				// reset returned record.
 				s_record = local_record;
@@ -53,6 +56,7 @@ namespace Cavalia{
 				Access *access = access_list_.NewAccess();
 				access->access_type_ = DELETE_ONLY;
 				access->access_record_ = t_record;
+				access->table_id_ = table_id;
 				write_list_.Add(access);
 				s_record = t_record->record_;
 				return true;

@@ -16,7 +16,10 @@ namespace Cavalia{
 			tb_record->record_->is_visible_ = true;
 			Access *access = access_list_.NewAccess();
 			access->access_type_ = INSERT_ONLY;
+			access->access_record_ = tb_record;
 			access->local_record_ = NULL;
+			access->table_id_ = table_id;
+			access->timestamp_ = 0;
 			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			return true;
 		}
@@ -34,7 +37,9 @@ namespace Cavalia{
 					access->access_type_ = READ_ONLY;
 					access->access_record_ = t_record;
 					access->local_record_ = NULL;
+					access->table_id_ = table_id;
 					access->timestamp_ = t_record->content_.GetTimestamp();
+					return true;
 				}
 			}
 			else if (access_type == READ_WRITE) {
@@ -52,7 +57,9 @@ namespace Cavalia{
 					access->access_type_ = READ_WRITE;
 					access->access_record_ = t_record;
 					access->local_record_ = local_record;
+					access->table_id_ = table_id;
 					access->timestamp_ = t_record->content_.GetTimestamp();
+					return true;
 				}
 			}
 			else {
@@ -66,9 +73,12 @@ namespace Cavalia{
 					Access *access = access_list_.NewAccess();
 					access->access_type_ = DELETE_ONLY;
 					access->access_record_ = t_record;
+					access->local_record_ = local_record;
+					access->table_id_ = table_id;
+					access->timestamp_ = t_record->content_.GetTimestamp();
+					return true;
 				}
 			}
-			return true;
 		}
 
 		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str){
@@ -130,10 +140,7 @@ namespace Cavalia{
 					access_ptr->local_record_->~SchemaRecord();
 					MemAllocator::Free((char*)access_ptr->local_record_);
 				}
-				else if (access_ptr->access_type_ == INSERT_ONLY){
-					access_ptr->access_record_->content_.ReleaseWriteLock();
-				}
-				else if (access_ptr->access_type_ == DELETE_ONLY){
+				else {
 					access_ptr->access_record_->content_.ReleaseWriteLock();
 				}
 			}

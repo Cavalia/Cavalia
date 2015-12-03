@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_DATABASE_LOCK_WAIT_CONTENT_H__
 #define __CAVALIA_DATABASE_LOCK_WAIT_CONTENT_H__
 
-#include <boost/thread/mutex.hpp>
+#include <SpinLock.h>
 #include "ContentCommon.h"
 
 namespace Cavalia {
@@ -10,7 +10,6 @@ namespace Cavalia {
 		class LockWaitContent {
 		public:
 			LockWaitContent(){
-				memset(&spinlock_, 0, sizeof(spinlock_));
 				lock_type_ = NO_LOCK;
 				waiters_head_ = NULL;
 				owners_head_ = NULL;
@@ -126,6 +125,16 @@ namespace Cavalia {
 				ReleaseLatch();
 				
 			}
+
+			void SetTimestamp(const uint64_t &timestamp) {
+				assert(timestamp_ <= timestamp);
+				timestamp_.store(timestamp, std::memory_order_relaxed);
+			}
+
+			uint64_t GetTimestamp() const {
+				return timestamp_.load(std::memory_order_relaxed);
+			}
+
 		private:
 			bool Conflict(const LockType& lt1, const LockType& lt2){
 				if (lt1 == NO_LOCK || lt2 == NO_LOCK){
@@ -169,24 +178,24 @@ namespace Cavalia {
 			}
 
 			void AcquireLatch(){
-				spinlock_.lock();
+				spinlock_.Lock();
 			}
+
 			void ReleaseLatch(){
-				spinlock_.unlock();
+				spinlock_.Unlock();
 			}
 
 		private:
-			// waiters sorted from big to small
+			// waiters sorted from large to small
 			LockEntry* waiters_head_;
-
 			// owner list is not sorted
 			LockEntry* owners_head_;
 			size_t owners_count_;
-			
 			// current holding lock type
 			LockType lock_type_;
+			SpinLock spinlock_;
 
-			boost::detail::spinlock spinlock_;
+			std::atomic<uint64_t> timestamp_;
 		};
 	}
 }
