@@ -13,11 +13,11 @@ namespace Cavalia{
 			BaseUnorderedIndex(){}
 			virtual ~BaseUnorderedIndex(){}
 
-			virtual void InsertRecord(const std::string&, TableRecord *) = 0;
-			virtual void DeleteRecord(const std::string&) = 0;
+			virtual bool InsertRecord(const std::string&, TableRecord *) = 0;
+			virtual bool DeleteRecord(const std::string&) = 0;
 			virtual TableRecord* SearchRecord(const std::string&) = 0;
 			virtual size_t GetSize() const = 0;
-			virtual void SaveCheckpoint(std::ofstream &, const size_t &) = 0;
+			virtual void SaveCheckpoint(std::ofstream &, const size_t &) const = 0;
 
 		private:
 			BaseUnorderedIndex(const BaseUnorderedIndex &);

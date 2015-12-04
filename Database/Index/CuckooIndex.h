@@ -14,12 +14,12 @@ namespace Cavalia{
 			CuckooIndex(){}
 			virtual ~CuckooIndex(){}
 
-			virtual void InsertRecord(const std::string &key, TableRecord *record){
-				hash_index_[key] = record;
+			virtual bool InsertRecord(const std::string &key, TableRecord *record){
+				return hash_index_.insert(key, record);
 			}
 
-			virtual void DeleteRecord(const std::string &key){
-				//hash_index_.unsafe_erase(key);
+			virtual bool DeleteRecord(const std::string &key){
+				//hash_index_.erase(key);
 			}
 
 			virtual TableRecord* SearchRecord(const std::string &key){
@@ -36,7 +36,7 @@ namespace Cavalia{
 				return hash_index_.size();
 			}
 
-			virtual void SaveCheckpoint(std::ofstream &out_stream, const size_t &record_size){
+			virtual void SaveCheckpoint(std::ofstream &out_stream, const size_t &record_size) const {
 				auto lt = hash_index_.lock_table();
 				for (const auto &it : lt) {
 					out_stream.write(it.second->record_->data_ptr_, record_size);
