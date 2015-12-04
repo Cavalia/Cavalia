@@ -5,10 +5,16 @@ namespace Cavalia{
 	namespace Database{
 		bool TransactionManager::InsertRecord(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *record){
 			BEGIN_PHASE_MEASURE(thread_id_, INSERT_PHASE);
-			Insertion *insertion = insertion_list_.NewInsertion();
-			insertion->local_record_ = record;
-			insertion->table_id_ = table_id;
-			insertion->primary_key_ = primary_key;
+			record->is_visible_ = false;
+			TableRecord *tb_record = new TableRecord(record);
+			// upsert.
+			storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record);
+			Access *access = access_list_.NewAccess();
+			access->access_type_ = INSERT_ONLY;
+			access->access_record_ = tb_record;
+			access->local_record_ = NULL;
+			access->table_id_ = table_id;
+			access->timestamp_ = 0;
 			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			return true;
 		}
@@ -153,13 +159,6 @@ namespace Cavalia{
 						access_record->record_->is_visible_ = false;
 					}
 				}
-				//for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
-				//	Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-				//	SchemaRecord *insertion_record = insertion_ptr->insertion_record_;
-				//	insertion_record->content_.AcquireWriteLock();
-				//	insertion_record->content_.SetTimestamp(commit_ts);
-				//	//storage_manager_->tables_[insertion_ptr->table_id_]->InsertRecord(insertion_ptr->primary_key_, insertion_ptr->insertion_record_);
-				//}
 			}
 
 			// step 3: release locks and clean up.
@@ -178,10 +177,6 @@ namespace Cavalia{
 				}
 			}
 			assert(lock_count == 0);
-			for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
-				Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-				insertion_ptr->insertion_record_->content_.ReleaseWriteLock();
-			}
 			// clean up.
 			if (is_success == true){
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
@@ -205,16 +200,8 @@ namespace Cavalia{
 					access_ptr->local_record_->~SchemaRecord();
 					MemAllocator::Free((char*)access_ptr->local_record_);
 				}
-				//for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
-				//	Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-				//	MemAllocator::Free(insertion_ptr->insertion_record_->data_ptr_);
-				//	insertion_ptr->insertion_record_->~SchemaRecord();
-				//	MemAllocator::Free((char*)insertion_ptr->insertion_record_);
-				//}
 			}
-			assert(insertion_list_.insertion_count_ <= kMaxAccessNum);
 			assert(access_list_.access_count_ <= kMaxAccessNum);
-			insertion_list_.Clear();
 			access_list_.Clear();
 			is_first_access_ = true;
 			END_PHASE_MEASURE(thread_id_, COMMIT_PHASE);

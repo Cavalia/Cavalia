@@ -19,10 +19,14 @@ namespace Cavalia{
 				is_first_access_ = false;
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 			}
-			Insertion *insertion = insertion_list_.NewInsertion();
-			insertion->local_record_ = record;
-			insertion->table_id_ = table_id;
-			insertion->primary_key_ = primary_key;
+			record->is_visible_ = false;
+			TableRecord *tb_record = new TableRecord(record);
+			tb_record->record_->is_visible_ = true;
+			Access *access = access_list_.NewAccess();
+			access->access_type_ = INSERT_ONLY;
+			access->access_record_ = tb_record;
+			access->local_record_ = NULL;
+			access->table_id_ = table_id;
 			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			return true;
 		}
@@ -154,10 +158,6 @@ namespace Cavalia{
 						// install from local copy.
 						access_ptr->access_record_->content_.WriteAccess(commit_timestamp, access_ptr->local_record_->data_ptr_);
 					}
-					//else if (access_ptr->access_type_ == INSERT_ONLY){
-					//	// install from local copy.
-					//	storage_manager_->tables_[access_ptr->table_id_]->InsertRecord(access_ptr->primary_key_, access_ptr->local_record_);
-					//}
 				}
 			}
 
@@ -223,10 +223,6 @@ namespace Cavalia{
 					access_ptr->access_record_->content_.ReleaseLock(start_timestamp_);
 					MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 				}
-				//else{
-				//	assert(access_ptr->access_type_ == INSERT_ONLY);
-				//	MemAllocator::Free(access_ptr->local_record_->data_ptr_);
-				//}
 				access_ptr->local_record_->~SchemaRecord();
 				MemAllocator::Free((char*)access_ptr->local_record_);
 			}
