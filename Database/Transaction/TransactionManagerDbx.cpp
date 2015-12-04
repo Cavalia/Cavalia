@@ -125,7 +125,7 @@ namespace Cavalia{
 						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY){
-						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, access_ptr->local_record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY){
 						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->GetPrimaryKey());
