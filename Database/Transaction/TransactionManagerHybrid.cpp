@@ -8,7 +8,6 @@ namespace Cavalia{
 			if (context->is_retry_ == false){
 				record->is_visible_ = false;
 				TableRecord *tb_record = new TableRecord(record);
-				// upsert.
 				storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record);
 				Access *access = access_list_.NewAccess();
 				access->access_type_ = INSERT_ONLY;
@@ -18,7 +17,6 @@ namespace Cavalia{
 			else{
 				record->is_visible_ = false;
 				TableRecord *tb_record = new TableRecord(record);
-				// upsert.
 				storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record);
 				if (tb_record->content_.TryWriteLock() == false){
 					this->AbortTransaction();

@@ -8,7 +8,6 @@ namespace Cavalia{
 			BEGIN_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			record->is_visible_ = false;
 			TableRecord *tb_record = new TableRecord(record);
-			// upsert.
 			//if (storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record) == true){
 				if (tb_record->content_.TryWriteLock() == false){
 					this->AbortTransaction();
@@ -25,7 +24,6 @@ namespace Cavalia{
 				return true;
 			/*}
 			else{
-				//assert(false);
 				END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 				return true;
 			}*/

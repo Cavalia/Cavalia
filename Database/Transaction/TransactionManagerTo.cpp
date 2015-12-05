@@ -20,14 +20,21 @@ namespace Cavalia{
 			}
 			record->is_visible_ = false;
 			TableRecord *tb_record = new TableRecord(record);
-			tb_record->record_->is_visible_ = true;
-			Access *access = access_list_.NewAccess();
-			access->access_type_ = INSERT_ONLY;
-			access->access_record_ = tb_record;
-			access->local_record_ = NULL;
-			access->table_id_ = table_id;
-			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
-			return true;
+			//if (storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record) == true){
+				tb_record->record_->is_visible_ = true;
+				Access *access = access_list_.NewAccess();
+				access->access_type_ = INSERT_ONLY;
+				access->access_record_ = tb_record;
+				access->local_record_ = NULL;
+				access->table_id_ = table_id;
+				END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
+				return true;
+			//}
+			//else{
+			//	// if the record has already existed, then we need to lock the original record.
+			//	END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
+			//	return true;
+			//}
 		}
 
 		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type) {
@@ -44,12 +51,13 @@ namespace Cavalia{
 				is_first_access_ = false;
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 			}
-			char *local_data = MemAllocator::Alloc(t_record->record_->schema_ptr_->GetSchemaSize());
-			SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
-			new(local_record)SchemaRecord(t_record->record_->schema_ptr_, local_data);
+			const RecordSchema *schema_ptr = t_record->record_->schema_ptr_;
 			// local_record should be allocated here.
+			char *local_data = MemAllocator::Alloc(schema_ptr->GetSchemaSize());
+			SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
+			new(local_record)SchemaRecord(schema_ptr, local_data);
 			if (access_type == READ_WRITE) {
-				// write will be pushed into a queue without block. 
+				// write will be pushed into a queue without blocking.
 				// write should be installed right before commit.
 				if (t_record->content_.RequestWriteAccess(start_timestamp_, &local_record->data_ptr_) == false) {
 					UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, table_id);
@@ -79,6 +87,7 @@ namespace Cavalia{
 			access->access_type_ = access_type;
 			access->access_record_ = t_record;
 			access->local_record_ = local_record;
+			access->table_id_ = table_id;
 			// reset returned record.
 			s_record = local_record;
 			return true;
