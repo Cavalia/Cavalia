@@ -46,32 +46,40 @@ namespace Cavalia{
 			char* tmp_data = NULL;
 			// read never abort or block
 			t_record->content_.ReadAccess(tmp_data);
-			Access *access = access_list_.NewAccess();
-			access->access_type_ = access_type;
-			access->access_record_ = t_record;
-			SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 			if (access_type == READ_ONLY) {
-				// directly return the versioned copy.
+				Access *access = access_list_.NewAccess();
+				access->access_type_ = READ_ONLY;
+				access->access_record_ = t_record;
+				SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 				new(local_record)SchemaRecord(t_record->record_->schema_ptr_, tmp_data);
 				access->timestamp_ = t_record->content_.GetTimestamp();
+				access->local_record_ = local_record;
+				access->table_id_ = table_id;
+				s_record = local_record;
+				return true;
 			}
 			else if (access_type == READ_WRITE) {
+				Access *access = access_list_.NewAccess();
+				access->access_type_ = READ_WRITE;
+				access->access_record_ = t_record;
+				SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 				// write in local copy
 				size_t size = t_record->record_->schema_ptr_->GetSchemaSize();
 				char* local_data = MemAllocator::Alloc(size);
 				memcpy(local_data, tmp_data, size);
 				new(local_record)SchemaRecord(t_record->record_->schema_ptr_, local_data);
 				access->timestamp_ = t_record->content_.GetTimestamp();
+				access->local_record_ = local_record;
+				access->table_id_ = table_id;
+				s_record = local_record;
+				return true;
 			}
 			else {
 				assert(access_type == DELETE_ONLY);
 				// directly return the versioned copy.
-				new(local_record)SchemaRecord(t_record->record_->schema_ptr_, tmp_data);
+				//new(local_record)SchemaRecord(t_record->record_->schema_ptr_, tmp_data);
+				return true;
 			}
-			access->local_record_ = local_record;
-			access->table_id_ = table_id;
-			s_record = local_record;
-			return true;
 		}
 
 		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str){
@@ -155,9 +163,6 @@ namespace Cavalia{
 					access_ptr->access_record_->content_.ReleaseReadLock();
 				}
 				else {
-					assert(access_ptr->access_type_ == READ_WRITE || 
-						access_ptr->access_type_ == DELETE_ONLY || 
-						access_ptr->access_type_ == INSERT_ONLY);
 					access_ptr->access_record_->content_.ReleaseWriteLock();
 				}
 				--lock_count;
@@ -170,9 +175,11 @@ namespace Cavalia{
 			if (is_success == true){
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
-					access_ptr->local_record_->data_ptr_ = NULL;
-					access_ptr->local_record_->~SchemaRecord();
-					MemAllocator::Free((char*)access_ptr->local_record_);
+					if (access_ptr->access_type_ == READ_WRITE || access_ptr->access_type_ == READ_ONLY){
+						access_ptr->local_record_->data_ptr_ = NULL;
+						access_ptr->local_record_->~SchemaRecord();
+						MemAllocator::Free((char*)access_ptr->local_record_);
+					}
 				}
 				GlobalTimestamp::SetThreadTimestamp(thread_id_, commit_ts);
 			}
@@ -181,20 +188,16 @@ namespace Cavalia{
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE) {
 						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
+						access_ptr->local_record_->~SchemaRecord();
+						MemAllocator::Free((char*)access_ptr->local_record_);
 					}
 					else {
-						assert(access_ptr->access_type_ == READ_ONLY || 
-							access_ptr->access_type_ == DELETE_ONLY ||
-							access_ptr->access_type_ == INSERT_ONLY);
-						access_ptr->local_record_->data_ptr_ = NULL;
+						//access_ptr->local_record_->data_ptr_ = NULL;
 					}
-					access_ptr->local_record_->~SchemaRecord();
-					MemAllocator::Free((char*)access_ptr->local_record_);
 				}
 			}
 			assert(access_list_.access_count_ <= kMaxAccessNum);
 			access_list_.Clear();
-			is_first_access_ = true;
 			END_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			return is_success;
 		}
