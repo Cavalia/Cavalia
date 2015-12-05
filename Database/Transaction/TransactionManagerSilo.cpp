@@ -119,29 +119,31 @@ namespace Cavalia{
 
 				for (size_t i = 0; i < write_list_.access_count_; ++i){
 					Access *access_ptr = write_list_.accesses_[i];
-					TableRecord *access_record = access_ptr->access_record_;
+					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
+					SchemaRecord *local_record_ptr = access_ptr->local_record_;
+					auto &content_ref = access_ptr->access_record_->content_;
 					if (access_ptr->access_type_ == READ_WRITE){
-						access_record->record_->CopyFrom(access_ptr->local_record_);
+						global_record_ptr->CopyFrom(local_record_ptr);
 						COMPILER_MEMORY_FENCE;
-						access_record->content_.SetTimestamp(commit_ts);
+						content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, access_ptr->local_record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
 #endif
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY){
-						access_record->record_->is_visible_ = true;
+						global_record_ptr->is_visible_ = true;
 						COMPILER_MEMORY_FENCE;
-						access_record->content_.SetTimestamp(commit_ts);
+						content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
 #endif
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY){
-						access_record->record_->is_visible_ = false;
+						global_record_ptr->is_visible_ = false;
 						COMPILER_MEMORY_FENCE;
-						access_record->content_.SetTimestamp(commit_ts);
+						content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->GetPrimaryKey());
+						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
 #endif
 					}
 				}
@@ -158,15 +160,14 @@ namespace Cavalia{
 					if (access_ptr->access_type_ == READ_WRITE){
 						access_ptr->access_record_->content_.ReleaseWriteLock();
 						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
-						access_ptr->local_record_->~SchemaRecord();
-						MemAllocator::Free((char*)access_ptr->local_record_);
+						SchemaRecord *local_record_ptr = access_ptr->local_record_;
+						MemAllocator::Free(local_record_ptr->data_ptr_);
+						local_record_ptr->~SchemaRecord();
+						MemAllocator::Free((char*)local_record_ptr);
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
-					else if (access_ptr->access_type_ == INSERT_ONLY){
-						access_ptr->access_record_->content_.ReleaseWriteLock();
-					}
-					else if (access_ptr->access_type_ == DELETE_ONLY){
+					else{
+						// insert_only or delete_only
 						access_ptr->access_record_->content_.ReleaseWriteLock();
 					}
 				}
@@ -179,15 +180,14 @@ namespace Cavalia{
 					if (access_ptr->access_type_ == READ_WRITE){
 						access_ptr->access_record_->content_.ReleaseWriteLock();
 						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
-						access_ptr->local_record_->~SchemaRecord();
-						MemAllocator::Free((char*)access_ptr->local_record_);
+						SchemaRecord *local_record_ptr = access_ptr->local_record_;
+						MemAllocator::Free(local_record_ptr->data_ptr_);
+						local_record_ptr->~SchemaRecord();
+						MemAllocator::Free((char*)local_record_ptr);
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
-					else if (access_ptr->access_type_ == INSERT_ONLY){
-						access_ptr->access_record_->content_.ReleaseWriteLock();
-					}
-					else if (access_ptr->access_type_ == DELETE_ONLY){
+					else{
+						// insert_only or delete_only
 						access_ptr->access_record_->content_.ReleaseWriteLock();
 					}
 				}

@@ -20,9 +20,15 @@ namespace Cavalia{
 			void CopyTo(const SchemaRecord *dst_record){
 				memcpy(dst_record->data_ptr_, data_ptr_, schema_ptr_->GetSchemaSize());
 			}
-			
+
 			void CopyFrom(const SchemaRecord *src_record){
 				memcpy(data_ptr_, src_record->data_ptr_, schema_ptr_->GetSchemaSize());
+			}
+
+			void SwapData(SchemaRecord *src_record){
+				char *tmp_ptr = data_ptr_;
+				data_ptr_ = src_record->data_ptr_;
+				src_record->data_ptr_ = tmp_ptr;
 			}
 
 			// set column. type can be any type.

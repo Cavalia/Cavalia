@@ -107,26 +107,28 @@ namespace Cavalia{
 
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
-				TableRecord *access_record = access_ptr->access_record_;
+				SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
+				SchemaRecord *local_record_ptr = access_ptr->local_record_;
+				auto &content_ref = access_ptr->access_record_->content_;
 				if (access_ptr->access_type_ == READ_WRITE){
 					assert(commit_ts >= access_ptr->timestamp_);
-					access_record->content_.SetTimestamp(commit_ts);
+					content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-					((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, access_ptr->local_record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+					((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
 #endif
 				}
 				else if (access_ptr->access_type_ == INSERT_ONLY){
 					assert(commit_ts >= access_ptr->timestamp_);
-					access_record->content_.SetTimestamp(commit_ts);
+					content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-					((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+					((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
 #endif
 				}
 				else if (access_ptr->access_type_ == DELETE_ONLY){
 					assert(commit_ts >= access_ptr->timestamp_);
-					access_record->content_.SetTimestamp(commit_ts);
+					content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-					((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->GetPrimaryKey());
+					((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
 #endif
 				}
 			}
@@ -143,10 +145,11 @@ namespace Cavalia{
 					access_ptr->access_record_->content_.ReleaseReadLock();
 				}
 				else if (access_ptr->access_type_ == READ_WRITE){
+					SchemaRecord *local_record_ptr = access_ptr->local_record_;
 					access_ptr->access_record_->content_.ReleaseWriteLock();
-					MemAllocator::Free(access_ptr->local_record_->data_ptr_);
-					access_ptr->local_record_->~SchemaRecord();
-					MemAllocator::Free((char*)access_ptr->local_record_);
+					MemAllocator::Free(local_record_ptr->data_ptr_);
+					local_record_ptr->~SchemaRecord();
+					MemAllocator::Free((char*)local_record_ptr);
 				}
 				else {
 					// insert_only or delete_only
@@ -163,23 +166,26 @@ namespace Cavalia{
 			// recover updated data and release locks.
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
+				SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
+				SchemaRecord *local_record_ptr = access_ptr->local_record_;
+				auto &content_ref = access_ptr->access_record_->content_;
 				if (access_ptr->access_type_ == READ_ONLY){
-					access_ptr->access_record_->content_.ReleaseReadLock();
+					content_ref.ReleaseReadLock();
 				}
 				else if (access_ptr->access_type_ == READ_WRITE){
-					access_ptr->access_record_->record_->CopyFrom(access_ptr->local_record_);
-					access_ptr->access_record_->content_.ReleaseWriteLock();
-					MemAllocator::Free(access_ptr->local_record_->data_ptr_);
-					access_ptr->local_record_->~SchemaRecord();
-					MemAllocator::Free((char*)access_ptr->local_record_);
+					global_record_ptr->CopyFrom(local_record_ptr);
+					content_ref.ReleaseWriteLock();
+					MemAllocator::Free(local_record_ptr->data_ptr_);
+					local_record_ptr->~SchemaRecord();
+					MemAllocator::Free((char*)local_record_ptr);
 				}
 				else if (access_ptr->access_type_ == INSERT_ONLY){
-					access_ptr->access_record_->record_->is_visible_ = false;
-					access_ptr->access_record_->content_.ReleaseWriteLock();
+					global_record_ptr->is_visible_ = false;
+					content_ref.ReleaseWriteLock();
 				}
 				else if (access_ptr->access_type_ == DELETE_ONLY){
-					access_ptr->access_record_->record_->is_visible_ = true;
-					access_ptr->access_record_->content_.ReleaseWriteLock();
+					global_record_ptr->is_visible_ = true;
+					content_ref.ReleaseWriteLock();
 				}
 			}
 			assert(access_list_.access_count_ <= kMaxAccessNum);

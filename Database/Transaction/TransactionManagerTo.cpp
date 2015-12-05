@@ -97,7 +97,7 @@ namespace Cavalia{
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			for (size_t i = 0; i < access_list_.access_count_; ++i) {
 				Access *access_ptr = access_list_.GetAccess(i);
-				// if is write, then install it.
+				// if it is write, then install it.
 				if (access_ptr->access_type_ == READ_WRITE){
 					volatile bool is_ready = false;
 					access_ptr->access_record_->content_.RequestCommit(start_timestamp_, &is_ready);
