@@ -40,11 +40,12 @@ namespace Cavalia{
 								int next_o_id = no_o_id + 1;
 								district_new_order_record->UpdateColumn(2, (char*)(&next_o_id));
 							}
-							//else{
-							//	no_o_ids[no_d_id - 1] = -1;
-							//	int next_o_id = 1;
-							//	district_new_order_record->UpdateColumn(2, (char*)(&next_o_id));
-							//}
+							else{
+								no_o_ids[no_d_id - 1] = -1;
+								// TODO: this place should be modified after implementing an efficient index.
+								int next_o_id = 1;
+								district_new_order_record->UpdateColumn(2, (char*)(&next_o_id));
+							}
 						}
 
 						for (size_t no_d_id = 1; no_d_id <= DISTRICTS_PER_WAREHOUSE; ++no_d_id){
