@@ -181,7 +181,7 @@ namespace Cavalia{
 						MemAllocator::Free((char*)access_ptr->local_record_);
 					}
 				}
-				GlobalTimestamp::SetThreadTimestamp(thread_id_, commit_ts);
+				//GlobalTimestamp::SetThreadTimestamp(thread_id_, commit_ts);
 			}
 			else{
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
