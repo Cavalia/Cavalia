@@ -52,7 +52,7 @@ namespace Cavalia{
 			}
 
 			// shared
-			bool SelectKeyRecord(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *&record, const AccessType access_type, const size_t &access_id){
+			bool SelectKeyRecord(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *&record, const AccessType access_type){
 				BEGIN_INDEX_TIME_MEASURE(thread_id_);
 				TableRecord *t_record = NULL;
 				storage_manager_->tables_[table_id]->SelectKeyRecord(primary_key, t_record);
@@ -63,7 +63,11 @@ namespace Cavalia{
 					END_PHASE_MEASURE(thread_id_, SELECT_PHASE);
 					return rt;
 				}
-				return true;
+				else{
+					assert(false);
+					// if no record is found, then a "virtual record" should be inserted as the placeholder so that we can lock it.
+					return true;
+				}
 			}
 
 			// partition
@@ -78,11 +82,15 @@ namespace Cavalia{
 					END_PHASE_MEASURE(thread_id_, SELECT_PHASE);
 					return rt;
 				}
-				return true;
+				else{
+					assert(false);
+					// if no record is found, then a "virtual record" should be inserted as the placeholder so that we can lock it.
+					return true;
+				}
 			}
 
 			// shared
-			bool SelectRecord(TxnContext *context, const size_t &table_id, const size_t &idx_id, const std::string &secondary_key, SchemaRecord *&record, const AccessType access_type, const size_t &access_id){
+			bool SelectRecord(TxnContext *context, const size_t &table_id, const size_t &idx_id, const std::string &secondary_key, SchemaRecord *&record, const AccessType access_type){
 				BEGIN_INDEX_TIME_MEASURE(thread_id_);
 				TableRecord *t_record = NULL;
 				storage_manager_->tables_[table_id]->SelectRecord(idx_id, secondary_key, t_record);
@@ -112,7 +120,7 @@ namespace Cavalia{
 			}
 
 			// shared
-			bool SelectRecords(TxnContext *context, const size_t &table_id, const size_t &idx_id, const std::string &secondary_key, SchemaRecords *records, const AccessType access_type, const size_t &access_id) {
+			bool SelectRecords(TxnContext *context, const size_t &table_id, const size_t &idx_id, const std::string &secondary_key, SchemaRecords *records, const AccessType access_type) {
 				BEGIN_INDEX_TIME_MEASURE(thread_id_);
 				storage_manager_->tables_[table_id]->SelectRecords(idx_id, secondary_key, t_records_);
 				END_INDEX_TIME_MEASURE(thread_id_);
@@ -148,8 +156,8 @@ namespace Cavalia{
 			}
 
 		private:
-			bool SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type, const size_t &access_id = SIZE_MAX, bool is_key_access = true);
-			bool SelectRecordsCC(TxnContext *context, const size_t &table_id, TableRecords *t_records, SchemaRecords *records, const AccessType access_type, const size_t &access_id = SIZE_MAX){
+			bool SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type);
+			bool SelectRecordsCC(TxnContext *context, const size_t &table_id, TableRecords *t_records, SchemaRecords *records, const AccessType access_type){
 				for (size_t i = 0; i < t_records->curr_size_; ++i) {
 					SchemaRecord **s_record = &(records->records_[i]);
 					TableRecord *t_record = t_records->records_[i];

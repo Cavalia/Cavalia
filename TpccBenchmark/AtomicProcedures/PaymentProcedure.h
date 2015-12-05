@@ -20,7 +20,7 @@ namespace Cavalia{
 						SchemaRecord *warehouse_record = NULL;
 						// "getWarehouse": "SELECT W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP FROM WAREHOUSE WHERE W_ID = ?"
 						// "updateWarehouseBalance": "UPDATE WAREHOUSE SET W_YTD = W_YTD + ? WHERE W_ID = ?"
-						DB_QUERY(SelectKeyRecord(&context_, WAREHOUSE_TABLE_ID, std::string((char*)(&payment_param->w_id_), sizeof(int)), warehouse_record, READ_WRITE, 0));
+						DB_QUERY(SelectKeyRecord(&context_, WAREHOUSE_TABLE_ID, std::string((char*)(&payment_param->w_id_), sizeof(int)), warehouse_record, READ_WRITE));
 						double w_ytd = *(double*)(warehouse_record->GetColumn(8));
 						ret.Memcpy(ret.size_, (char*)(&w_ytd), sizeof(w_ytd));
 						ret.size_ += sizeof(w_ytd);
@@ -32,7 +32,7 @@ namespace Cavalia{
 						SchemaRecord *district_record = NULL;
 						// "getDistrict": "SELECT D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?"
 						// "updateDistrictBalance": "UPDATE DISTRICT SET D_YTD = D_YTD + ? WHERE D_W_ID  = ? AND D_ID = ?"
-						DB_QUERY(SelectKeyRecord(&context_, DISTRICT_TABLE_ID, std::string(d_key, sizeof(int)*2), district_record, READ_WRITE, 0));
+						DB_QUERY(SelectKeyRecord(&context_, DISTRICT_TABLE_ID, std::string(d_key, sizeof(int)*2), district_record, READ_WRITE));
 						double d_ytd = *(double*)(district_record->GetColumn(9));
 						ret.Memcpy(ret.size_, (char*)(&d_ytd), sizeof(d_ytd));
 						ret.size_ += sizeof(d_ytd);
@@ -52,7 +52,7 @@ namespace Cavalia{
 							memcpy(c_key + sizeof(int), &payment_param->d_id_, sizeof(int));
 							memcpy(c_key + sizeof(int)+sizeof(int), &payment_param->w_id_, sizeof(int));
 							// "getCustomerByCustomerId": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?"
-							DB_QUERY(SelectKeyRecord(&context_, CUSTOMER_TABLE_ID, std::string(c_key, sizeof(int)* 3), customer_record, READ_WRITE, 0));
+							DB_QUERY(SelectKeyRecord(&context_, CUSTOMER_TABLE_ID, std::string(c_key, sizeof(int)* 3), customer_record, READ_WRITE));
 						}
 						// "updateBCCustomer": "UPDATE CUSTOMER SET C_BALANCE = ?, C_YTD_PAYMENT = ?, C_PAYMENT_CNT = ?, C_DATA = ? WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?"
 						// "updateGCCustomer": "UPDATE CUSTOMER SET C_BALANCE = ?, C_YTD_PAYMENT = ?, C_PAYMENT_CNT = ? WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?"

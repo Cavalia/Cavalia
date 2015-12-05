@@ -13,7 +13,7 @@ namespace Cavalia{
 			return true;
 		}
 
-		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type, const size_t &access_id, bool is_key_access) {
+		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type) {
 			// for lock
 			if (access_type == READ_ONLY) {
 				// if cannot get lock, then return immediately.

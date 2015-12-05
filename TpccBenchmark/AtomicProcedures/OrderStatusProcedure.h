@@ -33,7 +33,7 @@ namespace Cavalia{
 						memcpy(o_key + sizeof(int)+sizeof(int), &order_status_param->w_id_, sizeof(int));
 						SchemaRecord *order_record = NULL;
 						// "getLastOrder": "SELECT O_ID, O_CARRIER_ID, O_ENTRY_D FROM ORDERS WHERE O_W_ID = ? AND O_D_ID = ? AND O_C_ID = ? ORDER BY O_ID DESC LIMIT 1"
-						DB_QUERY(SelectRecord(&context_, ORDER_TABLE_ID, 0, std::string(o_key, sizeof(int)* 3), order_record, READ_ONLY, 0));
+						DB_QUERY(SelectRecord(&context_, ORDER_TABLE_ID, 0, std::string(o_key, sizeof(int)* 3), order_record, READ_ONLY));
 						
 						if (order_record != NULL){
 							int o_id = *(char*)(order_record->GetColumn(0));
@@ -42,7 +42,7 @@ namespace Cavalia{
 							memcpy(ol_key + sizeof(int)+sizeof(int), &order_status_param->w_id_, sizeof(int));
 							order_line_records->Clear();
 							// "getOrderLines": "SELECT OL_SUPPLY_W_ID, OL_I_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM ORDER_LINE WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?"
-							DB_QUERY(SelectRecords(&context_, ORDER_LINE_TABLE_ID, 0, std::string(ol_key, sizeof(int)*3), order_line_records, READ_ONLY, 0));
+							DB_QUERY(SelectRecords(&context_, ORDER_LINE_TABLE_ID, 0, std::string(ol_key, sizeof(int)*3), order_line_records, READ_ONLY));
 							for (size_t i = 0; i < order_line_records->curr_size_; ++i){
 								SchemaRecord *ol_record = order_line_records->records_[i];
 								int i_id = *(int*)(ol_record->GetColumn(4));

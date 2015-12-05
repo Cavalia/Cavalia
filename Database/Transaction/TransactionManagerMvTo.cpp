@@ -32,7 +32,7 @@ namespace Cavalia{
 			return true;
 		}
 
-		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type, const size_t &access_id, bool is_key_access) {
+		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type) {
 			if (context->is_read_only_ == true){
 				if (is_first_access_ == true){
 					BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);

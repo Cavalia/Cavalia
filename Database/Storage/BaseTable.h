@@ -23,8 +23,8 @@ namespace Cavalia{
 			// get the number of records in this table.
 			virtual const size_t GetTableSize() const = 0;
 
-			virtual void InsertRecord(TableRecord *record) = 0;
-			virtual void InsertRecord(const std::string &key, TableRecord *record) = 0;
+			virtual bool InsertRecord(TableRecord *record) = 0;
+			virtual bool InsertRecord(const std::string &key, TableRecord *record) = 0;
 			virtual void DeleteRecord(TableRecord *record) = 0;
 			virtual void DeleteRecord(const std::string &key, TableRecord *record) = 0;
 

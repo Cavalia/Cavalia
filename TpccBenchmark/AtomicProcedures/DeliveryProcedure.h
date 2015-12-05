@@ -32,14 +32,14 @@ namespace Cavalia{
 							// this table maintains the minimum new order id. to eliminate the nondeterminism, we require the transaction to access new orders sequentially. This strategy is also adopted in H-Store.
 							// "getNewOrder": "SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1"
 							// "deleteNewOrder": "DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?"
-							DB_QUERY(SelectKeyRecord(&context_, DISTRICT_NEW_ORDER_TABLE_ID, std::string(d_no_key, sizeof(int)* 2), district_new_order_record, READ_WRITE, no_d_id - 1));
+							DB_QUERY(SelectKeyRecord(&context_, DISTRICT_NEW_ORDER_TABLE_ID, std::string(d_no_key, sizeof(int)* 2), district_new_order_record, READ_WRITE));
 							assert(district_new_order_record != NULL);
 							int no_o_id = *(int*)(district_new_order_record->GetColumn(2));
 							memcpy(no_key, &no_o_id, sizeof(int));
 							memcpy(no_key + sizeof(int), &no_d_id, sizeof(int));
 							memcpy(no_key + sizeof(int)+sizeof(int), &(delivery_param->w_id_), sizeof(int));
 							SchemaRecord *new_order_record = NULL;
-							DB_QUERY(SelectKeyRecord(&context_, NEW_ORDER_TABLE_ID, std::string(no_key, sizeof(int)* 3), new_order_record, READ_ONLY, no_d_id - 1));
+							DB_QUERY(SelectKeyRecord(&context_, NEW_ORDER_TABLE_ID, std::string(no_key, sizeof(int)* 3), new_order_record, READ_ONLY));
 							if (new_order_record != NULL){
 								no_o_ids[no_d_id - 1] = no_o_id;
 								int next_o_id = no_o_id + 1;
@@ -63,7 +63,7 @@ namespace Cavalia{
 							SchemaRecord *order_record = NULL;
 							// "getCId": "SELECT O_C_ID FROM ORDERS WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?"
 							// "updateOrders": "UPDATE ORDERS SET O_CARRIER_ID = ? WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?"
-							DB_QUERY(SelectKeyRecord(&context_, ORDER_TABLE_ID, std::string(o_key, sizeof(int)* 3), order_record, READ_WRITE, no_d_id - 1));
+							DB_QUERY(SelectKeyRecord(&context_, ORDER_TABLE_ID, std::string(o_key, sizeof(int)* 3), order_record, READ_WRITE));
 							assert(order_record != NULL);
 							order_record->UpdateColumn(5, (char*)(&delivery_param->o_carrier_id_));
 							int c_id = *(int*)(order_record->GetColumn(1));
@@ -101,7 +101,7 @@ namespace Cavalia{
 							memcpy(c_key + sizeof(int)+sizeof(int), &(delivery_param->w_id_), sizeof(int));
 							SchemaRecord *customer_record = NULL;
 							// "updateCustomer": "UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?"
-							DB_QUERY(SelectKeyRecord(&context_, CUSTOMER_TABLE_ID, std::string(c_key, sizeof(int)* 3), customer_record, READ_WRITE, no_d_id - 1));
+							DB_QUERY(SelectKeyRecord(&context_, CUSTOMER_TABLE_ID, std::string(c_key, sizeof(int)* 3), customer_record, READ_WRITE));
 							assert(customer_record != NULL);
 							double balance = *(const double*)(customer_record->GetColumn(16)) + sums[no_d_id - 1];
 							customer_record->UpdateColumn(16, (char*)(&balance));

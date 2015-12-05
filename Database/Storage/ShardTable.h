@@ -95,29 +95,34 @@ namespace Cavalia {
 			}
 
 			///////////////////INSERT//////////////////
-			virtual void InsertRecord(TableRecord *record) {
-				InsertRecord(record->record_->GetPrimaryKey(), record);
+			virtual bool InsertRecord(TableRecord *record) {
+				return InsertRecord(record->record_->GetPrimaryKey(), record);
 			}
 
-			virtual void InsertRecord(const std::string &primary_key, TableRecord *record){
+			virtual bool InsertRecord(const std::string &primary_key, TableRecord *record){
+				SchemaRecord *record_ptr = record->record_;
 				size_t part_id = 0;
 				if (partition_count_ != 1){
-					part_id = GetPartitionId(record->record_);
+					part_id = GetPartitionId(record_ptr);
 				}
-				if(record->record_->schema_ptr_->GetTableId()==0){
+				if (primary_index_[part_id]->InsertRecord(primary_key, record) == true){
+					// build secondary index here
+					for (size_t i = 0; i < secondary_count_; ++i) {
+						secondary_indexes_[part_id][i]->InsertRecord(record_ptr->GetSecondaryKey(i), record);
+					}
+					return true;
 				}
-				primary_index_[part_id]->InsertRecord(primary_key, record);
-				// build secondary index here
-				for (size_t i = 0; i < secondary_count_; ++i) {
-					secondary_indexes_[part_id][i]->InsertRecord(record->record_->GetSecondaryKey(i), record);
+				else{
+					return false;
 				}
 			}
 
 			// for replication
-			virtual void InsertRecord(const size_t &part_id, TableRecord *record){
-				primary_index_[part_id]->InsertRecord(record->record_->GetPrimaryKey(), record);
+			void InsertRecord(const size_t &part_id, TableRecord *record){
+				SchemaRecord *record_ptr = record->record_;
+				primary_index_[part_id]->InsertRecord(record_ptr->GetPrimaryKey(), record);
 				for (size_t i = 0; i < secondary_count_; ++i) {
-					secondary_indexes_[part_id][i]->InsertRecord(record->record_->GetSecondaryKey(i), record);
+					secondary_indexes_[part_id][i]->InsertRecord(record_ptr->GetSecondaryKey(i), record);
 				}
 			}
 

@@ -26,7 +26,7 @@ namespace Cavalia{
 							int item_id = new_order_param->i_ids_[i];
 							SchemaRecord *item_record = NULL;
 							// "getItemInfo": "SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = ?"
-							DB_QUERY(SelectKeyRecord(&context_, ITEM_TABLE_ID, std::string((char*)(&item_id), sizeof(item_id)), item_record, READ_ONLY, i));
+							DB_QUERY(SelectKeyRecord(&context_, ITEM_TABLE_ID, std::string((char*)(&item_id), sizeof(item_id)), item_record, READ_ONLY));
 
 							// abort here!
 							if (item_record == NULL){
@@ -53,7 +53,7 @@ namespace Cavalia{
 							SchemaRecord *stock_record = NULL;
 							// "getStockInfo": "SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_%02d FROM STOCK WHERE S_I_ID = ? AND S_W_ID = ?"
 							// "updateStock": "UPDATE STOCK SET S_QUANTITY = ?, S_YTD = ?, S_ORDER_CNT = ?, S_REMOTE_CNT = ? WHERE S_I_ID = ? AND S_W_ID = ?"
-							DB_QUERY(SelectKeyRecord(&context_, STOCK_TABLE_ID, std::string(s_key, sizeof(int)* 2), stock_record, READ_WRITE, i));
+							DB_QUERY(SelectKeyRecord(&context_, STOCK_TABLE_ID, std::string(s_key, sizeof(int)* 2), stock_record, READ_WRITE));
 							assert(stock_record != NULL);
 							int ol_quantity = new_order_param->i_qtys_[i];
 							int ytd = *(int*)(stock_record->GetColumn(13)) + ol_quantity;
@@ -79,7 +79,7 @@ namespace Cavalia{
 
 						SchemaRecord *warehouse_record = NULL;
 						// "getWarehouseTaxRate": "SELECT W_TAX FROM WAREHOUSE WHERE W_ID = ?"
-						DB_QUERY(SelectKeyRecord(&context_, WAREHOUSE_TABLE_ID, std::string((char*)(&new_order_param->w_id_), sizeof(int)), warehouse_record, READ_ONLY, 0));
+						DB_QUERY(SelectKeyRecord(&context_, WAREHOUSE_TABLE_ID, std::string((char*)(&new_order_param->w_id_), sizeof(int)), warehouse_record, READ_ONLY));
 						assert(warehouse_record != NULL);
 						double w_tax = *(double*)(warehouse_record->GetColumn(7));
 
@@ -88,7 +88,7 @@ namespace Cavalia{
 						SchemaRecord *district_record = NULL;
 						// "getDistrict": "SELECT D_TAX, D_NEXT_O_ID FROM DISTRICT WHERE D_ID = ? AND D_W_ID = ?"
 						// "incrementNextOrderId": "UPDATE DISTRICT SET D_NEXT_O_ID = ? WHERE D_ID = ? AND D_W_ID = ?"
-						DB_QUERY(SelectKeyRecord(&context_, DISTRICT_TABLE_ID, std::string(d_key, sizeof(int)* 2), district_record, READ_WRITE, 0));
+						DB_QUERY(SelectKeyRecord(&context_, DISTRICT_TABLE_ID, std::string(d_key, sizeof(int)* 2), district_record, READ_WRITE));
 						assert(district_record != NULL);
 						int d_next_o_id = *(int*)(district_record->GetColumn(10));
 						ret.Memcpy(ret.size_, (char*)(&d_next_o_id), sizeof(d_next_o_id));
@@ -102,7 +102,7 @@ namespace Cavalia{
 						memcpy(c_key + sizeof(int)+sizeof(int), &new_order_param->w_id_, sizeof(int));
 						SchemaRecord *customer_record = NULL;
 						// "getCustomer": "SELECT C_DISCOUNT, C_LAST, C_CREDIT FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?"
-						DB_QUERY(SelectKeyRecord(&context_, CUSTOMER_TABLE_ID, std::string(c_key, sizeof(int)*3), customer_record, READ_ONLY, 0));
+						DB_QUERY(SelectKeyRecord(&context_, CUSTOMER_TABLE_ID, std::string(c_key, sizeof(int)*3), customer_record, READ_ONLY));
 						assert(customer_record != NULL);
 						double c_discount = *(double*)(customer_record->GetColumn(15));
 
