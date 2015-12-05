@@ -9,7 +9,7 @@ namespace Cavalia {
 			record->is_visible_ = false;
 			TableRecord *tb_record = new TableRecord(record);
 			// the to-be-inserted record may have already existed.
-			if (storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record) == true){
+			//if (storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record) == true){
 				Access *access = access_list_.NewAccess();
 				access->access_type_ = INSERT_ONLY;
 				access->access_record_ = tb_record;
@@ -18,12 +18,12 @@ namespace Cavalia {
 				access->timestamp_ = 0;
 				END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 				return true;
-			}
+			/*}
 			else{
 				// if the record has already existed, then we need to lock the original record.
 				END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 				return true;
-			}
+			}*/
 		}
 
 		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type) {
