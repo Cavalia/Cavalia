@@ -20,7 +20,6 @@ namespace Cavalia {
 				return true;
 			}
 			else{
-				assert(false);
 				// if the record has already existed, then we need to lock the original record.
 				END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 				return true;

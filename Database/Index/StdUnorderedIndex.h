@@ -20,11 +20,11 @@ namespace Cavalia {
 
 			virtual bool InsertRecord(const std::string &key, TableRecord *record) {
 				if (hash_index_.find(key) == hash_index_.end()){
-					return false;
-				}
-				else{
 					hash_index_[key] = record;
 					return true;
+				}
+				else{
+					return false;
 				}
 			}
 
@@ -51,7 +51,7 @@ namespace Cavalia {
 				return hash_index_.size();
 			}
 
-			virtual void SaveCheckpoint(std::ofstream &out_stream, const size_t &record_size) const {
+			virtual void SaveCheckpoint(std::ofstream &out_stream, const size_t &record_size) {
 				for (auto &entry : hash_index_){
 					out_stream.write(entry.second->record_->data_ptr_, record_size);
 				}

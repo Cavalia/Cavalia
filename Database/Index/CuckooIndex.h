@@ -36,7 +36,7 @@ namespace Cavalia{
 				return hash_index_.size();
 			}
 
-			virtual void SaveCheckpoint(std::ofstream &out_stream, const size_t &record_size) const {
+			virtual void SaveCheckpoint(std::ofstream &out_stream, const size_t &record_size){
 				auto lt = hash_index_.lock_table();
 				for (const auto &it : lt) {
 					out_stream.write(it.second->record_->data_ptr_, record_size);

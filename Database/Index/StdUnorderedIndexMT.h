@@ -15,13 +15,13 @@ namespace Cavalia {
 			virtual bool InsertRecord(const std::string &key, TableRecord *record) {
 				lock_.AcquireWriteLock();
 				if (hash_index_.find(key) == hash_index_.end()){
-					lock_.ReleaseWriteLock();
-					return false;
-				}
-				else{
 					hash_index_[key] = record;
 					lock_.ReleaseWriteLock();
 					return true;
+				}
+				else{
+					lock_.ReleaseWriteLock();
+					return false;
 				}
 			}
 

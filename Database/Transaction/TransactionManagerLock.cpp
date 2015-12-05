@@ -1,4 +1,5 @@
 #if defined(LOCK)
+#include <iostream>
 #include "TransactionManager.h"
 
 namespace Cavalia{
@@ -24,7 +25,7 @@ namespace Cavalia{
 				return true;
 			}
 			else{
-				assert(false);
+				//assert(false);
 				END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 				return true;
 			}
