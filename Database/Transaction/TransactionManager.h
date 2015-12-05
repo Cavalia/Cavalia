@@ -168,9 +168,9 @@ namespace Cavalia{
 				return true;
 			}
 
-			uint64_t GenerateTimestamp(const uint64_t curr_ts, const uint64_t &max_write_ts){
-				uint64_t max_global_ts = max_write_ts >> 32;
-				uint32_t max_local_ts = max_write_ts & 0xFFFFFFFF;
+			uint64_t GenerateTimestamp(const uint64_t curr_ts, const uint64_t &max_rw_ts){
+				uint64_t max_global_ts = max_rw_ts >> 32;
+				uint32_t max_local_ts = max_rw_ts & 0xFFFFFFFF;
 				assert(curr_ts >= max_global_ts);
 				assert(curr_ts >= this->global_ts_);
 				// init.
@@ -190,7 +190,7 @@ namespace Cavalia{
 				assert(this->global_ts_ == max_global_ts && this->local_ts_ >= max_local_ts || this->global_ts_ > max_global_ts);
 
 				uint64_t commit_ts = (this->global_ts_ << 32) | this->local_ts_;
-				assert(commit_ts >= max_write_ts);
+				assert(commit_ts >= max_rw_ts);
 				return commit_ts;
 			}
 
