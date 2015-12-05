@@ -77,7 +77,7 @@ namespace Cavalia{
 						memcpy(h_key + sizeof(int), &payment_param->w_id_, sizeof(int));
 						memcpy(h_key + sizeof(int)+sizeof(int), &payment_param->h_date_, sizeof(int64_t));
 						// "insertHistory": "INSERT INTO HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-						DB_QUERY(InsertRecord(&context_, HISTORY_TABLE_ID, h_key, history_record));
+						DB_QUERY(InsertRecord(&context_, HISTORY_TABLE_ID, std::string(h_key, sizeof(int)+sizeof(int)+sizeof(int64_t)), history_record));
 
 						return transaction_manager_->CommitTransaction(&context_, param, ret);
 					}

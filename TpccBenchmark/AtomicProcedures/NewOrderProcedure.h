@@ -116,7 +116,7 @@ namespace Cavalia{
 						memcpy(o_key + sizeof(int), &(new_order_param->d_id_), sizeof(int));
 						memcpy(o_key + sizeof(int)+sizeof(int), &(new_order_param->w_id_), sizeof(int));
 						// "createNewOrder": "INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)"
-						DB_QUERY(InsertRecord(&context_, NEW_ORDER_TABLE_ID, o_key, new_order_record));
+						DB_QUERY(InsertRecord(&context_, NEW_ORDER_TABLE_ID, std::string(o_key, sizeof(int)* 3), new_order_record));
 
 						bool all_local = true;
 						for (auto & w_id : new_order_param->i_w_ids_){
@@ -134,7 +134,7 @@ namespace Cavalia{
 						order_record->SetColumn(6, (char*)(&new_order_param->ol_cnt_));
 						order_record->SetColumn(7, (char*)(&all_local));
 						// "createOrder": "INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-						DB_QUERY(InsertRecord(&context_, ORDER_TABLE_ID, o_key, order_record));
+						DB_QUERY(InsertRecord(&context_, ORDER_TABLE_ID, std::string(o_key, sizeof(int)* 3), order_record));
 
 						for (size_t i = 0; i < new_order_param->ol_cnt_; ++i){
 							int ol_number = i + 1;
@@ -159,7 +159,7 @@ namespace Cavalia{
 							memcpy(ol_key + sizeof(int) + sizeof(int), &new_order_param->w_id_, sizeof(int));
 							memcpy(ol_key + sizeof(int) + sizeof(int) + sizeof(int), &ol_number, sizeof(int));
 							// "createOrderLine": "INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-							DB_QUERY(InsertRecord(&context_, ORDER_LINE_TABLE_ID, ol_key, order_line_record));
+							DB_QUERY(InsertRecord(&context_, ORDER_LINE_TABLE_ID, std::string(ol_key, sizeof(int)* 4), order_line_record));
 						}
 
 						ret.Memcpy(ret.size_, (char*)(&w_tax), sizeof(w_tax));
