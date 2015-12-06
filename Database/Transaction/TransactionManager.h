@@ -32,6 +32,10 @@ namespace Cavalia{
 				global_ts_ = 0;
 				local_ts_ = 0;
 				t_records_ = new TableRecords(64);
+				
+				// for multi-version concurrency-control schemes.
+				this->progress_ts_ = 0;
+				GlobalTimestamp::thread_timestamp_[thread_id_] = &(this->progress_ts_);
 			}
 
 			// for replayer.
@@ -208,6 +212,7 @@ namespace Cavalia{
 			bool is_first_access_;
 			uint64_t global_ts_;
 			uint32_t local_ts_;
+			std::atomic<uint64_t> progress_ts_;
 			AccessList<kMaxAccessNum> access_list_;
 			TableRecords *t_records_;
 
