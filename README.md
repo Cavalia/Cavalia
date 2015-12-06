@@ -9,7 +9,7 @@ Cavalia is a main-memory database system specifically designed for modern multic
 Our project aims at faithfully implementing all kinds of concurrency-control and failure-recovery schemes in the same database framework. Currently, this project is still under instensive development. Please feel free to contact us if you find any bugs or errors in our implementation. Thanks!
 
 ##Project Schedule
-* Technical report on running and tuning Cavalia. 31st December, 2015.
+* Wiki on running and tuning Cavalia. 31st December, 2015.
 
 ##Linux Platform Installation
 
@@ -23,7 +23,7 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 ###Concurrency control
 * SILOCK: locking-based snapshot isolation with no-wait strategy [BBG+95].
 * SIOCC: optimistic snapshot isolation [BBG+95].
-* MVTO (not ready): multi-version timestamp ordering [BHG87, CM86, YBP+14].
+* MVTO: multi-version timestamp ordering [BHG87, CM86, YBP+14].
 * MVLOCK_WAIT: multi-version two-phase locking with wait-die strategy [CM86].
 * MVLOCK: multi-version two-phase locking with no-wait strategy [CM86].
 * TVLOCK: two-version two-phase locking with no-wait strategy [CM86].
