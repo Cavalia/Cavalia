@@ -2,61 +2,60 @@
 #ifndef __CAVALIA_DATABASE_TV_LOCK_CONTENT_H__
 #define __CAVALIA_DATABASE_TV_LOCK_CONTENT_H__
 
-#include <boost/thread/mutex.hpp>
+#include <cassert>
 #include <boost/atomic.hpp>
+#include <SpinLock.h>
 
 namespace Cavalia {
 	namespace Database {
 		class TvLockContent {
 		public:
-			TvLockContent() : read_count_(0), is_writing_(false), is_certifying_(false){
-				memset(&spinlock_, 0, sizeof(spinlock_));
-			}
+			TvLockContent() : read_count_(0), is_writing_(false), is_certifying_(false){}
 			~TvLockContent(){}
 
 			bool AcquireReadLock() {
 				bool rt = true;
-				spinlock_.lock();
+				spinlock_.Lock();
 				if (is_certifying_ == true){
 					rt = false;
 				}
 				else{
 					++read_count_;
 				}
-				spinlock_.unlock();
+				spinlock_.Unlock();
 				return rt;
 			}
 
 			void ReleaseReadLock() {
-				spinlock_.lock();
+				spinlock_.Lock();
 				assert(read_count_ > 0);
 				--read_count_;
-				spinlock_.unlock();
+				spinlock_.Unlock();
 			}
 
 			bool AcquireWriteLock() {
 				bool rt = true;
-				spinlock_.lock();
+				spinlock_.Lock();
 				if (is_writing_ == true || is_certifying_ == true){
 					rt = false;
 				}
 				else{
 					is_writing_ = true;
 				}
-				spinlock_.unlock();
+				spinlock_.Unlock();
 				return rt;
 			}
 
 			void ReleaseWriteLock() {
-				spinlock_.lock();
+				spinlock_.Lock();
 				assert(is_writing_ == true);
 				is_writing_ = false;
-				spinlock_.unlock();
+				spinlock_.Unlock();
 			}
 
 			bool AcquireCertifyLock() {
 				bool rt = true;
-				spinlock_.lock();
+				spinlock_.Lock();
 				assert(is_writing_ == true);
 				assert(is_certifying_ == false);
 				if (read_count_ != 0){
@@ -66,19 +65,19 @@ namespace Cavalia {
 					is_writing_ = false;
 					is_certifying_ = true;
 				}
-				spinlock_.unlock();
+				spinlock_.Unlock();
 				return rt;
 			}
 
 			void ReleaseCertifyLock() {
-				spinlock_.lock();
+				spinlock_.Lock();
 				assert(is_certifying_ == true);
 				is_certifying_ = false;
-				spinlock_.unlock();
+				spinlock_.Unlock();
 			}
 
 		private:
-			boost::detail::spinlock spinlock_;
+			SpinLock spinlock_;
 			size_t read_count_;
 			bool is_writing_;
 			bool is_certifying_;
