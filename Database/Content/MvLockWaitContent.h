@@ -2,8 +2,8 @@
 #ifndef __CAVALIA_DATABASE_MV_LOCK_WAIT_CONTENT_H__
 #define __CAVALIA_DATABASE_MV_LOCK_WAIT_CONTENT_H__
 
-#include <boost/thread/mutex.hpp>
 #include <boost/atomic.hpp>
+#include <SpinLock.h>
 #include <RWLock.h>
 #include "../Transaction/GlobalTimestamp.h"
 #include "ContentCommon.h"
@@ -13,8 +13,6 @@ namespace Cavalia {
 		class MvLockWaitContent {
 		public:
 			MvLockWaitContent(char* data_str) : data_ptr_(data_str){
-				memset(&wait_lock_, 0, sizeof(wait_lock_));
-
 				history_head_ = NULL;
 				history_tail_ = NULL;
 				history_length_ = 0;
@@ -47,8 +45,8 @@ namespace Cavalia {
 				}
 			}
 
-			void WriteAccess(const int64_t& commit_timestamp, char* data_str){
-				spinlock_.AcquireWriteLock();
+			void WriteAccess(const uint64_t& commit_timestamp, char* data_str){
+				rw_lock_.AcquireWriteLock();
 				MvHistoryEntry* en = new MvHistoryEntry();
 				en->data_ptr_ = data_str;
 				en->timestamp_ = commit_timestamp;
@@ -62,20 +60,20 @@ namespace Cavalia {
 				}
 				++history_length_;
 				//CollectGarbage();
-				spinlock_.ReleaseWriteLock();
+				rw_lock_.ReleaseWriteLock();
 			}
 			void ReadAccess(char*& data_ptr){
-				spinlock_.AcquireReadLock();
+				rw_lock_.AcquireReadLock();
 				if (history_head_ != NULL){
 					data_ptr = history_head_->data_ptr_;
 				}
 				else{
 					data_ptr = data_ptr_;
 				}
-				spinlock_.ReleaseReadLock();
+				rw_lock_.ReleaseReadLock();
 			}
-			void ReadAccess(const int64_t& timestamp, char*& data_ptr){
-				spinlock_.AcquireReadLock();
+			void ReadAccess(const uint64_t& timestamp, char*& data_ptr){
+				rw_lock_.AcquireReadLock();
 				MvHistoryEntry* en = history_head_;
 				while (en != NULL && en->timestamp_ > timestamp){
 					en = en->next_;
@@ -86,11 +84,11 @@ namespace Cavalia {
 				else{
 					data_ptr = data_ptr_;
 				}
-				spinlock_.ReleaseReadLock();
+				rw_lock_.ReleaseReadLock();
 			}
-			bool AcquireLock(const int64_t& timestamp, const LockType& lock_type, volatile bool* lock_ready){
+			bool AcquireLock(const uint64_t& timestamp, const LockType& lock_type, volatile bool* lock_ready){
 				bool ret = true;
-				wait_lock_.lock();
+				wait_lock_.Lock();
 				bool is_conflict = IsConflict(lock_type);
 				if (is_conflict){
 					bool can_wait = true;
@@ -142,12 +140,12 @@ namespace Cavalia {
 						}
 					}
 				}
-				wait_lock_.unlock();
+				wait_lock_.Unlock();
 				return ret;
 			}
-			void ReleaseLock(const int64_t& timestamp){
+			void ReleaseLock(const uint64_t& timestamp){
 				LockEntry* entry = NULL, *pre = NULL;
-				wait_lock_.lock();
+				wait_lock_.Lock();
 				entry = owners_;
 				while (entry != NULL && entry->timestamp_ != timestamp){
 					pre = entry;
@@ -200,16 +198,16 @@ namespace Cavalia {
 					delete entry;
 					entry = NULL;
 				}
-				wait_lock_.unlock();
+				wait_lock_.Unlock();
 			}
 		private:
 			void CollectGarbage(){
 				if (history_length_ > kRecycleLength){
-					int64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
+					uint64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
 					ClearHistory(min_thread_ts);
 				}
 			}
-			void ClearHistory(const int64_t &timestamp) {
+			void ClearHistory(const uint64_t &timestamp) {
 				MvHistoryEntry* his_entry = history_tail_;
 				while (his_entry != NULL && his_entry->prev_ != NULL && his_entry->prev_->timestamp_ < timestamp) {
 					MvHistoryEntry* tmp_entry = his_entry;
@@ -235,8 +233,8 @@ namespace Cavalia {
 					}
 				}
 				else if (lock_type == CERTIFY_LOCK){
-					// certify lock is only issued at the point of commit
-					// only the one acquiring write lock can issue certify lock
+					// certify Lock is only issued at the point of commit
+					// only the one acquiring write Lock can issue certify Lock
 					assert(is_writing_ == true);
 					assert(is_certifying_ == false);
 					if (read_count_ != 0){
@@ -249,7 +247,7 @@ namespace Cavalia {
 				return false;
 			}
 			
-			void BufferWaiter(const int64_t& timestamp, const LockType& lock_type, volatile bool* lock_ready){
+			void BufferWaiter(const uint64_t& timestamp, const LockType& lock_type, volatile bool* lock_ready){
 				LockEntry* entry = waiters_;
 				LockEntry* pre = NULL;
 				while (entry != NULL && timestamp < entry->timestamp_){
@@ -274,7 +272,7 @@ namespace Cavalia {
 					en = waiters_;
 					waiters_ = waiters_->next_;
 					if (en->lock_type_ == CERTIFY_LOCK){
-						//eliminate previously acquired write lock entry
+						//eliminate previously acquired write Lock entry
 						LockEntry* tmp = owners_, *pre = NULL;
 						while (tmp != NULL && tmp->timestamp_ != en->timestamp_){
 							pre = tmp;
@@ -313,13 +311,13 @@ namespace Cavalia {
 				}
 			}
 
-			RWLock spinlock_;
+			RWLock rw_lock_;
 			char* data_ptr_;
 			MvHistoryEntry* history_head_;
 			MvHistoryEntry* history_tail_;
 			size_t history_length_;
 
-			boost::detail::spinlock wait_lock_;
+			SpinLock wait_lock_;
 			bool is_certifying_;
 			bool is_writing_;
 			size_t read_count_;

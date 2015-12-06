@@ -2,7 +2,6 @@
 #ifndef __CAVALIA_DATABASE_MV_LOCK_CONTENT_H__
 #define __CAVALIA_DATABASE_MV_LOCK_CONTENT_H__
 
-#include <boost/thread/mutex.hpp>
 #include <boost/atomic.hpp>
 #include <RWLock.h>
 #include "../Transaction/GlobalTimestamp.h"
@@ -16,7 +15,6 @@ namespace Cavalia {
 				history_head_ = NULL;
 				history_tail_ = NULL;
 				history_length_ = 0;
-				memset(&wait_lock_, 0, sizeof(wait_lock_));
 			}
 			~MvLockContent(){
 				MvHistoryEntry* his, *prev_his;
@@ -30,18 +28,18 @@ namespace Cavalia {
 			}
 
 			void ReadAccess(char *&data_ptr){
-				spinlock_.AcquireReadLock();
+				rw_lock_.AcquireReadLock();
 				if (history_head_ == NULL){
 					data_ptr = data_ptr_;
 				}
 				else{
 					data_ptr = history_head_->data_ptr_;
 				}
-				spinlock_.ReleaseReadLock();
+				rw_lock_.ReleaseReadLock();
 			}
 
-			void ReadAccess(const int64_t &timestamp, char *&data_ptr){
-				spinlock_.AcquireReadLock();
+			void ReadAccess(const uint64_t &timestamp, char *&data_ptr){
+				rw_lock_.AcquireReadLock();
 				MvHistoryEntry* entry = history_head_;
 				while (entry != NULL){
 					if (entry->timestamp_ <= timestamp){
@@ -55,11 +53,11 @@ namespace Cavalia {
 				else{
 					data_ptr = entry->data_ptr_;
 				}
-				spinlock_.ReleaseReadLock();
+				rw_lock_.ReleaseReadLock();
 			}
 
-			void WriteAccess(const int64_t &commit_timestamp, char* data_ptr){
-				spinlock_.AcquireWriteLock();
+			void WriteAccess(const uint64_t &commit_timestamp, char* data_ptr){
+				rw_lock_.AcquireWriteLock();
 				MvHistoryEntry* entry = new MvHistoryEntry();
 				entry->data_ptr_ = data_ptr;
 				entry->timestamp_ = commit_timestamp;
@@ -74,52 +72,52 @@ namespace Cavalia {
 				}
 				++history_length_;
 				CollectGarbage();
-				spinlock_.ReleaseWriteLock();
+				rw_lock_.ReleaseWriteLock();
 			}
 
 			bool AcquireReadLock() {
 				bool rt = true;
-				wait_lock_.lock();
+				wait_lock_.Lock();
 				if (is_certifying_ == true){
 					rt = false;
 				}
 				else{
 					++read_count_;
 				}
-				wait_lock_.unlock();
+				wait_lock_.Unlock();
 				return rt;
 			}
 
 			void ReleaseReadLock() {
-				wait_lock_.lock();
+				wait_lock_.Lock();
 				assert(read_count_ > 0);
 				--read_count_;
-				wait_lock_.unlock();
+				wait_lock_.Unlock();
 			}
 
 			bool AcquireWriteLock() {
 				bool rt = true;
-				wait_lock_.lock();
+				wait_lock_.Lock();
 				if (is_writing_ == true || is_certifying_ == true){
 					rt = false;
 				}
 				else{
 					is_writing_ = true;
 				}
-				wait_lock_.unlock();
+				wait_lock_.Unlock();
 				return rt;
 			}
 
 			void ReleaseWriteLock() {
-				wait_lock_.lock();
+				wait_lock_.Lock();
 				assert(is_writing_ == true);
 				is_writing_ = false;
-				wait_lock_.unlock();
+				wait_lock_.Unlock();
 			}
 
 			bool AcquireCertifyLock() {
 				bool rt = true;
-				wait_lock_.lock();
+				wait_lock_.Lock();
 				assert(is_writing_ == true);
 				assert(is_certifying_ == false);
 				if (read_count_ != 0){
@@ -129,26 +127,26 @@ namespace Cavalia {
 					is_writing_ = false;
 					is_certifying_ = true;
 				}
-				wait_lock_.unlock();
+				wait_lock_.Unlock();
 				return rt;
 			}
 
 			void ReleaseCertifyLock() {
-				wait_lock_.lock();
+				wait_lock_.Lock();
 				assert(is_certifying_ == true);
 				is_certifying_ = false;
-				wait_lock_.unlock();
+				wait_lock_.Unlock();
 			}
 
 		private:
 			void CollectGarbage(){
 				if (history_length_ > kRecycleLength){
-					int64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
+					uint64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
 					ClearHistory(min_thread_ts);
 				}
 			}
 
-			void ClearHistory(const int64_t &timestamp) {
+			void ClearHistory(const uint64_t &timestamp) {
 				MvHistoryEntry* his_entry = history_tail_;
 				while (his_entry != NULL && his_entry->prev_ != NULL && his_entry->prev_->timestamp_ < timestamp) {
 					MvHistoryEntry* tmp_entry = his_entry;
@@ -164,8 +162,8 @@ namespace Cavalia {
 			}
 
 		private:
-			boost::detail::spinlock wait_lock_;
-			RWLock spinlock_;
+			SpinLock wait_lock_;
+			RWLock rw_lock_;
 			size_t read_count_;
 			bool is_writing_;
 			bool is_certifying_;

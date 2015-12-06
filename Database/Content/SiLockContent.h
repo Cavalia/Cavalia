@@ -17,8 +17,6 @@ namespace Cavalia{
 				history_head_ = NULL;
 				history_tail_ = NULL;
 				history_length_ = 0;
-				memset(&lock_, 0, sizeof(lock_));
-				memset(&latch_, 0, sizeof(latch_));
 			}
 			~SiLockContent(){
 				MvHistoryEntry* his, *prev_his;
