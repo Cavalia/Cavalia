@@ -15,8 +15,8 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 
 ##Compile Options
 ###Concurrency control
-* SILOCK (not ready): locking-based snapshot isolation with no-wait strategy.
-* SIOCC (not ready): optimistic snapshot isolation.
+* SILOCK: locking-based snapshot isolation with no-wait strategy.
+* SIOCC: optimistic snapshot isolation.
 * MVTO (not ready): multi-version timestamp ordering.
 * MVLOCK_WAIT (not ready): multi-version two-phase locking with wait-die strategy.
 * MVLOCK (not ready): multi-version two-phase locking with no-wait strategy.
