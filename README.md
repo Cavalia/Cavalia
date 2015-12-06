@@ -9,7 +9,8 @@ Cavalia is a main-memory database system specifically designed for modern multic
 Our project aims at faithfully implementing all kinds of concurrency-control and failure-recovery schemes in the same database framework. Currently, this project is still under instensive development. Please feel free to contact us if you find any bugs or errors in our implementation. Thanks!
 
 ##Project Schedule
-* Wiki on running and tuning Cavalia. 31st December, 2015.
+* Wiki (https://github.com/Cavalia/Cavalia/wiki) on running and tuning Cavalia. 31st December, 2015.
+* Smallbank benchmark. 31st December, 2015.
 
 ##Linux Platform Installation
 
@@ -68,22 +69,17 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 * the memory allocated for storage manager, including indexes and records, goes unmanaged -- we do not reclaim them throughout the lifetime.
 
 ##References
-[BBG+95] Hal Berenson, Phil Bernstein, Jim Gray, Jim Melton, Elizabeth O’Neil, and Patrick O’Neil. A critique of ansi sql isolation levels. In SIGMOD, 1995.
-
-[BHG87] Philip A Bernstein, Vassos Hadzilacos, and Nathan Goodman. Concurrency control and recovery in database systems. 1987.
-
-[CM86] Michael J Carey and Waleed A Muhanna. The performance of multiversion concurrency control
+* [BBG+95] Hal Berenson, Phil Bernstein, Jim Gray, Jim Melton, Elizabeth O’Neil, and Patrick O’Neil. A critique of ansi sql isolation levels. In SIGMOD, 1995.
+* [BHG87] Philip A Bernstein, Vassos Hadzilacos, and Nathan Goodman. Concurrency control and recovery in database systems. 1987.
+* [CM86] Michael J Carey and Waleed A Muhanna. The performance of multiversion concurrency control
 algorithms. TOCS, 1986.
-
-[TZK+13] Stephen Tu, Wenting Zheng, Eddie Kohler, Barbara
+* [TZK+13] Stephen Tu, Wenting Zheng, Eddie Kohler, Barbara
 Liskov, and Samuel Madden. Speedy transactions in
 multicore in-memory databases. In SOSP, 2013.
-
-[WQLC14] Zhaoguo Wang, Hao Qian, Jinyang Li, and Haibo
+* [WQLC14] Zhaoguo Wang, Hao Qian, Jinyang Li, and Haibo
 Chen. Using restricted transactional memory to build
 a scalable in-memory database. In EuroSys, 2014.
-
-[YBP+14] Xiangyao Yu, George Bezerra, Andrew Pavlo,
+* [YBP+14] Xiangyao Yu, George Bezerra, Andrew Pavlo,
 Srinivas Devadas, and Michael Stonebraker. Staring
 into the abyss: An evaluation of concurrency control
 with one thousand cores. In VLDB, 2014.
