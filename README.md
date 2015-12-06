@@ -20,7 +20,7 @@ Please note that the project requires g++ 4.8 with C++11 enabled.
 * MVTO (not ready): multi-version timestamp ordering.
 * MVLOCK_WAIT (not ready): multi-version two-phase locking with wait-die strategy.
 * MVLOCK (not ready): multi-version two-phase locking with no-wait strategy.
-* MVOCC (not ready): multi-version optimistic concurrency control.
+* MVOCC: multi-version optimistic concurrency control.
 * TO: timestamp ordering.
 * LOCK_WAIT: two-phase locking with wait-die strategy.
 * LOCK: two-phase locking with no-wait strategy.
