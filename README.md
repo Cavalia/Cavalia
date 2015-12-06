@@ -8,13 +8,16 @@ Cavalia is a main-memory database system specifically designed for modern multic
 ##Disclaimers
 Our project aims at faithfully implementing all kinds of concurrency-control and failure-recovery schemes in the same database framework. Currently, this project is still under instensive development. Please feel free to contact us if you find any bugs or errors in our implementation. Thanks!
 
+##Project Schedule
+* Technical report on running and tuning Cavalia. 31st December, 2015.
+
 ##Linux Platform Installation
 
-1. Download and install dependent libraries, including: boost-1.55.0, gtest-1.7.0, protobuf-2.5.0, libcuckoo;
+1. Download and install dependent libraries, including: boost-1.55.0 and libcuckoo;
 2. Clone Cavalia project, update CMakeLists.txt to set dependent library directories. 
 3. Build the project using the following command: mkdir build; cd build; cmake -DCMAKE_INSTALL_PREFIX=/to/your/directory ..; make -j; make install.
+* Please note that the project requires g++ 4.8 with C++11 enabled.
 
-Please note that the project requires g++ 4.8 with C++11 enabled.
 
 ##Compile Options
 ###Concurrency control
