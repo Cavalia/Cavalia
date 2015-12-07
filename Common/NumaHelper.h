@@ -19,8 +19,8 @@ struct NumaTopology{
 		core_per_node_ = max_core_count_ / max_node_count_;
 
 		cores_.resize(max_node_count_);
-
-		bitmask *bm = numa_bitmask_alloc(max_core_count_);
+		//bitmask *bm = numa_bitmask_alloc(max_core_count_);
+		bitmask *bm = numa_allocate_cpumask();
 		for (size_t i = 0; i < max_node_count_; ++i) {
 			numa_node_to_cpus(i, bm);
 			for (size_t j = 0; j < max_core_count_; ++j) {
@@ -29,7 +29,7 @@ struct NumaTopology{
 				}
 			}
 		}
-		numa_bitmask_free(bm);
+		numa_free_nodemask(bm);
 	}
 
 	void Print(){
@@ -56,10 +56,11 @@ static size_t GetNumaNodeId(const size_t &core_id){
 static size_t GetCoreInNode(const size_t &numa_node_id){
 #if defined(__linux__)
 	size_t max_core_count = numa_num_task_cpus();
-	bitmask *bm = numa_bitmask_alloc(max_core_count);
+	bitmask *bm = numa_allocate_cpumask();
 	numa_node_to_cpus(numa_node_id, bm);
 	for (size_t i = 0; i < max_core_count; ++i){
 		if (numa_bitmask_isbitset(bm, i)){
+			numa_free_nodemask(bm);
 			return i;
 		}
 	}

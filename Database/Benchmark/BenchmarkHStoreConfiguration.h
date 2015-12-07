@@ -3,9 +3,9 @@
 #define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_HSTORE_CONFIGURATION_H__
 
 #include <cassert>
+#include <NumaHelper.h>
 #include "../Storage/TableLocation.h"
 #include "../Executor/HStoreTxnLocation.h"
-#include "NumaTopology.h"
 
 namespace Cavalia {
 	namespace Benchmark {
