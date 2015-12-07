@@ -17,7 +17,7 @@ namespace Cavalia {
 				using namespace ShardProcedures;
 				class TpccSiteExecutor : public SiteExecutor {
 				public:
-					TpccSiteExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const TxnLocation &txn_location) : SiteExecutor(redirector, storage_manager, logger, txn_location) {}
+					TpccSiteExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const SiteTxnLocation &txn_location) : SiteExecutor(redirector, storage_manager, logger, txn_location) {}
 					virtual ~TpccSiteExecutor() {}
 
 				private:

@@ -17,7 +17,7 @@ namespace Cavalia {
 				using namespace ShardProcedures;
 				class TpccHStoreExecutor : public HStoreExecutor {
 				public:
-					TpccHStoreExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const TxnLocation &txn_location) : HStoreExecutor(redirector, storage_manager, logger, txn_location) {}
+					TpccHStoreExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const HStoreTxnLocation &txn_location) : HStoreExecutor(redirector, storage_manager, logger, txn_location) {}
 					virtual ~TpccHStoreExecutor() {}
 
 				private:
