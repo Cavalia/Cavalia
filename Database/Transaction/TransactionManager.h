@@ -87,7 +87,7 @@ namespace Cavalia{
 					return rt;
 				}
 				else{
-					assert(false);
+					//assert(false);
 					// if no record is found, then a "virtual record" should be inserted as the placeholder so that we can lock it.
 					return true;
 				}
