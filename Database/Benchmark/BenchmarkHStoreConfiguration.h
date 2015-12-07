@@ -2,13 +2,15 @@
 #ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_HSTORE_CONFIGURATION_H__
 #define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_HSTORE_CONFIGURATION_H__
 
-#include <cmath>
-#include "../Meta/MetaTypes.h"
+#include <cassert>
+#include "../Storage/TableLocation.h"
+#include "../Executor/HStoreTxnLocation.h"
 #include "NumaTopology.h"
 
 namespace Cavalia {
 	namespace Benchmark {
 		using namespace Cavalia::Database;
+
 		class BenchmarkHStoreConfiguration {
 		public:
 			BenchmarkHStoreConfiguration(const size_t &core_count, const size_t &node_count) : core_count_(core_count), node_count_(node_count) {}
@@ -34,13 +36,13 @@ namespace Cavalia {
 
 				for (size_t k = 0; k < core_count_; ++k){
 					for (size_t i = 0; i < node_count_; ++i){
-						txn_location_.AddPartition(occupied_cores.at(i).at(k));
+						txn_location_.AddThread(occupied_cores.at(i).at(k));
 						table_location_.AddPartition(i);
 					}
 				}
 			}
 
-			const TxnLocation& GetTxnLocation() const {
+			const HStoreTxnLocation& GetHStoreTxnLocation() const {
 				return txn_location_;
 			}
 
@@ -58,9 +60,8 @@ namespace Cavalia {
 		private:
 			const size_t core_count_;
 			const size_t node_count_;
-			// <partition_id, core_id>
-			// partition_id is essentially the same as thread_id.
-			TxnLocation  txn_location_;
+			// <thread_id, core_id>
+			HStoreTxnLocation txn_location_;
 			// <partition_id, numa_node_id>
 			TableLocation table_location_;
 		};

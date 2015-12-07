@@ -56,7 +56,7 @@ if (boost::filesystem::exists(full_name) == false){ \
 
 ////////////////////////////////////////////////////////////
 #define RELOAD_STORAGE_PARTITION(BenchmarkName, DirName, ThreadSafe) \
-	BenchmarkName##ShardStorageManager storage_manager(DirName+"/"#BenchmarkName"/Checkpoint", configure.GetTableLocations(), ThreadSafe); \
+	BenchmarkName##ShardStorageManager storage_manager(DirName+"/"#BenchmarkName"/Checkpoint", configure.GetTableLocation(), ThreadSafe); \
 	BenchmarkName##TableInitiator initiator; \
 	initiator.Initialize(&storage_manager); \
 	storage_manager.ReloadCheckpoint();
@@ -66,7 +66,7 @@ if (boost::filesystem::exists(full_name) == false){ \
 	configure.MeasureConfiguration();
 
 #define EXECUTE_TRANSACTIONS_HSTORE(BenchmarkName) \
-	BenchmarkName##HStoreExecutor executor(&io_redirector, &storage_manager, logger, configure.GetTxnLocation()); \
+	BenchmarkName##HStoreExecutor executor(&io_redirector, &storage_manager, logger, configure.GetHStoreTxnLocation()); \
 	executor.Start();
 
 #define CONFIGURE_SITE(BenchmarkName, NumCore, NumNode) \
@@ -74,7 +74,7 @@ if (boost::filesystem::exists(full_name) == false){ \
 	configure.MeasureConfiguration();
 
 #define EXECUTE_TRANSACTIONS_SITE(BenchmarkName) \
-	BenchmarkName##SiteExecutor executor(&io_redirector, &storage_manager, logger, configure.GetTxnLocation()); \
+	BenchmarkName##SiteExecutor executor(&io_redirector, &storage_manager, logger, configure.GetSiteTxnLocation()); \
 	executor.Start();
 
 ////////////////////////////////////////////////////////////

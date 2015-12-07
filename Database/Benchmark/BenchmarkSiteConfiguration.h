@@ -2,12 +2,15 @@
 #ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_SITE_CONFIGURATION_H__
 #define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_SITE_CONFIGURATION_H__
 
-#include "../Meta/MetaTypes.h"
+#include <cassert>
+#include "../Storage/TableLocation.h"
+#include "../Executor/SiteTxnLocation.h"
 #include "NumaTopology.h"
 
 namespace Cavalia {
 	namespace Benchmark {
 		using namespace Cavalia::Database;
+
 		class BenchmarkSiteConfiguration {
 		public:
 			BenchmarkSiteConfiguration(const size_t &core_count, const size_t &node_count) : core_count_(core_count), node_count_(node_count) {}
@@ -31,27 +34,24 @@ namespace Cavalia {
 					std::cout << std::endl;
 				}
 
-				size_t table_count = GetTableCount();
-				table_locations_.resize(table_count);
-				for (size_t tab_id = 0; tab_id < table_count; ++tab_id){
-					for (size_t node_id = 0; node_id < node_count_; ++node_id){
-						table_locations_[tab_id].node_ids_.push_back(node_id);
-					}
-				}
-				for(size_t j = 0; j < core_count_; ++j){
+				for(size_t k = 0; k < core_count_; ++k){
 					for (size_t i = 0; i < node_count_; ++i){
-						txn_location_.core_ids_.push_back(occupied_cores.at(i).at(j));
+						txn_location_.AddThread(occupied_cores.at(i).at(k));
 					}
 				}
-				txn_location_.node_count_ = node_count_;
+				txn_location_.SetPartitionCount(node_count_);
+
+				for (size_t node_id = 0; node_id < node_count_; ++node_id){
+					table_location_.AddPartition(node_id);
+				}
 			}
 
-			const TxnLocation& GetTxnLocation() const {
+			const SiteTxnLocation& GetSiteTxnLocation() const {
 				return txn_location_;
 			}
 
-			const std::vector<TableLocation>& GetTableLocations() const {
-				return table_locations_;
+			const TableLocation& GetTableLocation() const {
+				return table_location_;
 			}
 
 		private:
@@ -64,11 +64,10 @@ namespace Cavalia {
 		private:
 			const size_t core_count_;
 			const size_t node_count_;
-			// <partition_id, core_id>
-			// partition_id is essentially the same as thread_id.
-			TxnLocation  txn_location_;
-			// table_id => <partition_id, numa_node_id>
-			std::vector<TableLocation> table_locations_;
+			// <thread_id, core_id>
+			SiteTxnLocation  txn_location_;
+			// <partition_id, numa_node_id>
+			TableLocation table_location_;
 		};
 	}
 }

@@ -10,12 +10,13 @@
 #include "../Transaction/StoredProcedure.h"
 #include "../Content/HStoreContent.h"
 #include "BaseExecutor.h"
+#include "HStoreTxnLocation.h"
 
 namespace Cavalia {
 	namespace Database {
 		class HStoreExecutor : public BaseExecutor {
 		public:
-			HStoreExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const TxnLocation &txn_location) : BaseExecutor(redirector, logger, txn_location.GetPartitionCount()), storage_manager_(storage_manager), txn_location_(txn_location){
+			HStoreExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const HStoreTxnLocation &txn_location) : BaseExecutor(redirector, logger, txn_location.GetThreadCount()), storage_manager_(storage_manager), txn_location_(txn_location){
 				is_begin_ = false;
 				is_finish_ = false;
 				total_count_ = 0;
@@ -26,15 +27,15 @@ namespace Cavalia {
 				memset(&time_lock_, 0, sizeof(time_lock_));
 
 				spinlocks_ = new boost::detail::spinlock*[thread_count_];
-				for (size_t part_id = 0; part_id < txn_location_.GetPartitionCount(); ++part_id){
-					size_t core_id = txn_location_.Partition2Core(part_id);
+				for (size_t thread_id = 0; thread_id < txn_location_.GetThreadCount(); ++thread_id){
+					size_t core_id = txn_location_.Thread2Core(thread_id);
 					size_t node_id = GetNumaNodeId(core_id);
 					boost::detail::spinlock *lock = (boost::detail::spinlock*)MemAllocator::AllocNode(sizeof(boost::detail::spinlock), node_id);
 					memset(lock, 0, sizeof(boost::detail::spinlock));
-					spinlocks_[part_id] = lock;
+					spinlocks_[thread_id] = lock;
 				}
-
 			}
+
 			virtual ~HStoreExecutor() {
 				delete[] is_ready_;
 				is_ready_ = NULL;
@@ -58,9 +59,9 @@ namespace Cavalia {
 
 			virtual void ProcessQuery() {
 				boost::thread_group thread_group;
-				for (size_t part_id = 0; part_id < txn_location_.GetPartitionCount(); ++part_id){
-					size_t core_id = txn_location_.Partition2Core(part_id);
-					thread_group.create_thread(boost::bind(&HStoreExecutor::ProcessQueryThread, this, part_id, core_id));
+				for (size_t thread_id = 0; thread_id < txn_location_.GetThreadCount(); ++thread_id){
+					size_t core_id = txn_location_.Thread2Core(thread_id);
+					thread_group.create_thread(boost::bind(&HStoreExecutor::ProcessQueryThread, this, thread_id, core_id));
 				}
 				bool is_all_ready = true;
 				while (1) {
@@ -187,7 +188,7 @@ namespace Cavalia {
 			volatile bool is_begin_;
 			volatile bool is_finish_;
 			std::atomic<size_t> total_count_;
-			TxnLocation txn_location_;
+			HStoreTxnLocation txn_location_;
 			boost::detail::spinlock **spinlocks_;
 		};
 	}
