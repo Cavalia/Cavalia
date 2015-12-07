@@ -5,6 +5,7 @@
 #include <NumaHelper.h>
 #include <ThreadHelper.h>
 #include "BaseTable.h"
+#include "TableLocation.h"
 #include "../Index/StdUnorderedIndex.h"
 #include "../Index/StdUnorderedIndexMT.h"
 #include "../Index/StdOrderedIndex.h"
@@ -27,7 +28,7 @@ namespace Cavalia {
 #endif			
 					secondary_indexes_ = new BaseOrderedIndex**[partition_count_];
 					for (size_t i = 0; i < partition_count_; ++i){
-						size_t numa_node_id = table_location.node_ids_.at(i);
+						size_t numa_node_id = table_location.Partition2Node(i);
 #if defined(CUCKOO_INDEX)
 						CuckooIndex *p_index = (CuckooIndex*)MemAllocator::AllocNode(sizeof(CuckooIndex), numa_node_id);
 						new(p_index)CuckooIndex();
@@ -51,7 +52,7 @@ namespace Cavalia {
 					primary_index_ = new BaseUnorderedIndex*[partition_count_];
 					secondary_indexes_ = new BaseOrderedIndex**[partition_count_];
 					for (size_t i = 0; i < partition_count_; ++i){
-						size_t numa_node_id = table_location.node_ids_.at(i);
+						size_t numa_node_id = table_location.Partition2Node(i);
 						StdUnorderedIndex *p_index = (StdUnorderedIndex*)MemAllocator::AllocNode(sizeof(StdUnorderedIndex), numa_node_id);
 						new(p_index)StdUnorderedIndex();
 						primary_index_[i] = p_index;
@@ -228,7 +229,7 @@ namespace Cavalia {
 				char *tmp_entry = new char[record_size];
 
 				for (size_t part_id = 0; part_id < partition_count_; ++part_id){
-					size_t numa_node_id = table_location_.node_ids_.at(part_id);
+					size_t numa_node_id = table_location_.Partition2Node(part_id);
 					size_t core_id = GetCoreInNode(numa_node_id);
 					PinToCore(core_id);
 					in_stream.seekg(0, std::ios::end);
