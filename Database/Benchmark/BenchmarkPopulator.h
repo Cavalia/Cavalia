@@ -22,7 +22,16 @@ namespace Cavalia{
 				std::cout << "populate elapsed time=" << timer.GetElapsedMilliSeconds() << "ms" << std::endl;
 			}
 
+			void Start(const size_t &min_part, const size_t &max_part){
+				TimeMeasurer timer;
+				timer.StartTimer();
+				StartPopulate(min_part, max_part);
+				timer.EndTimer();
+				std::cout << "populate elapsed time=" << timer.GetElapsedMilliSeconds() << "ms" << std::endl;
+			}
+
 			virtual void StartPopulate() = 0;
+			virtual void StartPopulate(const size_t &min_part, const size_t &max_part) = 0;
 
 		private:
 			BenchmarkPopulator(const BenchmarkPopulator &);

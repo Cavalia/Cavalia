@@ -34,13 +34,33 @@ namespace Cavalia{
 			size_t GetPartitionCount() const {
 				return node_ids_.size();
 			}
+
+			size_t Partition2Node(const size_t &partition_id) const {
+				return node_ids_.at(partition_id);
+			}
+
+			void AddPartition(const size_t &node_id) {
+				node_ids_.push_back(node_id);
+			}
+
+		private:
 			std::vector<size_t> node_ids_;
 		};
 
 		struct TxnLocation{
-			size_t GetCoreCount() const {
+			size_t GetPartitionCount() const {
 				return core_ids_.size();
 			}
+
+			size_t Partition2Core(const size_t &partition_id) const {
+				return core_ids_.at(partition_id);
+			}
+
+			void AddPartition(const size_t &core_id) {
+				core_ids_.push_back(core_id);
+			}
+
+		private:
 			std::vector<size_t> core_ids_;
 			size_t node_count_;
 		};

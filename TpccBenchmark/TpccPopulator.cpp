@@ -4,6 +4,10 @@ namespace Cavalia{
 	namespace Benchmark{
 		namespace Tpcc{
 			void TpccPopulator::StartPopulate(){
+				StartPopulate(1, scale_params_->num_warehouses_);
+			}
+			
+			void TpccPopulator::StartPopulate(const size_t &min_w_id, const size_t &max_w_id){
 				// load items
 				std::unordered_set<int> original_rows;
 				TpccRandomGenerator::SelectUniqueIds(scale_params_->num_items_ / 10, 1, scale_params_->num_items_, original_rows);
@@ -16,7 +20,7 @@ namespace Cavalia{
 					item_record = NULL;
 				}
 				// load warehouses
-				for (int w_id = 1; w_id <= scale_params_->num_warehouses_; ++w_id){
+				for (int w_id = (int)min_w_id; w_id <= (int)max_w_id; ++w_id){
 					// generate warehouses
 					WarehouseRecord *warehouse_record = GenerateWarehouseRecord(w_id);
 					InsertWarehouseRecord(warehouse_record);

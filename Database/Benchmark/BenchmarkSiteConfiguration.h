@@ -21,19 +21,21 @@ namespace Cavalia {
 
 				std::vector<std::vector<size_t>> occupied_cores;
 				occupied_cores.resize(node_count_);
-				for (size_t i = 0; i < node_count_; ++i) {
-					std::cout << "cores in node " << i << ":";
-					for (size_t j = 0; j < core_count_; ++j) {
-						std::cout << " " << topology.cores_.at(i).at(j);
-						occupied_cores.at(i).push_back(topology.cores_.at(i).at(j));
+				for (size_t node_id = 0; node_id < node_count_; ++node_id) {
+					std::cout << "cores in node " << node_id << ":";
+					for (size_t k = 0; k < core_count_; ++k) {
+						size_t core_id = topology.cores_.at(node_id).at(k);
+						std::cout << " " << core_id;
+						occupied_cores.at(node_id).push_back(core_id);
 					}
 					std::cout << std::endl;
 				}
 
-				table_locations_.resize(GetTableCount());
-				for (size_t tab_id = 0; tab_id < GetTableCount(); ++tab_id){
-					for (size_t i = 0; i < node_count_; ++i){
-						table_locations_[tab_id].node_ids_.push_back(i);
+				size_t table_count = GetTableCount();
+				table_locations_.resize(table_count);
+				for (size_t tab_id = 0; tab_id < table_count; ++tab_id){
+					for (size_t node_id = 0; node_id < node_count_; ++node_id){
+						table_locations_[tab_id].node_ids_.push_back(node_id);
 					}
 				}
 				for(size_t j = 0; j < core_count_; ++j){

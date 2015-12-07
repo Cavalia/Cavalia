@@ -4,6 +4,7 @@
 
 #include <Benchmark/BenchmarkDriver.h>
 #include <Benchmark/BenchmarkArguments.h>
+#include <Benchmark/BenchmarkConfigParser.h>
 
 #include <Profiler/Profilers.h>
 #include <Redirector/IORedirector.h>
@@ -27,7 +28,6 @@
 #include "TpccSiteExecutor.h"
 #endif
 
-#include "TpccConfigure.h"
 
 using namespace Cavalia;
 using namespace Cavalia::Benchmark::Tpcc;
@@ -105,15 +105,26 @@ int main(int argc, char *argv[]) {
 		delete logger;
 		logger = NULL;
 	}
-	else if (app_type == APP_DIST_EXECUTE){
+	else if (app_type == APP_ISLAND_EXECUTE){
 		assert(factor_count == 2);
 		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
-		ConfigFileParser conf_parser;
-		conf_parser.LogConfigFile(server_id, true);
-		if (server_id == -1){
+		
+	}
+	else if (app_type == APP_SERVER_EXECUTE){
+		assert(factor_count == 2);
+		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
+		BenchmarkConfigParser conf_parser;
+		conf_parser.LogConfigFile(true);
+		if (instance_id == -1){
 			// this is client.
 		}
 		else{
+			// reload storage partition.
+			//ShareStorageManager storage_manager(DirName + "/"#BenchmarkName"/Checkpoint", true);
+			//TpccTableInitiator initiator;
+			//initiator.Initialize(&storage_manager);
+			//storage_manager.ReloadCheckpoint();
+			// execute transaction.
 		}
 	}
 	std::cout << "finished everything..." << std::endl;

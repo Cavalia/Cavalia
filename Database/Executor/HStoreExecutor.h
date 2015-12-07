@@ -15,7 +15,7 @@ namespace Cavalia {
 	namespace Database {
 		class HStoreExecutor : public BaseExecutor {
 		public:
-			HStoreExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const TxnLocation &txn_location) : BaseExecutor(redirector, logger, txn_location.GetCoreCount()), storage_manager_(storage_manager), txn_location_(txn_location){
+			HStoreExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const TxnLocation &txn_location) : BaseExecutor(redirector, logger, txn_location.GetPartitionCount()), storage_manager_(storage_manager), txn_location_(txn_location){
 				is_begin_ = false;
 				is_finish_ = false;
 				total_count_ = 0;
@@ -26,12 +26,12 @@ namespace Cavalia {
 				memset(&time_lock_, 0, sizeof(time_lock_));
 
 				spinlocks_ = new boost::detail::spinlock*[thread_count_];
-				for (size_t i = 0; i < thread_count_; ++i){
-					size_t core_id = txn_location_.core_ids_.at(i);
+				for (size_t part_id = 0; part_id < txn_location_.GetPartitionCount(); ++part_id){
+					size_t core_id = txn_location_.Partition2Core(part_id);
 					size_t node_id = GetNumaNodeId(core_id);
 					boost::detail::spinlock *lock = (boost::detail::spinlock*)MemAllocator::AllocNode(sizeof(boost::detail::spinlock), node_id);
 					memset(lock, 0, sizeof(boost::detail::spinlock));
-					spinlocks_[i] = lock;
+					spinlocks_[part_id] = lock;
 				}
 
 			}
@@ -58,8 +58,8 @@ namespace Cavalia {
 
 			virtual void ProcessQuery() {
 				boost::thread_group thread_group;
-				for (size_t part_id = 0; part_id < txn_location_.GetCoreCount(); ++part_id){
-					size_t core_id = txn_location_.core_ids_.at(part_id);
+				for (size_t part_id = 0; part_id < txn_location_.GetPartitionCount(); ++part_id){
+					size_t core_id = txn_location_.Partition2Core(part_id);
 					thread_group.create_thread(boost::bind(&HStoreExecutor::ProcessQueryThread, this, part_id, core_id));
 				}
 				bool is_all_ready = true;

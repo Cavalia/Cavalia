@@ -5,8 +5,9 @@
 #include "../Meta/MetaTypes.h"
 
 #define CHECK_DIRECTORY(BenchmarkName, DirName) \
-if (boost::filesystem::exists(DirName+"/"#BenchmarkName) == false){ \
-	bool rt = boost::filesystem::create_directory(DirName+"/"#BenchmarkName); \
+	std::string full_name = DirName + "/" + #BenchmarkName;\
+if (boost::filesystem::exists(full_name) == false){ \
+	bool rt = boost::filesystem::create_directory(full_name); \
 	assert(rt == true); \
 }
 
