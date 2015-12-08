@@ -114,13 +114,13 @@ int main(int argc, char *argv[]) {
 		BaseLogger *logger = NULL;
 		size_t total_num_core = num_core * num_node;
 		assert(num_node <= int(scale_factors[0]));
+		CONFIGURE_ISLAND(Tpcc, num_core, num_node, instance_id);
 		IORedirector io_redirector(total_num_core);
 		SET_SOURCE_SELECT(Tpcc, dir_name, num_txn, dist_ratio, total_num_core, instance_id);
 		RELOAD_STORAGE_SELECT(Tpcc, dir_name, true);
 		PRINT_STORAGE_STATUS;
 		delete logger;
 		logger = NULL;
-		
 	}
 	else if (app_type == APP_SERVER_EXECUTE){
 		assert(factor_count == 2);

@@ -87,6 +87,13 @@ if (boost::filesystem::exists(full_name) == false){ \
 	BenchmarkName##SiteExecutor executor(&io_redirector, &storage_manager, logger, configure.GetSiteTxnLocation()); \
 	executor.Start();
 
+#define CONFIGURE_ISLAND(BenchmarkName, NumCore, NumNode, NodeId) \
+	BenchmarkName##IslandConfiguration configure(NumCore, NumNode, NodeId); \
+	configure.MeasureConfiguration();
+
+#define EXECUTE_TRANSACTIONS_ISLAND(BenchmarkName) \
+	BenchmarkName##IslandExecutor executor(&io_redirector, &storage_manager, logger, configure.GetSiteTxnLocation()); \
+	executor.Start();
 ////////////////////////////////////////////////////////////
 #define COMMAND_REPLAY(BenchmarkName, DirName, NumCore) \
 	BenchmarkName##CommandReplayer replayer(DirName+"/"#BenchmarkName"/", &storage_manager, NumCore); \
