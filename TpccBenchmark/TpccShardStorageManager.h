@@ -11,7 +11,7 @@ namespace Cavalia{
 			using namespace Cavalia::Database;
 			class TpccShardStorageManager : public ShardStorageManager {
 			public:
-				TpccShardStorageManager(const std::string &filename, const TableLocation &table_location, bool is_thread_safe) : ShardStorageManager(filename, table_location, is_thread_safe){}
+				TpccShardStorageManager(const std::string &filename, const ShardTableLocation &table_location, bool is_thread_safe) : ShardStorageManager(filename, table_location, is_thread_safe){}
 				virtual ~TpccShardStorageManager(){}
 
 				virtual void RegisterTables(const std::unordered_map<size_t, RecordSchema*> &schemas){

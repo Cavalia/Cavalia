@@ -11,7 +11,7 @@ namespace Cavalia {
 			using namespace Cavalia::Database;
 			class TpccShardTable : public ShardTable {
 			public:
-				TpccShardTable(const RecordSchema * const schema_ptr, const TableLocation &table_location, bool is_thread_safe) : ShardTable(schema_ptr, table_location, is_thread_safe){}
+				TpccShardTable(const RecordSchema * const schema_ptr, const ShardTableLocation &table_location, bool is_thread_safe) : ShardTable(schema_ptr, table_location, is_thread_safe){}
 				virtual ~TpccShardTable() {}
 
 				// partition by warehouse_id.
