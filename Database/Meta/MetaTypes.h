@@ -25,7 +25,6 @@ namespace Cavalia{
 		
 		enum LockType : size_t{ NO_LOCK, READ_LOCK, WRITE_LOCK, CERTIFY_LOCK };
 		enum AccessType : size_t { READ_ONLY, READ_WRITE, INSERT_ONLY, DELETE_ONLY };
-		enum SourceType : size_t { RANDOM_SOURCE, PARTITION_SOURCE };
 
 		typedef uint32_t HashcodeType;
 

@@ -2,10 +2,8 @@
 #ifndef __CAVALIA_DATABASE_IO_REDIRECTOR_H__
 #define __CAVALIA_DATABASE_IO_REDIRECTOR_H__
 
-#include <thread>
 #include <vector>
 #include "../Transaction/TxnParam.h"
-#include "../Meta/MetaTypes.h"
 
 namespace Cavalia {
 	namespace Database {

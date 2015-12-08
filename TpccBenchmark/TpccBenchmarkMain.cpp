@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 			ENABLE_VALUE_LOGGER(Tpcc, dir_name, num_core);
 #endif
 			IORedirector io_redirector(num_core);
-			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, (int)(scale_factors[0]), dist_ratio);
+			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, dist_ratio, (int)(scale_factors[0]));
 			INIT_PROFILERS;
 			RELOAD_STORAGE(Tpcc, dir_name, true);
 			PRINT_STORAGE_STATUS;
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 			assert(total_num_core == int(scale_factors[0]));
 			CONFIGURE_HSTORE(Tpcc, num_core, num_node);
 			IORedirector io_redirector(total_num_core);
-			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, total_num_core, dist_ratio);
+			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, dist_ratio, total_num_core);
 			RELOAD_STORAGE_PARTITION(Tpcc, dir_name, false);
 			PRINT_STORAGE_STATUS;
 			EXECUTE_TRANSACTIONS_HSTORE(Tpcc);
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 			assert(num_node <= int(scale_factors[0]));
 			CONFIGURE_SITE(Tpcc, num_core, num_node);
 			IORedirector io_redirector(total_num_core);
-			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, num_node, dist_ratio);
+			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, dist_ratio, num_node);
 			RELOAD_STORAGE_PARTITION(Tpcc, dir_name, true);
 			PRINT_STORAGE_STATUS;
 			EXECUTE_TRANSACTIONS_SITE(Tpcc);
@@ -108,6 +108,11 @@ int main(int argc, char *argv[]) {
 	else if (app_type == APP_ISLAND_EXECUTE){
 		assert(factor_count == 2);
 		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
+		BaseLogger *logger = NULL;
+		IORedirector io_redirector(num_core);
+		//TpccSource source("tpcc/txn", &io_redirector, &params, 10000, RANDOM_SOURCE);
+		delete logger;
+		logger = NULL;
 		
 	}
 	else if (app_type == APP_SERVER_EXECUTE){

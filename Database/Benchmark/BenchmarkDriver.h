@@ -34,12 +34,12 @@ if (boost::filesystem::exists(full_name) == false){ \
 	logger = new ValueLogger(DirName+"/"#BenchmarkName"/", NumTxn);
 
 ////////////////////////////////////////////////////////////
-#define SET_SOURCE(BenchmarkName, DirName, NumTxn) \
-	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, RANDOM_SOURCE); \
+#define SET_SOURCE(BenchmarkName, DirName, NumTxn, DistRatio) \
+	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, DistRatio); \
 	source.Start();
 
-#define SET_SOURCE_PARTITION(BenchmarkName, DirName, NumTxn, NumPartition, DistRatio) \
-	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, PARTITION_SOURCE, NumPartition, DistRatio); \
+#define SET_SOURCE_PARTITION(BenchmarkName, DirName, NumTxn, DistRatio, NumPartition) \
+	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, DistRatio, NumPartition); \
 	source.Start();
 
 ///////////////////////////////////////////////////////////
