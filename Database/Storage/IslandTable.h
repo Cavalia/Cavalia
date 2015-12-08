@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __CAVALIA_DATABASE_SHARD_TABLE_H__
-#define __CAVALIA_DATABASE_SHARD_TABLE_H__
+#ifndef __CAVALIA_DATABASE_ISLAND_TABLE_H__
+#define __CAVALIA_DATABASE_ISLAND_TABLE_H__
 
 #include <NumaHelper.h>
 #include <ThreadHelper.h>
