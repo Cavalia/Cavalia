@@ -6,8 +6,22 @@
 #include <cassert>
 #include "../Meta/MetaTypes.h"
 
-enum AppType { APP_POPULATE, APP_REPLAY, APP_CC_EXECUTE, APP_HSTORE_EXECUTE, APP_SITE_EXECUTE, APP_ISLAND_EXECUTE, APP_SERVER_EXECUTE, kAppSize };
-enum AppReplayType { APP_COMMAND_REPLAY, APP_VALUE_REPLAY, kAppReplaySize };
+enum AppType { 
+	APP_POPULATE, 
+	APP_REPLAY, 
+	APP_CC_EXECUTE, 
+	APP_HSTORE_EXECUTE, 
+	APP_SITE_EXECUTE, 
+	APP_ISLAND_EXECUTE, 
+	APP_SERVER_EXECUTE, 
+	kAppSize 
+};
+
+enum AppReplayType { 
+	APP_COMMAND_REPLAY, 
+	APP_VALUE_REPLAY, 
+	kAppReplaySize 
+};
 
 static std::string dir_name = ".";
 static int app_type = -1;
@@ -96,7 +110,26 @@ static void ArgumentsChecker() {
 		}
 	}
 	else if (app_type == APP_ISLAND_EXECUTE){
-
+		if (factor_count == 0) {
+			std::cout << "SCALE_FACTOR (-sf) should be set." << std::endl;
+			exit(0);
+		}
+		if (num_core == -1) {
+			std::cout << "CORE_COUNT (-c) should be set." << std::endl;
+			exit(0);
+		}
+		if (num_txn == -1) {
+			std::cout << "TXN_COUNT (-t) should be set." << std::endl;
+			exit(0);
+		}
+		if (num_node == -1){
+			std::cout << "NODE_COUNT (-n) should be set." << std::endl;
+			exit(0);
+		}
+		if (instance_id == -1){
+			std::cout << "INSTANCE_ID (-i) should be set." << std::endl;
+			exit(0);
+		}
 	}
 	else if (app_type == APP_SERVER_EXECUTE){
 	
