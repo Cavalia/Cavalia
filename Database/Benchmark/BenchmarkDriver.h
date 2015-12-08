@@ -42,6 +42,10 @@ if (boost::filesystem::exists(full_name) == false){ \
 	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, DistRatio, NumPartition); \
 	source.Start();
 
+#define SET_SOURCE_SELECT(BenchmarkName, DirName, NumTxn, DistRatio, NumPartition, PartitionId) \
+	BenchmarkName##Source source(DirName + "/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, DistRatio, NumPartition, PartitionId); \
+	source.Start();
+
 ///////////////////////////////////////////////////////////
 #define RELOAD_STORAGE(BenchmarkName, DirName, ThreadSafe) \
 	ShareStorageManager storage_manager(DirName+"/"#BenchmarkName"/Checkpoint", ThreadSafe); \

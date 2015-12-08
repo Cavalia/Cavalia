@@ -23,6 +23,10 @@ namespace Cavalia{
 				partition_id_ = node_id;
 			}
 
+			size_t GetPartitionId() const {
+				return partition_id_;
+			}
+
 		private:
 			std::vector<size_t> node_ids_;
 			size_t partition_id_;

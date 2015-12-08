@@ -26,8 +26,10 @@
 #include "TpccHStoreExecutor.h"
 #include "TpccSiteConfiguration.h"
 #include "TpccSiteExecutor.h"
+#include "TpccIslandStorageManager.h"
+#include "TpccIslandConfiguration.h"
+#include "TpccIslandExecutor.h"
 #endif
-
 
 using namespace Cavalia;
 using namespace Cavalia::Benchmark::Tpcc;
@@ -105,13 +107,15 @@ int main(int argc, char *argv[]) {
 		delete logger;
 		logger = NULL;
 	}
+#if defined(__linux__)
 	else if (app_type == APP_ISLAND_EXECUTE){
 		assert(factor_count == 2);
 		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
 		BaseLogger *logger = NULL;
-		IORedirector io_redirector(num_core);
-		TpccSource source("tpcc/txn", &io_redirector, &params, 10000, 0);
-		source.Start();
+		size_t total_num_core = num_core * num_node;
+		assert(num_node <= int(scale_factors[0]));
+		IORedirector io_redirector(total_num_core);
+		SET_SOURCE_SELECT(Tpcc, dir_name, num_txn, dist_ratio, total_num_core, instance_id);
 		delete logger;
 		logger = NULL;
 		
@@ -133,6 +137,7 @@ int main(int argc, char *argv[]) {
 			// execute transaction.
 		}
 	}
+#endif
 	std::cout << "finished everything..." << std::endl;
 	return 0;
 }

@@ -5,7 +5,7 @@
 #include <cassert>
 #include <NumaHelper.h>
 #include "../Storage/IslandTableLocation.h"
-#include "../Executor/SiteTxnLocation.h"
+#include "../Executor/IslandTxnLocation.h"
 
 namespace Cavalia {
 	namespace Benchmark {
@@ -35,18 +35,17 @@ namespace Cavalia {
 				}
 
 				for (size_t k = 0; k < core_count_; ++k){
-					for (size_t i = 0; i < node_count_; ++i){
-						txn_location_.AddThread(occupied_cores.at(i).at(k));
-					}
+					txn_location_.AddThread(occupied_cores.at(node_id_).at(k));
 				}
 				txn_location_.SetPartitionCount(node_count_);
 
 				for (size_t node_id = 0; node_id < node_count_; ++node_id){
 					table_location_.AddPartition(node_id);
 				}
+				table_location_.SetPartitionId(node_id_);
 			}
 
-			const SiteTxnLocation& GetSiteTxnLocation() const {
+			const IslandTxnLocation& GetIslandTxnLocation() const {
 				return txn_location_;
 			}
 
@@ -66,7 +65,7 @@ namespace Cavalia {
 			const size_t node_count_;
 			const size_t node_id_;
 			// <thread_id, core_id>
-			SiteTxnLocation  txn_location_;
+			IslandTxnLocation  txn_location_;
 			// <partition_id, numa_node_id>
 			IslandTableLocation table_location_;
 		};
