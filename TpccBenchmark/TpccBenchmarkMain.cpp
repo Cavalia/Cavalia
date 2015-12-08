@@ -116,6 +116,8 @@ int main(int argc, char *argv[]) {
 		assert(num_node <= int(scale_factors[0]));
 		IORedirector io_redirector(total_num_core);
 		SET_SOURCE_SELECT(Tpcc, dir_name, num_txn, dist_ratio, total_num_core, instance_id);
+		RELOAD_STORAGE_SELECT(Tpcc, dir_name, true);
+		PRINT_STORAGE_STATUS;
 		delete logger;
 		logger = NULL;
 		

@@ -53,17 +53,23 @@ if (boost::filesystem::exists(full_name) == false){ \
 	initiator.Initialize(&storage_manager); \
 	storage_manager.ReloadCheckpoint();
 
+#define RELOAD_STORAGE_PARTITION(BenchmarkName, DirName, ThreadSafe) \
+	BenchmarkName##ShardStorageManager storage_manager(DirName + "/"#BenchmarkName"/Checkpoint", configure.GetTableLocation(), ThreadSafe); \
+	BenchmarkName##TableInitiator initiator; \
+	initiator.Initialize(&storage_manager); \
+	storage_manager.ReloadCheckpoint();
+
+#define RELOAD_STORAGE_SELECT(BenchmarkName, DirName, ThreadSafe) \
+	BenchmarkName##SelectStorageManager storage_manager(DirName + "/"#BenchmarkName"/Checkpoint", configure.GetTableLocation(), ThreadSafe); \
+	BenchmarkName##TableInitiator initiator; \
+	initiator.Initialize(&storage_manager); \
+	storage_manager.ReloadCheckpoint();
+
+////////////////////////////////////////////////////////////
 // multiple concurrency control types
 #define EXECUTE_TRANSACTIONS_CONCURRENT(BenchmarkName, NumCore) \
 	BenchmarkName##ConcurrentExecutor executor(&io_redirector, &storage_manager, logger, NumCore); \
 	executor.Start();
-
-////////////////////////////////////////////////////////////
-#define RELOAD_STORAGE_PARTITION(BenchmarkName, DirName, ThreadSafe) \
-	BenchmarkName##ShardStorageManager storage_manager(DirName+"/"#BenchmarkName"/Checkpoint", configure.GetTableLocation(), ThreadSafe); \
-	BenchmarkName##TableInitiator initiator; \
-	initiator.Initialize(&storage_manager); \
-	storage_manager.ReloadCheckpoint();
 
 #define CONFIGURE_HSTORE(BenchmarkName, NumCore, NumNode) \
 	BenchmarkName##HStoreConfiguration configure(NumCore, NumNode); \
