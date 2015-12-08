@@ -15,10 +15,12 @@ namespace Cavalia{
 				TpccSource(const std::string &filename_prefix, IORedirector *const redirector, TpccScaleParams *const params, const size_t &num_transactions, const size_t &dist_ratio) : BenchmarkSource(filename_prefix, redirector, params, num_transactions, dist_ratio), scale_params_(params){}
 
 				TpccSource(const std::string &filename_prefix, IORedirector *const redirector, TpccScaleParams *const params, const size_t &num_transactions, const size_t &dist_ratio, const size_t &partition_count) : BenchmarkSource(filename_prefix, redirector, params, num_transactions, dist_ratio, partition_count), scale_params_(params){}
+
+				TpccSource(const std::string &filename_prefix, IORedirector *const redirector, TpccScaleParams *const params, const size_t &num_transactions, const size_t &dist_ratio, const size_t &partition_count, const size_t &partition_id) : BenchmarkSource(filename_prefix, redirector, params, num_transactions, dist_ratio, partition_count, partition_id), scale_params_(params){}
 				virtual ~TpccSource(){}
 
 			private:
-				virtual void StartExecution();
+				virtual void StartGeneration();
 
 				DeliveryParam* GenerateDeliveryParam(const int &w_id = -1) const;
 				NewOrderParam* GenerateNewOrderParam(const int &w_id = -1) const;

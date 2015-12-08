@@ -9,7 +9,7 @@ namespace Cavalia{
 	namespace Database{
 		class ShardStorageManager : public BaseStorageManager {
 		public:
-			ShardStorageManager(const std::string &filename, const TableLocation &table_location, bool is_thread_safe) : BaseStorageManager(filename) {
+			ShardStorageManager(const std::string &filename, const ShardTableLocation &table_location, bool is_thread_safe) : BaseStorageManager(filename) {
 				table_location_ = table_location;
 				is_thread_safe_ = is_thread_safe;
 			}
@@ -23,7 +23,7 @@ namespace Cavalia{
 
 		protected:
 			// <partition_id, numa_node_id>
-			TableLocation table_location_;
+			ShardTableLocation table_location_;
 			bool is_thread_safe_;
 		};
 	}

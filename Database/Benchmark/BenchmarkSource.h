@@ -13,18 +13,24 @@ namespace Cavalia{
 	namespace Benchmark{
 		using namespace Database;
 
-		enum SourceType : size_t { RANDOM_SOURCE, PARTITION_SOURCE };
+		enum SourceType : size_t { RANDOM_SOURCE, PARTITION_SOURCE, SELECT_SOURCE };
 		class BenchmarkSource{
 		public:
-			BenchmarkSource(const std::string &prefix, IORedirector *redirector, BenchmarkScaleParams *const scale_params, const size_t &num_transactions, const size_t dist_ratio) : redirector_ptr_(redirector), num_transactions_(num_transactions), dist_ratio_(dist_ratio), source_type_(RANDOM_SOURCE), partition_count_(0){
+			BenchmarkSource(const std::string &prefix, IORedirector *redirector, BenchmarkScaleParams *const scale_params, const size_t &num_transactions, const size_t dist_ratio) : redirector_ptr_(redirector), num_transactions_(num_transactions), dist_ratio_(dist_ratio), source_type_(RANDOM_SOURCE), partition_count_(0), partition_id_(0){
 				log_filename_ = prefix + "_" + scale_params->ToString() + "_" + std::to_string(num_transactions) + "_" + std::to_string(dist_ratio) + "_" + std::to_string(source_type_);
 				is_exists_ = boost::filesystem::exists(log_filename_);
 			}
 
-			BenchmarkSource(const std::string &prefix, IORedirector *redirector, BenchmarkScaleParams *const scale_params, const size_t &num_transactions, const size_t &dist_ratio, const size_t &partition_count) : redirector_ptr_(redirector), num_transactions_(num_transactions), dist_ratio_(dist_ratio), source_type_(PARTITION_SOURCE), partition_count_(partition_count){
+			BenchmarkSource(const std::string &prefix, IORedirector *redirector, BenchmarkScaleParams *const scale_params, const size_t &num_transactions, const size_t &dist_ratio, const size_t &partition_count) : redirector_ptr_(redirector), num_transactions_(num_transactions), dist_ratio_(dist_ratio), source_type_(PARTITION_SOURCE), partition_count_(partition_count), partition_id_(0){
 				log_filename_ = prefix + "_" + scale_params->ToString() + "_" + std::to_string(num_transactions) + "_" + std::to_string(dist_ratio) + "_" + std::to_string(source_type_) + "_" + std::to_string(partition_count);
 				is_exists_ = boost::filesystem::exists(log_filename_);
 			}
+
+			BenchmarkSource(const std::string &prefix, IORedirector *redirector, BenchmarkScaleParams *const scale_params, const size_t &num_transactions, const size_t &dist_ratio, const size_t &partition_count, const size_t &partition_id) : redirector_ptr_(redirector), num_transactions_(num_transactions), dist_ratio_(dist_ratio), source_type_(SELECT_SOURCE), partition_count_(partition_count), partition_id_(partition_id){
+				log_filename_ = prefix + "_" + scale_params->ToString() + "_" + std::to_string(num_transactions) + "_" + std::to_string(dist_ratio) + "_" + std::to_string(source_type_) + "_" + std::to_string(partition_count) + "_" + std::to_string(partition_id);
+				is_exists_ = boost::filesystem::exists(log_filename_);
+			}
+
 			virtual ~BenchmarkSource(){}
 
 			void Start(){
@@ -37,7 +43,7 @@ namespace Cavalia{
 				else {
 					// generate params and dump to file.
 					output_file_.open(log_filename_, std::ofstream::binary);
-					StartExecution();
+					StartGeneration();
 					output_file_.close();
 				}
 				timer.EndTimer();
@@ -108,7 +114,7 @@ namespace Cavalia{
 			}
 
 			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray&) = 0;
-			virtual void StartExecution() = 0;
+			virtual void StartGeneration() = 0;
 
 		private:
 			BenchmarkSource(const BenchmarkSource &);
@@ -120,6 +126,7 @@ namespace Cavalia{
 			const size_t dist_ratio_;
 			const SourceType source_type_;
 			const size_t partition_count_;
+			const size_t partition_id_;
 			bool is_exists_;
 			std::string log_filename_;
 			std::ofstream output_file_;

@@ -8,7 +8,6 @@
 #include <numa.h>
 #endif
 
-#if defined(__linux__)
 struct NumaTopology{
 	NumaTopology(){
 		// number of cores in the machine.
@@ -43,7 +42,6 @@ struct NumaTopology{
 	size_t core_per_node_;
 	std::vector<std::vector<size_t>> cores_;
 };
-#endif
 
 static size_t GetNumaNodeId(const size_t &core_id){
 #if defined(__linux__)

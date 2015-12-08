@@ -46,7 +46,7 @@ static void PrintUsage() {
 	std::cout << "<HSTORE_EXECUTE> Benchmark -a3 -sf10 -sf100 -t100000 -c4 -n5 -d20" << std::endl;
 	std::cout << "<SITE_EXECUTE> Benchmark -a4 -sf10 -sf100 -t100000 -c4 -n5 -d20" << std::endl;
 	std::cout << "<ISLAND_EXECUTE> Benchmark -a5 -sf10 -sf100 -t100000 -i0" << std::endl;
-	std::cout << "<SERVER_EXECUTE> Benchmark -a5 -sf10 -sf100 -t100000 -i0" << std::endl;
+	std::cout << "<SERVER_EXECUTE> Benchmark -a6 -sf10 -sf100 -t100000 -i0" << std::endl;
 	std::cout << "==============================" << std::endl;
 }
 

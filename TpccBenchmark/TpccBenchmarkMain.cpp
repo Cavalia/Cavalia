@@ -110,7 +110,8 @@ int main(int argc, char *argv[]) {
 		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
 		BaseLogger *logger = NULL;
 		IORedirector io_redirector(num_core);
-		//TpccSource source("tpcc/txn", &io_redirector, &params, 10000, RANDOM_SOURCE);
+		TpccSource source("tpcc/txn", &io_redirector, &params, 10000, 0);
+		source.Start();
 		delete logger;
 		logger = NULL;
 		

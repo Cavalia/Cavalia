@@ -4,7 +4,7 @@
 
 #include <cassert>
 #include <NumaHelper.h>
-#include "../Storage/TableLocation.h"
+#include "../Storage/ShardTableLocation.h"
 #include "../Executor/HStoreTxnLocation.h"
 
 namespace Cavalia {
@@ -14,7 +14,7 @@ namespace Cavalia {
 		class BenchmarkHStoreConfiguration {
 		public:
 			BenchmarkHStoreConfiguration(const size_t &core_count, const size_t &node_count) : core_count_(core_count), node_count_(node_count) {}
-			~BenchmarkHStoreConfiguration() {}
+			virtual ~BenchmarkHStoreConfiguration() {}
 
 			void MeasureConfiguration() {
 				NumaTopology topology;
@@ -46,7 +46,7 @@ namespace Cavalia {
 				return txn_location_;
 			}
 
-			const TableLocation& GetTableLocation() const {
+			const ShardTableLocation& GetTableLocation() const {
 				return table_location_;
 			}
 
@@ -63,7 +63,7 @@ namespace Cavalia {
 			// <thread_id, core_id>
 			HStoreTxnLocation txn_location_;
 			// <partition_id, numa_node_id>
-			TableLocation table_location_;
+			ShardTableLocation table_location_;
 		};
 	}
 }

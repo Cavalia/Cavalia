@@ -5,7 +5,7 @@
 #include <NumaHelper.h>
 #include <ThreadHelper.h>
 #include "BaseTable.h"
-#include "ShardTableLocation.h"
+#include "TableLocation.h"
 #include "../Index/StdUnorderedIndex.h"
 #include "../Index/StdUnorderedIndexMT.h"
 #include "../Index/StdOrderedIndex.h"
@@ -16,9 +16,9 @@
 
 namespace Cavalia {
 	namespace Database {
-		class ShardTable : public BaseTable {
+		class IslandTable : public BaseTable {
 		public:
-			ShardTable(const RecordSchema * const schema_ptr, const ShardTableLocation &table_location, bool is_thread_safe) : BaseTable(schema_ptr), partition_count_(table_location.GetPartitionCount()){
+			IslandTable(const RecordSchema * const schema_ptr, const TableLocation &table_location, bool is_thread_safe) : BaseTable(schema_ptr), partition_count_(table_location.GetPartitionCount()){
 				table_location_ = table_location;
 				if (is_thread_safe == true){
 #if defined(CUCKOO_INDEX)
@@ -68,7 +68,7 @@ namespace Cavalia {
 				}
 			}
 
-			virtual ~ShardTable() {
+			virtual ~IslandTable() {
 				//// records in the table is released by primary index.
 				//for (size_t i = 0; i < partition_count_; ++i){
 				//	MemAllocator::FreeNode((char*)(primary_index_[i]), sizeof(StdUnorderedIndex));
@@ -161,11 +161,11 @@ namespace Cavalia {
 				}
 				record = secondary_indexes_[part_id][idx_id]->SearchRecord(key);
 			}
-			
+
 			virtual void SelectRecord(const size_t &part_id, const size_t &idx_id, const std::string &key, TableRecord *&record) const {
 				record = secondary_indexes_[part_id][idx_id]->SearchRecord(key);
 			}
-			
+
 			virtual void SelectRecords(const size_t &idx_id, const std::string &key, TableRecords *records) const {
 				size_t part_id = 0;
 				if (partition_count_ != 1){
@@ -173,7 +173,7 @@ namespace Cavalia {
 				}
 				secondary_indexes_[part_id][idx_id]->SearchRecords(key, records);
 			}
-			
+
 			virtual void SelectRecords(const size_t &part_id, const size_t &idx_id, const std::string &key, TableRecords *records) const {
 				secondary_indexes_[part_id][idx_id]->SearchRecords(key, records);
 			}
@@ -185,11 +185,11 @@ namespace Cavalia {
 				}
 				secondary_indexes_[part_id][idx_id]->SearchUpperRecords(key, records);
 			}
-			
+
 			virtual void SelectUpperRecords(const size_t part_id, const size_t &idx_id, const std::string &key, TableRecords *records) const {
 				secondary_indexes_[part_id][idx_id]->SearchUpperRecords(key, records);
 			}
-			
+
 			virtual void SelectLowerRecords(const size_t &idx_id, const std::string &key, TableRecords *records) const {
 				size_t part_id = 0;
 				if (partition_count_ != 1){
@@ -197,11 +197,11 @@ namespace Cavalia {
 				}
 				secondary_indexes_[part_id][idx_id]->SearchLowerRecords(key, records);
 			}
-			
+
 			virtual void SelectLowerRecords(const size_t part_id, const size_t &idx_id, const std::string &key, TableRecords *records) const {
 				secondary_indexes_[part_id][idx_id]->SearchLowerRecords(key, records);
 			}
-			
+
 			virtual void SelectRangeRecords(const size_t &idx_id, const std::string &lower_key, std::string &upper_key, TableRecords *records) const {
 				size_t part_id = 0;
 				if (partition_count_ != 1){
@@ -209,7 +209,7 @@ namespace Cavalia {
 				}
 				secondary_indexes_[part_id][idx_id]->SearchRangeRecords(lower_key, upper_key, records);
 			}
-			
+
 			virtual void SelectRangeRecords(const size_t part_id, const size_t &idx_id, const std::string &lower_key, const std::string &upper_key, TableRecords *records) const {
 				secondary_indexes_[part_id][idx_id]->SearchRangeRecords(lower_key, upper_key, records);
 			}
@@ -280,12 +280,12 @@ namespace Cavalia {
 			}
 
 		private:
-			ShardTable(const ShardTable&);
-			ShardTable & operator=(const ShardTable&);
+			IslandTable(const IslandTable&);
+			IslandTable & operator=(const IslandTable&);
 
 		protected:
 			const size_t partition_count_;
-			ShardTableLocation table_location_;
+			TableLocation table_location_;
 			BaseUnorderedIndex **primary_index_;
 			BaseOrderedIndex ***secondary_indexes_;
 		};

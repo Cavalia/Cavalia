@@ -1,12 +1,12 @@
 #pragma once
-#ifndef __CAVALIA_DATABASE_EXECUTOR_TABLE_LOCATION_H__
-#define __CAVALIA_DATABASE_EXECUTOR_TABLE_LOCATION_H__
+#ifndef __CAVALIA_DATABASE_EXECUTOR_SHARD_TABLE_LOCATION_H__
+#define __CAVALIA_DATABASE_EXECUTOR_SHARD_TABLE_LOCATION_H__
 
 #include <vector>
 
 namespace Cavalia{
 	namespace Database{
-		struct TableLocation{
+		struct ShardTableLocation{
 			size_t GetPartitionCount() const {
 				return node_ids_.size();
 			}
