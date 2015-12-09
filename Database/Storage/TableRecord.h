@@ -22,7 +22,7 @@
 #include "../Content/MvLockWaitContent.h"
 #elif defined(MVOCC)
 #include "../Content/MvOccContent.h"
-#elif defined(DBX)
+#elif defined(DBX) || defined(HRTM)
 #include "../Content/RtmContent.h"
 #endif
 
@@ -62,7 +62,7 @@ namespace Cavalia{
 			MvLockWaitContent content_;
 #elif defined(MVOCC)
 			MvOccContent content_;
-#elif defined(DBX)
+#elif defined(DBX) || defined(HRTM)
 			RtmContent content_;
 #endif
 		};

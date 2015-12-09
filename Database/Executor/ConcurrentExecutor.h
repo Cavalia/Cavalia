@@ -13,7 +13,7 @@
 #include "../Transaction/StoredProcedure.h"
 #include "../Transaction/ScalableTimestamp.h"
 #include "BaseExecutor.h"
-#if defined(DBX)
+#if defined(DBX) || defined(HRTM)
 #include <RtmLock.h>
 #endif
 
@@ -67,7 +67,7 @@ namespace Cavalia{
 					}
 					is_all_ready = true;
 				}
-#if defined(LOCK_WAIT) || defined(LOCK) || defined(OCC) || defined(SILO) || defined(DBX) || defined(MVOCC)
+#if defined(LOCK_WAIT) || defined(LOCK) || defined(OCC) || defined(SILO) || defined(MVOCC) || defined(DBX) || defined(HRTM)
 				ScalableTimestamp scalable_ts;
 #endif
 				std::cout << "start processing..." << std::endl;
@@ -112,7 +112,7 @@ namespace Cavalia{
 				// prepare local managers.
 				size_t node_id = GetNumaNodeId(core_id);
 				TransactionManager *txn_manager = new TransactionManager(storage_manager_, logger_, thread_id, this->thread_count_);
-#if defined(DBX)
+#if defined(DBX) || defined(HRTM)
 				txn_manager->SetRtmLock(&rtm_lock_);
 #endif
 				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
@@ -217,7 +217,7 @@ namespace Cavalia{
 			volatile bool is_finish_;
 			std::atomic<size_t> total_count_;
 			std::atomic<size_t> total_abort_count_;
-#if defined(DBX)
+#if defined(DBX) || defined(HRTM)
 			RtmLock rtm_lock_;
 #endif
 		};

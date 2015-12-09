@@ -16,7 +16,7 @@
 #include "GlobalTimestamp.h"
 #include "BatchTimestamp.h"
 #include "ScalableTimestamp.h"
-#if defined(DBX)
+#if defined(DBX) || defined(HRTM)
 #include <RtmLock.h>
 #endif
 
@@ -44,7 +44,7 @@ namespace Cavalia{
 			// destruction.
 			virtual ~TransactionManager(){}
 
-#if defined(DBX)
+#if defined(DBX) || defined(HRTM)
 			void SetRtmLock(RtmLock *rtm_lock){
 				rtm_lock_ = rtm_lock;
 			}
@@ -225,7 +225,7 @@ namespace Cavalia{
 #if defined(MVTO) || defined(MVLOCK) || defined(MVLOCK_WAIT) || defined(MVOCC)
 			std::vector<SchemaRecord*> read_only_set_;
 #endif
-#if defined(DBX)
+#if defined(DBX) || defined(HRTM)
 			RtmLock *rtm_lock_;
 #endif
 		};
