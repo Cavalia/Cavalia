@@ -7,8 +7,8 @@ namespace Cavalia{
 			BEGIN_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			record->is_visible_ = false;
 			TableRecord *tb_record = new TableRecord(record);
-			// upsert.
-			storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record);
+			// the to-be-inserted record may have already existed.
+			//if (storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record) == true){
 			Access *access = access_list_.NewAccess();
 			access->access_type_ = INSERT_ONLY;
 			access->access_record_ = tb_record;
@@ -17,6 +17,12 @@ namespace Cavalia{
 			access->timestamp_ = 0;
 			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 			return true;
+			/*}
+			else{
+			// if the record has already existed, then we need to lock the original record.
+			END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
+			return true;
+			}*/
 		}
 
 		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type) {
@@ -24,6 +30,8 @@ namespace Cavalia{
 				Access *access = access_list_.NewAccess();
 				access->access_type_ = READ_ONLY;
 				access->access_record_ = t_record;
+				access->local_record_ = NULL;
+				access->table_id_ = table_id;
 				// ensure consistent view of timestamp_ and record_
 				rtm_lock_->Lock();
 				access->timestamp_ = t_record->timestamp_;
@@ -35,18 +43,21 @@ namespace Cavalia{
 				Access *access = access_list_.NewAccess();
 				access->access_type_ = READ_WRITE;
 				access->access_record_ = t_record;
+				access->table_id_ = table_id;
 				// ensure consistent view of timestamp_ and record_
+				SchemaRecord *global_record = NULL;
 				rtm_lock_->Lock();
 				access->timestamp_ = t_record->timestamp_;
-				SchemaRecord* tmp_record = t_record->record_;
+				global_record = t_record->record_;
 				rtm_lock_->Unlock();
 				// copy data
 				BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-				char *local_data = MemAllocator::Alloc(tmp_record->schema_ptr_->GetSchemaSize());
+				const RecordSchema *schema_ptr = global_record->schema_ptr_;
+				char *local_data = MemAllocator::Alloc(schema_ptr->GetSchemaSize());
 				SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
-				new(local_record)SchemaRecord(tmp_record->schema_ptr_, local_data);
+				new(local_record)SchemaRecord(schema_ptr, local_data);
 				END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-				local_record->CopyFrom(tmp_record);
+				local_record->CopyFrom(global_record);
 				access->local_record_ = local_record;
 				// reset returned record.
 				s_record = local_record;
@@ -74,16 +85,15 @@ namespace Cavalia{
 				if (access_ptr->access_type_ == READ_ONLY) {
 					// whether someone has changed the tuple after my read
 					if (access_ptr->access_record_->timestamp_ != access_ptr->timestamp_) {
-						UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->access_record_->GetTableId());
+						UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->table_id_);
 						is_success = false;
 						break;
 					}
-
 				}
 				else if (access_ptr->access_type_ == READ_WRITE) {
 					// whether someone has changed the tuple after my read
-					if (access_ptr->access_record_->timestamp_ != access_ptr->timestamp_ || access_ptr->access_record_->record_->is_visible_ == false) {
-						UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->access_record_->GetTableId());
+					if (access_ptr->access_record_->timestamp_ != access_ptr->timestamp_) {
+						UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->table_id_);
 						is_success = false;
 						break;
 					}
@@ -93,7 +103,7 @@ namespace Cavalia{
 			if (is_success == true) {
 				// get global epoch id for commit
 				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-				uint64_t global_ts = ScalableTimestamp::GetTimestamp();
+				//uint64_t global_ts = ScalableTimestamp::GetTimestamp();
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
@@ -139,11 +149,11 @@ namespace Cavalia{
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE) {
-						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						/*BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 						access_ptr->local_record_->~SchemaRecord();
 						MemAllocator::Free((char*)access_ptr->local_record_);
-						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);*/
 					}
 					// deletes, wait for recycling to clean up
 				}
@@ -156,11 +166,11 @@ namespace Cavalia{
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE) {
-						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						/*BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 						access_ptr->local_record_->~SchemaRecord();
 						MemAllocator::Free((char*)access_ptr->local_record_);
-						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);*/
 					}
 					// inserts and deletes, wait for recycling to clean up
 				}
