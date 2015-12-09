@@ -4,7 +4,7 @@
 
 #include "../Transaction/TxnParam.h"
 #include "BaseLogger.h"
-#if defined(LZ4)
+#if defined(COMPRESSION)
 #include <lz4frame.h>
 #endif
 
@@ -23,7 +23,7 @@ namespace Cavalia {
 				for (size_t i = 0; i < thread_count_; ++i){
 					last_timestamps_[i] = 0;
 				}
-#if defined(LZ4)
+#if defined(COMPRESSION)
 				compression_contexts_ = new LZ4F_compressionContext_t[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
 					LZ4F_errorCode_t err = LZ4F_createCompressionContext(&compression_contexts_[i], LZ4F_VERSION);
@@ -48,7 +48,7 @@ namespace Cavalia {
 
 			}
 			virtual ~CommandLogger() {
-#if defined(LZ4)
+#if defined(COMPRESSION)
 				for (size_t i = 0; i < thread_count_; ++i){
 					size_t& offset = compressed_buf_offsets_[i];
 					size_t n = LZ4F_compressEnd(compression_contexts_[i], compressed_buffers_[i] + offset, compressed_buf_size_ - offset, NULL);
@@ -86,7 +86,7 @@ namespace Cavalia {
 			void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts, const size_t &txn_type, TxnParam *param) {
 				if (global_ts == -1){
 					FILE *file_ptr = outfiles_[thread_id];
-#if defined(LZ4)
+#if defined(COMPRESSION)
 					size_t& offset = compressed_buf_offsets_[thread_id];
 					size_t n = LZ4F_compressUpdate(compression_contexts_[thread_id], compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
 					assert(LZ4F_isError(n) == false);
@@ -121,7 +121,7 @@ namespace Cavalia {
 				if (global_ts != last_timestamps_[thread_id] || global_ts == (uint64_t)(-1)){
 					FILE *file_ptr = outfiles_[thread_id];
 					last_timestamps_[thread_id] = global_ts;
-#if defined(LZ4)
+#if defined(COMPRESSION)
 					size_t& offset = compressed_buf_offsets_[thread_id];
 					size_t n = LZ4F_compressUpdate(compression_contexts_[thread_id], compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
 					assert(LZ4F_isError(n) == false);
@@ -152,7 +152,7 @@ namespace Cavalia {
 			char **buffers_;
 			size_t *buffer_offsets_;
 			uint64_t *last_timestamps_;
-#if defined(LZ4)
+#if defined(COMPRESSION)
 			LZ4F_compressionContext_t* compression_contexts_;
 			char **compressed_buffers_;
 			size_t *compressed_buf_offsets_;
