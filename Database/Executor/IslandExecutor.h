@@ -110,9 +110,6 @@ namespace Cavalia {
 					procedures[entry.first]->SetPartitionId(node_id);
 					procedures[entry.first]->SetPartitionCount(txn_location_.GetPartitionCount());
 				}
-#if defined(DBX)
-				txn_manager.SetRtmLock(&rtm_lock_);
-#endif
 				/////////////////////////////////////////////////
 				is_ready_[part_id] = true;
 				while (is_begin_ == false);
