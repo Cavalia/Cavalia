@@ -43,6 +43,7 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 ###Logging
 * VALUE_LOGGING: enable value logging.
 * COMMAND_LOGGING: enable command logging.
+* COMPRESSION: enable log compression.
 
 ###Timestamp allocation
 * BATCH_TIMESTAMP: allocate timestamp in batch.
