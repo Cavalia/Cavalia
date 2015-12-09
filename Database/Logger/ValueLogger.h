@@ -4,12 +4,15 @@
 
 #include "../Meta/MetaConstants.h"
 #include "BaseLogger.h"
-
+#if defined(LZ4)
+#include <lz4frame.h>
+#endif
 namespace Cavalia{
 	namespace Database{
-
 		class ValueLogger : public BaseLogger{
 		public:
+			static const int LZ4_HEADER_SIZE = 19;
+			static const int LZ4_FOOTER_SIZE = 4;
 			ValueLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, true){
 				buffers_ = new char*[thread_count_];
 				buffer_offsets_ = new size_t[thread_count_];
@@ -23,8 +26,53 @@ namespace Cavalia{
 				for (size_t i = 0; i < thread_count_; ++i){
 					last_timestamps_[i] = 0;
 				}
+#if defined(LZ4)
+				compression_contexts_ = new LZ4F_compressionContext_t[thread_count_];
+				for (size_t i = 0; i < thread_count_; ++i){
+					LZ4F_errorCode_t err = LZ4F_createCompressionContext(&compression_contexts_[i], LZ4F_VERSION);
+					assert(LZ4F_isError(err) == false);
+				}
+				size_t frame_size = LZ4F_compressBound(kValueLogBufferSize, NULL);
+				// compressed_buf_size_ is the max size of file write
+				compressed_buf_size_ = frame_size + LZ4_HEADER_SIZE + LZ4_FOOTER_SIZE;
+				
+				compressed_buffers_ = new char*[thread_count_];
+				compressed_buf_offsets_ = new size_t[thread_count_];
+				for (size_t i = 0; i < thread_count_; ++i){
+					compressed_buf_offsets_[i] = 0;
+					compressed_buffers_[i] = new char[compressed_buf_size_];
+				}
+				
+				// compress begin: put header
+				for (size_t i = 0; i < thread_count_; ++i){
+					compressed_buf_offsets_[i] = LZ4F_compressBegin(compression_contexts_[i], compressed_buffers_[i], compressed_buf_size_, NULL);
+				}
+#endif
 			}
 			virtual ~ValueLogger(){
+#if defined(LZ4)
+				for (size_t i = 0; i < thread_count_; ++i){
+					size_t& offset = compressed_buf_offsets_[i];
+					size_t n = LZ4F_compressEnd(compression_contexts_[i], compressed_buffers_[i] + offset, compressed_buf_size_ - offset, NULL);
+					assert(LZ4F_isError(n) == false);
+					offset += n;
+					
+					FILE *file_ptr = outfiles_[i];
+					fwrite(compressed_buffers_[i], sizeof(char), offset, file_ptr);
+
+					LZ4F_freeCompressionContext(compression_contexts_[i]);
+				}
+				delete[] compression_contexts_;
+				compression_contexts_ = NULL;
+				for (size_t i = 0; i < thread_count_; ++i){
+					delete[] compressed_buffers_[i];
+					compressed_buffers_[i] = NULL;
+				}
+				delete[] compressed_buffers_;
+				compressed_buffers_ = NULL;
+				delete[] compressed_buf_offsets_;
+				compressed_buf_offsets_ = NULL;
+#endif
 				for (size_t i = 0; i < thread_count_; ++i){
 					delete[] buffers_[i];
 					buffers_[i] = NULL;
@@ -82,7 +130,18 @@ namespace Cavalia{
 			void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts, const uint64_t &commit_ts){
 				if (global_ts == -1){
 					FILE *file_ptr = outfiles_[thread_id];
+#if defined(LZ4)
+					size_t& offset = compressed_buf_offsets_[thread_id];
+					size_t n = LZ4F_compressUpdate(compression_contexts_[thread_id], compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
+					assert(LZ4F_isError(n) == false);
+					offset += n;
+					
+					// after compression, write into file
+					fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
+					offset = 0;
+#else
 					fwrite(buffers_[thread_id], sizeof(char), buffer_offsets_[thread_id], file_ptr);
+#endif
 					int ret;
 					ret = fflush(file_ptr);
 					assert(ret == 0);
@@ -101,7 +160,18 @@ namespace Cavalia{
 				if (global_ts != last_timestamps_[thread_id]){
 					FILE *file_ptr = outfiles_[thread_id];
 					last_timestamps_[thread_id] = global_ts;
+#if defined(LZ4)
+					size_t& offset = compressed_buf_offsets_[thread_id];
+					size_t n = LZ4F_compressUpdate(compression_contexts_[thread_id], compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
+					assert(LZ4F_isError(n) == false);
+					offset += n;
+					
+					// after compression, write into file
+					fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
+					offset = 0;
+#else
 					fwrite(buffers_[thread_id], sizeof(char), buffer_offsets_[thread_id], file_ptr);
+#endif
 					int ret;
 					ret = fflush(file_ptr);
 					assert(ret == 0);
@@ -127,6 +197,12 @@ namespace Cavalia{
 			size_t *buffer_offsets_;
 			size_t *txn_offsets_;
 			uint64_t *last_timestamps_;
+#if defined(LZ4)
+			LZ4F_compressionContext_t* compression_contexts_;
+			char **compressed_buffers_;
+			size_t *compressed_buf_offsets_;
+			size_t compressed_buf_size_;
+#endif
 		};
 	}
 }

@@ -66,7 +66,7 @@ namespace Cavalia{
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			// step 1: acquire lock and validate
 			bool is_success = true;
-
+			
 			// begin hardware transaction.
 			rtm_lock_->Lock();
 			for (size_t i = 0; i < access_list_.access_count_; ++i) {
@@ -88,12 +88,14 @@ namespace Cavalia{
 						break;
 					}
 				}
-				else {
-					assert(access_ptr->access_type_ == DELETE_ONLY);
-				}
 			}
 			// step 2: if success, then overwrite and commit
 			if (is_success == true) {
+				// get global epoch id for commit
+				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
+				uint64_t global_ts = ScalableTimestamp::GetTimestamp();
+				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
+
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
 					TableRecord *access_record = access_ptr->access_record_;
@@ -102,33 +104,38 @@ namespace Cavalia{
 						std::swap(access_record->record_, access_ptr->local_record_);
 						access_record->timestamp_++;
 					}
+					else if (access_ptr->access_type_ == INSERT_ONLY){
+						access_ptr->access_record_->record_->is_visible_ = true;
+					}
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
 						access_record->record_->is_visible_ = false;
+						// update timestamp to invalidate concurrent reads
 						access_record->timestamp_++;
 					}
 				}
-				for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
-					Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-					//storage_manager_->tables_[insertion_ptr->table_id_]->InsertRecord(insertion_ptr->primary_key_, insertion_ptr->insertion_record_);
-				}
-				// commit.
 				// end hardware transaction.
 				rtm_lock_->Unlock();
-				// step 3: release locks and clean up.
-				for (size_t i = 0; i < access_list_.access_count_; ++i) {
-					Access *access_ptr = access_list_.GetAccess(i);
-					if (access_ptr->access_type_ == READ_WRITE) {
-						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						//TODO: recycle old version, by mem_allocator or delete
-						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+
+				// logging, outside rtm region
+#if defined(VALUE_LOGGING)
+				for (size_t i = 0; i < access_list_.access_count_; ++i){
+					Access* access_ptr = access_list_.GetAccess(i);
+					TableRecord *access_record = access_ptr->access_record_;
+					if (access_ptr->access_type_ == READ_WRITE){
+						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+					}
+					else if (access_ptr->access_type_ == INSERT_ONLY){
+						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+					}
+					else if (access_ptr->access_type_ == DELETE_ONLY){
+						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->GetPrimaryKey());
 					}
 				}
-			}
-			// if failed.
-			else {
-				// end hardware transaction.
-				rtm_lock_->Unlock();
-				// step 3: release locks and clean up.
+				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, 0);
+#elif defined(COMMAND_LOGGING)
+				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, context->txn_type_, param);
+#endif
+				// clean up.
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE) {
@@ -138,21 +145,27 @@ namespace Cavalia{
 						MemAllocator::Free((char*)access_ptr->local_record_);
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
-				}
-				for (size_t i = 0; i < insertion_list_.insertion_count_; ++i) {
-					Insertion *insertion_ptr = insertion_list_.GetInsertion(i);
-					BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-					MemAllocator::Free(insertion_ptr->local_record_->data_ptr_);
-					insertion_ptr->local_record_->~SchemaRecord();
-					MemAllocator::Free((char*)insertion_ptr->local_record_);
-					insertion_ptr->insertion_record_->~TableRecord();
-					MemAllocator::Free((char*)insertion_ptr->insertion_record_);
-					END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+					// deletes, wait for recycling to clean up
 				}
 			}
-			assert(insertion_list_.insertion_count_ <= kMaxAccessNum);
+			// if failed.
+			else {
+				// end hardware transaction.
+				rtm_lock_->Unlock();
+				// clean up 
+				for (size_t i = 0; i < access_list_.access_count_; ++i) {
+					Access *access_ptr = access_list_.GetAccess(i);
+					if (access_ptr->access_type_ == READ_WRITE) {
+						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
+						access_ptr->local_record_->~SchemaRecord();
+						MemAllocator::Free((char*)access_ptr->local_record_);
+						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+					}
+					// inserts and deletes, wait for recycling to clean up
+				}
+			}
 			assert(access_list_.access_count_ <= kMaxAccessNum);
-			insertion_list_.Clear();
 			access_list_.Clear();
 			END_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			return is_success;
