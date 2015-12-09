@@ -130,15 +130,15 @@ namespace Cavalia{
 #if defined(VALUE_LOGGING)
 				for (size_t i = 0; i < access_list_.access_count_; ++i){
 					Access* access_ptr = access_list_.GetAccess(i);
-					TableRecord *access_record = access_ptr->access_record_;
+					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
 					if (access_ptr->access_type_ == READ_WRITE){
-						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY){
-						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY){
-						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->GetPrimaryKey());
+						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->GetPrimaryKey());
 					}
 				}
 				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, 0);
@@ -166,11 +166,11 @@ namespace Cavalia{
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE) {
-						/*BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 						access_ptr->local_record_->~SchemaRecord();
 						MemAllocator::Free((char*)access_ptr->local_record_);
-						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);*/
+						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
 					// inserts and deletes, wait for recycling to clean up
 				}
