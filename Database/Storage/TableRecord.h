@@ -22,6 +22,8 @@
 #include "../Content/MvLockWaitContent.h"
 #elif defined(MVOCC)
 #include "../Content/MvOccContent.h"
+#elif defined(DBX)
+#include "../Content/RtmContent.h"
 #endif
 
 namespace Cavalia{
@@ -48,20 +50,20 @@ namespace Cavalia{
 			LockContent content_;
 #elif defined(SILOCK) || defined(SIOCC)
 			SiLockContent content_;
-#elif defined(MVOCC)
-			MvOccContent content_;
+#elif defined(TO)
+			ToContent content_;
+#elif defined(MVTO)
+			MvToContent content_;
 #elif defined(TVLOCK)
 			TvLockContent content_;
 #elif defined(MVLOCK)
 			MvLockContent content_;
 #elif defined(MVLOCK_WAIT)
 			MvLockWaitContent content_;
-#elif defined(MVTO)
-			MvToContent content_;
-#elif defined(TO)
-			ToContent content_;
+#elif defined(MVOCC)
+			MvOccContent content_;
 #elif defined(DBX)
-			uint64_t timestamp_;
+			RtmContent content_;
 #endif
 		};
 	}

@@ -34,7 +34,7 @@ namespace Cavalia{
 				access->table_id_ = table_id;
 				// ensure consistent view of timestamp_ and record_
 				rtm_lock_->Lock();
-				access->timestamp_ = t_record->timestamp_;
+				access->timestamp_ = t_record->content_.GetTimestamp();
 				s_record = t_record->record_;
 				rtm_lock_->Unlock();
 				return true;
@@ -47,7 +47,7 @@ namespace Cavalia{
 				// ensure consistent view of timestamp_ and record_
 				SchemaRecord *global_record = NULL;
 				rtm_lock_->Lock();
-				access->timestamp_ = t_record->timestamp_;
+				access->timestamp_ = t_record->content_.GetTimestamp();
 				global_record = t_record->record_;
 				rtm_lock_->Unlock();
 				// copy data
@@ -84,7 +84,7 @@ namespace Cavalia{
 				Access *access_ptr = access_list_.GetAccess(i);
 				if (access_ptr->access_type_ == READ_ONLY) {
 					// whether someone has changed the tuple after my read
-					if (access_ptr->access_record_->timestamp_ != access_ptr->timestamp_) {
+					if (access_ptr->access_record_->content_.GetTimestamp() != access_ptr->timestamp_) {
 						UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->table_id_);
 						is_success = false;
 						break;
@@ -92,7 +92,7 @@ namespace Cavalia{
 				}
 				else if (access_ptr->access_type_ == READ_WRITE) {
 					// whether someone has changed the tuple after my read
-					if (access_ptr->access_record_->timestamp_ != access_ptr->timestamp_) {
+					if (access_ptr->access_record_->content_.GetTimestamp() != access_ptr->timestamp_) {
 						UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->table_id_);
 						is_success = false;
 						break;
@@ -112,7 +112,7 @@ namespace Cavalia{
 					if (access_ptr->access_type_ == READ_WRITE) {
 						// exchanging pointers, the old version would be recycled
 						std::swap(access_record->record_, access_ptr->local_record_);
-						access_record->timestamp_++;
+						access_record->content_.IncrementTimestamp();
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY){
 						access_ptr->access_record_->record_->is_visible_ = true;
@@ -120,7 +120,7 @@ namespace Cavalia{
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
 						access_record->record_->is_visible_ = false;
 						// update timestamp to invalidate concurrent reads
-						access_record->timestamp_++;
+						access_record->content_.IncrementTimestamp();
 					}
 				}
 				// end hardware transaction.
