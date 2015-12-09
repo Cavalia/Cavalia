@@ -26,26 +26,10 @@ namespace Cavalia{
 		const int LZ4_FOOTER_SIZE = 4;
 
 		enum LockType : size_t{ NO_LOCK, READ_LOCK, WRITE_LOCK, CERTIFY_LOCK };
-		enum AccessType : size_t { READ_ONLY, READ_WRITE, WRITE_ONLY, INSERT_ONLY, DELETE_ONLY };
-		enum SourceType : size_t { RANDOM_SOURCE, PARTITION_SOURCE };
-
+		enum AccessType : size_t { READ_ONLY, READ_WRITE, INSERT_ONLY, DELETE_ONLY };
 
 		typedef uint32_t HashcodeType;
 
-		struct TableLocation{
-			size_t GetPartitionCount() const {
-				return node_ids_.size();
-			}
-			std::vector<size_t> node_ids_;
-		};
-
-		struct TxnLocation{
-			size_t GetCoreCount() const {
-				return core_ids_.size();
-			}
-			std::vector<size_t> core_ids_;
-			size_t node_count_;
-		};
 	}
 }
 

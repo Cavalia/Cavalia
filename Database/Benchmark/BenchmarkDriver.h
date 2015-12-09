@@ -5,8 +5,9 @@
 #include "../Meta/MetaTypes.h"
 
 #define CHECK_DIRECTORY(BenchmarkName, DirName) \
-if (boost::filesystem::exists(DirName+"/"#BenchmarkName) == false){ \
-	bool rt = boost::filesystem::create_directory(DirName+"/"#BenchmarkName); \
+	std::string full_name = DirName + "/" + #BenchmarkName;\
+if (boost::filesystem::exists(full_name) == false){ \
+	bool rt = boost::filesystem::create_directory(full_name); \
 	assert(rt == true); \
 }
 
@@ -33,12 +34,16 @@ if (boost::filesystem::exists(DirName+"/"#BenchmarkName) == false){ \
 	logger = new ValueLogger(DirName+"/"#BenchmarkName"/", NumTxn);
 
 ////////////////////////////////////////////////////////////
-#define SET_SOURCE(BenchmarkName, DirName, NumTxn) \
-	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, RANDOM_SOURCE); \
+#define SET_SOURCE(BenchmarkName, DirName, NumTxn, DistRatio) \
+	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, DistRatio); \
 	source.Start();
 
-#define SET_SOURCE_PARTITION(BenchmarkName, DirName, NumTxn, NumPartition, DistRatio) \
-	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, PARTITION_SOURCE, NumPartition, DistRatio); \
+#define SET_SOURCE_PARTITION(BenchmarkName, DirName, NumTxn, DistRatio, NumPartition) \
+	BenchmarkName##Source source(DirName+"/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, DistRatio, NumPartition); \
+	source.Start();
+
+#define SET_SOURCE_SELECT(BenchmarkName, DirName, NumTxn, DistRatio, NumPartition, PartitionId) \
+	BenchmarkName##Source source(DirName + "/"#BenchmarkName"/txn", &io_redirector, &params, NumTxn, DistRatio, NumPartition, PartitionId); \
 	source.Start();
 
 ///////////////////////////////////////////////////////////
@@ -48,24 +53,30 @@ if (boost::filesystem::exists(DirName+"/"#BenchmarkName) == false){ \
 	initiator.Initialize(&storage_manager); \
 	storage_manager.ReloadCheckpoint();
 
+#define RELOAD_STORAGE_PARTITION(BenchmarkName, DirName, ThreadSafe) \
+	BenchmarkName##ShardStorageManager storage_manager(DirName + "/"#BenchmarkName"/Checkpoint", configure.GetTableLocation(), ThreadSafe); \
+	BenchmarkName##TableInitiator initiator; \
+	initiator.Initialize(&storage_manager); \
+	storage_manager.ReloadCheckpoint();
+
+#define RELOAD_STORAGE_SELECT(BenchmarkName, DirName, ThreadSafe) \
+	BenchmarkName##IslandStorageManager storage_manager(DirName + "/"#BenchmarkName"/Checkpoint", configure.GetTableLocation(), ThreadSafe); \
+	BenchmarkName##TableInitiator initiator; \
+	initiator.Initialize(&storage_manager); \
+	storage_manager.ReloadCheckpoint();
+
+////////////////////////////////////////////////////////////
 // multiple concurrency control types
 #define EXECUTE_TRANSACTIONS_CONCURRENT(BenchmarkName, NumCore) \
 	BenchmarkName##ConcurrentExecutor executor(&io_redirector, &storage_manager, logger, NumCore); \
 	executor.Start();
-
-////////////////////////////////////////////////////////////
-#define RELOAD_STORAGE_PARTITION(BenchmarkName, DirName, ThreadSafe) \
-	BenchmarkName##ShardStorageManager storage_manager(DirName+"/"#BenchmarkName"/Checkpoint", configure.GetTableLocations(), ThreadSafe); \
-	BenchmarkName##TableInitiator initiator; \
-	initiator.Initialize(&storage_manager); \
-	storage_manager.ReloadCheckpoint();
 
 #define CONFIGURE_HSTORE(BenchmarkName, NumCore, NumNode) \
 	BenchmarkName##HStoreConfiguration configure(NumCore, NumNode); \
 	configure.MeasureConfiguration();
 
 #define EXECUTE_TRANSACTIONS_HSTORE(BenchmarkName) \
-	BenchmarkName##HStoreExecutor executor(&io_redirector, &storage_manager, logger, configure.GetTxnLocation()); \
+	BenchmarkName##HStoreExecutor executor(&io_redirector, &storage_manager, logger, configure.GetHStoreTxnLocation()); \
 	executor.Start();
 
 #define CONFIGURE_SITE(BenchmarkName, NumCore, NumNode) \
@@ -73,9 +84,16 @@ if (boost::filesystem::exists(DirName+"/"#BenchmarkName) == false){ \
 	configure.MeasureConfiguration();
 
 #define EXECUTE_TRANSACTIONS_SITE(BenchmarkName) \
-	BenchmarkName##SiteExecutor executor(&io_redirector, &storage_manager, logger, configure.GetTxnLocation()); \
+	BenchmarkName##SiteExecutor executor(&io_redirector, &storage_manager, logger, configure.GetSiteTxnLocation()); \
 	executor.Start();
 
+#define CONFIGURE_ISLAND(BenchmarkName, NumCore, NumNode, NodeId) \
+	BenchmarkName##IslandConfiguration configure(NumCore, NumNode, NodeId); \
+	configure.MeasureConfiguration();
+
+#define EXECUTE_TRANSACTIONS_ISLAND(BenchmarkName) \
+	BenchmarkName##IslandExecutor executor(&io_redirector, &storage_manager, logger, configure.GetSiteTxnLocation()); \
+	executor.Start();
 ////////////////////////////////////////////////////////////
 #define COMMAND_REPLAY(BenchmarkName, DirName, NumCore) \
 	BenchmarkName##CommandReplayer replayer(DirName+"/"#BenchmarkName"/", &storage_manager, NumCore); \

@@ -1,8 +1,8 @@
 #pragma once
-#ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_SITE_EXECUTOR_H__
-#define __CAVALIA_TPCC_BENCHMARK_TPCC_SITE_EXECUTOR_H__
+#ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_ISLAND_EXECUTOR_H__
+#define __CAVALIA_TPCC_BENCHMARK_TPCC_ISLAND_EXECUTOR_H__
 
-#include <Executor/SiteExecutor.h>
+#include <Executor/IslandExecutor.h>
 
 #include "ShardProcedures/DeliveryShardProcedure.h"
 #include "ShardProcedures/NewOrderShardProcedure.h"
@@ -15,10 +15,10 @@ namespace Cavalia {
 		namespace Tpcc {
 			namespace Executor {
 				using namespace ShardProcedures;
-				class TpccSiteExecutor : public SiteExecutor {
+				class TpccIslandExecutor : public IslandExecutor {
 				public:
-					TpccSiteExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const SiteTxnLocation &txn_location) : SiteExecutor(redirector, storage_manager, logger, txn_location) {}
-					virtual ~TpccSiteExecutor() {}
+					TpccIslandExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const IslandTxnLocation &txn_location) : IslandExecutor(redirector, storage_manager, logger, txn_location) {}
+					virtual ~TpccIslandExecutor() {}
 
 				private:
 					virtual void PrepareProcedures() {
@@ -90,8 +90,8 @@ namespace Cavalia {
 					}
 
 				private:
-					TpccSiteExecutor(const TpccSiteExecutor &);
-					TpccSiteExecutor& operator=(const TpccSiteExecutor &);
+					TpccIslandExecutor(const TpccIslandExecutor &);
+					TpccIslandExecutor& operator=(const TpccIslandExecutor &);
 				};
 			}
 		}

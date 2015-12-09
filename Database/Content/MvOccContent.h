@@ -5,6 +5,7 @@
 #include <atomic>
 #include <RWLock.h>
 #include "ContentCommon.h"
+#include "../Transaction/ScalableTimestamp.h"
 #include "../Transaction/GlobalTimestamp.h"
 
 namespace Cavalia{
@@ -63,6 +64,7 @@ namespace Cavalia{
 				timestamp_ = commit_timestamp;
 				MvHistoryEntry* entry = new MvHistoryEntry();
 				entry->data_ptr_ = data_ptr;
+				COMPILER_MEMORY_FENCE;
 				entry->timestamp_ = commit_timestamp;
 				if (history_head_ != NULL){
 					entry->next_ = history_head_;
@@ -131,6 +133,7 @@ namespace Cavalia{
 			RWLock spinlock_;
 			RWLock wait_lock_;
 			// history list is sorted by timestamp
+			// the latest value is pointed by history_head_
 			MvHistoryEntry* history_head_;
 			MvHistoryEntry* history_tail_;
 			size_t history_length_;

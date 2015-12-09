@@ -11,6 +11,47 @@ namespace Cavalia{
 			using namespace Database;
 			class TpccSchema{
 			public:
+				static RecordSchema* GetTableSchema(const size_t &table_id){
+					RecordSchema *schema_ptr = NULL;
+					switch (table_id)
+					{
+					case ITEM_TABLE_ID:
+						schema_ptr = TpccSchema::GenerateItemSchema();
+						break;
+					case STOCK_TABLE_ID:
+						schema_ptr = TpccSchema::GenerateStockSchema();
+						break;
+					case WAREHOUSE_TABLE_ID:
+						schema_ptr = TpccSchema::GenerateWarehouseSchema();
+						break;
+					case DISTRICT_TABLE_ID:
+						schema_ptr = TpccSchema::GenerateDistrictSchema();
+						break;
+					case DISTRICT_NEW_ORDER_TABLE_ID:
+						schema_ptr = TpccSchema::GenerateDistrictNewOrderSchema();
+						break;
+					case NEW_ORDER_TABLE_ID:
+						schema_ptr = TpccSchema::GenerateNewOrderSchema();
+						break;
+					case ORDER_TABLE_ID:
+						schema_ptr = TpccSchema::GenerateOrderSchema();
+						break;
+					case ORDER_LINE_TABLE_ID:
+						schema_ptr = TpccSchema::GenerateOrderLineSchema();
+						break;
+					case CUSTOMER_TABLE_ID:
+						schema_ptr = TpccSchema::GenerateCustomerSchema();
+						break;
+					case HISTORY_TABLE_ID:
+						schema_ptr = TpccSchema::GenerateHistorySchema();
+						break;
+					default:
+						assert(false);
+						break;
+					}
+					return schema_ptr;
+				}
+
 				static RecordSchema* GenerateItemSchema(){
 					if (item_schema_ == NULL){
 						item_schema_ = new RecordSchema(ITEM_TABLE_ID);

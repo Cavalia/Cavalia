@@ -1,20 +1,20 @@
 #pragma once
-#ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_SITE_CONFIGURATION_H__
-#define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_SITE_CONFIGURATION_H__
+#ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_ISLAND_CONFIGURATION_H__
+#define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_ISLAND_CONFIGURATION_H__
 
 #include <cassert>
 #include <NumaHelper.h>
-#include "../Storage/ShardTableLocation.h"
-#include "../Executor/SiteTxnLocation.h"
+#include "../Storage/IslandTableLocation.h"
+#include "../Executor/IslandTxnLocation.h"
 
 namespace Cavalia {
 	namespace Benchmark {
 		using namespace Cavalia::Database;
 
-		class BenchmarkSiteConfiguration {
+		class BenchmarkIslandConfiguration {
 		public:
-			BenchmarkSiteConfiguration(const size_t &core_count, const size_t &node_count) : core_count_(core_count), node_count_(node_count) {}
-			virtual ~BenchmarkSiteConfiguration() {}
+			BenchmarkIslandConfiguration(const size_t &core_count, const size_t &node_count, const size_t &node_id) : core_count_(core_count), node_count_(node_count), node_id_(node_id) {}
+			virtual ~BenchmarkIslandConfiguration() {}
 
 			void MeasureConfiguration() {
 				NumaTopology topology;
@@ -34,23 +34,22 @@ namespace Cavalia {
 					std::cout << std::endl;
 				}
 
-				for(size_t k = 0; k < core_count_; ++k){
-					for (size_t i = 0; i < node_count_; ++i){
-						txn_location_.AddThread(occupied_cores.at(i).at(k));
-					}
+				for (size_t k = 0; k < core_count_; ++k){
+					txn_location_.AddThread(occupied_cores.at(node_id_).at(k));
 				}
 				txn_location_.SetPartitionCount(node_count_);
 
 				for (size_t node_id = 0; node_id < node_count_; ++node_id){
 					table_location_.AddPartition(node_id);
 				}
+				table_location_.SetPartitionId(node_id_);
 			}
 
-			const SiteTxnLocation& GetSiteTxnLocation() const {
+			const IslandTxnLocation& GetIslandTxnLocation() const {
 				return txn_location_;
 			}
 
-			const ShardTableLocation& GetTableLocation() const {
+			const IslandTableLocation& GetTableLocation() const {
 				return table_location_;
 			}
 
@@ -58,16 +57,17 @@ namespace Cavalia {
 			virtual size_t GetTableCount() const = 0;
 
 		private:
-			BenchmarkSiteConfiguration(const BenchmarkSiteConfiguration&);
-			BenchmarkSiteConfiguration& operator=(const BenchmarkSiteConfiguration&);
+			BenchmarkIslandConfiguration(const BenchmarkIslandConfiguration&);
+			BenchmarkIslandConfiguration& operator=(const BenchmarkIslandConfiguration&);
 
 		private:
 			const size_t core_count_;
 			const size_t node_count_;
+			const size_t node_id_;
 			// <thread_id, core_id>
-			SiteTxnLocation  txn_location_;
+			IslandTxnLocation  txn_location_;
 			// <partition_id, numa_node_id>
-			ShardTableLocation table_location_;
+			IslandTableLocation table_location_;
 		};
 	}
 }

@@ -1,18 +1,18 @@
 #pragma once
-#ifndef __CAVALIA_DATABASE_TPCC_SHARD_TABLE_H__
-#define __CAVALIA_DATABASE_TPCC_SHARD_TABLE_H__
+#ifndef __CAVALIA_DATABASE_TPCC_ISLAND_TABLE_H__
+#define __CAVALIA_DATABASE_TPCC_ISLAND_TABLE_H__
 
-#include <Storage/ShardTable.h>
+#include <Storage/IslandTable.h>
 #include "TpccMeta.h"
 
 namespace Cavalia {
 	namespace Benchmark {
 		namespace Tpcc{
 			using namespace Cavalia::Database;
-			class TpccShardTable : public ShardTable {
+			class TpccIslandTable : public IslandTable {
 			public:
-				TpccShardTable(const RecordSchema * const schema_ptr, const ShardTableLocation &table_location, bool is_thread_safe) : ShardTable(schema_ptr, table_location, is_thread_safe){}
-				virtual ~TpccShardTable() {}
+				TpccIslandTable(const RecordSchema * const schema_ptr, const IslandTableLocation &table_location, bool is_thread_safe) : IslandTable(schema_ptr, table_location, is_thread_safe){}
+				virtual ~TpccIslandTable() {}
 
 				// partition by warehouse_id.
 				// we temporarily place item table in the first (0) numa node.
@@ -64,8 +64,8 @@ namespace Cavalia {
 				}
 
 			private:
-				TpccShardTable(const TpccShardTable&);
-				TpccShardTable & operator=(const TpccShardTable&);
+				TpccIslandTable(const TpccIslandTable&);
+				TpccIslandTable & operator=(const TpccIslandTable&);
 			};
 		}
 	}

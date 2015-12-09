@@ -2,7 +2,8 @@
 #ifndef __CAVALIA_DATABASE_SI_LOCK_CONTENT_H__
 #define __CAVALIA_DATABASE_SI_LOCK_CONTENT_H__
 
-#include <boost/thread/mutex.hpp>
+#include <SpinLock.h>
+#include <RWLock.h>
 #include <boost/atomic.hpp>
 #include "../Transaction/GlobalTimestamp.h"
 #include "ContentCommon.h"
@@ -16,8 +17,6 @@ namespace Cavalia{
 				history_head_ = NULL;
 				history_tail_ = NULL;
 				history_length_ = 0;
-				memset(&lock_, 0, sizeof(lock_));
-				memset(&latch_, 0, sizeof(latch_));
 			}
 			~SiLockContent(){
 				MvHistoryEntry* his, *prev_his;
@@ -30,8 +29,8 @@ namespace Cavalia{
 				}
 			}
 
-			void ReadAccess(const int64_t &timestamp, char *&data_ptr){
-				latch_.lock();
+			void ReadAccess(const uint64_t &timestamp, char *&data_ptr){
+				latch_.Lock();
 				MvHistoryEntry* entry = history_head_;
 				while (entry != NULL){
 					if (entry->timestamp_ <= timestamp){
@@ -45,17 +44,17 @@ namespace Cavalia{
 				else{
 					data_ptr = entry->data_ptr_;
 				}
-				latch_.unlock();
+				latch_.Unlock();
 			}
 
 			// precondition: write lock acquired already
-			bool Validate(const int64_t &start_timestamp){
+			bool Validate(const uint64_t &start_timestamp){
 				return start_timestamp >= timestamp_;
 			}
 
 			// precondition: write lock acquired already
-			void WriteAccess(const int64_t &commit_timestamp, char* data_ptr){
-				latch_.lock();
+			void WriteAccess(const uint64_t &commit_timestamp, char* data_ptr){
+				latch_.Lock();
 				assert(commit_timestamp > timestamp_);
 				timestamp_ = commit_timestamp;
 				MvHistoryEntry* entry = new MvHistoryEntry();
@@ -72,31 +71,36 @@ namespace Cavalia{
 				}
 				++history_length_;
 				CollectGarbage();
-				latch_.unlock();
+				latch_.Unlock();
 			}
 
 			// set intial ts
-			void SetTimestamp(const int64_t &timestamp){
+			void SetTimestamp(const uint64_t &timestamp){
 				timestamp_ = timestamp;
 			}
 
-			bool AcquireWriteLock(){
-				return lock_.try_lock();
+			bool TryWriteLock(){
+				return lock_.TryWriteLock();
+			}
+
+			void AcquireWriteLock(){
+				lock_.AcquireWriteLock();
 			}
 
 			void ReleaseWriteLock(){
-				lock_.unlock();
+				lock_.ReleaseWriteLock();
 			}
+
 
 		private:
 			void CollectGarbage(){
 				if (history_length_ > kRecycleLength){
-					int64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
+					uint64_t min_thread_ts = GlobalTimestamp::GetMinTimestamp();
 					ClearHistory(min_thread_ts);
 				}
 			}
 
-			void ClearHistory(const int64_t &timestamp) {
+			void ClearHistory(const uint64_t &timestamp) {
 				MvHistoryEntry* his_entry = history_tail_;
 				while (his_entry != NULL && his_entry->prev_ != NULL && his_entry->prev_->timestamp_ < timestamp) {
 					MvHistoryEntry* tmp_entry = his_entry;
@@ -113,10 +117,10 @@ namespace Cavalia{
 
 		private:
 			// the latest version
-			int64_t timestamp_;
+			uint64_t timestamp_;
 			// for synchronization
-			boost::detail::spinlock latch_;
-			boost::detail::spinlock lock_;
+			SpinLock latch_;
+			RWLock lock_;
 
 			char* data_ptr_;
 			// history list is sorted by ts

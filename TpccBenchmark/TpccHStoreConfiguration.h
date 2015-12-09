@@ -11,7 +11,7 @@ namespace Cavalia {
 			class TpccHStoreConfiguration : public BenchmarkHStoreConfiguration{
 			public:
 				TpccHStoreConfiguration(const size_t &core_count, const size_t &node_count) : BenchmarkHStoreConfiguration(core_count, node_count) {}
-				~TpccHStoreConfiguration() {}
+				virtual ~TpccHStoreConfiguration() {}
 
 				virtual size_t GetTableCount() const {
 					return kTableCount;

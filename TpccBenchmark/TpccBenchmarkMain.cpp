@@ -4,6 +4,7 @@
 
 #include <Benchmark/BenchmarkDriver.h>
 #include <Benchmark/BenchmarkArguments.h>
+#include <Benchmark/BenchmarkConfigParser.h>
 
 #include <Profiler/Profilers.h>
 #include <Redirector/IORedirector.h>
@@ -25,9 +26,10 @@
 #include "TpccHStoreExecutor.h"
 #include "TpccSiteConfiguration.h"
 #include "TpccSiteExecutor.h"
+#include "TpccIslandStorageManager.h"
+#include "TpccIslandConfiguration.h"
+#include "TpccIslandExecutor.h"
 #endif
-
-#include "TpccConfigure.h"
 
 using namespace Cavalia;
 using namespace Cavalia::Benchmark::Tpcc;
@@ -68,7 +70,7 @@ int main(int argc, char *argv[]) {
 			ENABLE_VALUE_LOGGER(Tpcc, dir_name, num_core);
 #endif
 			IORedirector io_redirector(num_core);
-			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, (int)(scale_factors[0]), dist_ratio);
+			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, dist_ratio, (int)(scale_factors[0]));
 			INIT_PROFILERS;
 			RELOAD_STORAGE(Tpcc, dir_name, true);
 			PRINT_STORAGE_STATUS;
@@ -83,7 +85,7 @@ int main(int argc, char *argv[]) {
 			assert(total_num_core == int(scale_factors[0]));
 			CONFIGURE_HSTORE(Tpcc, num_core, num_node);
 			IORedirector io_redirector(total_num_core);
-			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, total_num_core, dist_ratio);
+			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, dist_ratio, total_num_core);
 			RELOAD_STORAGE_PARTITION(Tpcc, dir_name, false);
 			PRINT_STORAGE_STATUS;
 			EXECUTE_TRANSACTIONS_HSTORE(Tpcc);
@@ -95,7 +97,7 @@ int main(int argc, char *argv[]) {
 			assert(num_node <= int(scale_factors[0]));
 			CONFIGURE_SITE(Tpcc, num_core, num_node);
 			IORedirector io_redirector(total_num_core);
-			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, num_node, dist_ratio);
+			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, dist_ratio, num_node);
 			RELOAD_STORAGE_PARTITION(Tpcc, dir_name, true);
 			PRINT_STORAGE_STATUS;
 			EXECUTE_TRANSACTIONS_SITE(Tpcc);
@@ -105,17 +107,39 @@ int main(int argc, char *argv[]) {
 		delete logger;
 		logger = NULL;
 	}
-	else if (app_type == APP_DIST_EXECUTE){
+#if defined(__linux__)
+	else if (app_type == APP_ISLAND_EXECUTE){
 		assert(factor_count == 2);
 		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
-		ConfigFileParser conf_parser;
-		conf_parser.LogConfigFile(server_id, true);
-		if (server_id == -1){
+		BaseLogger *logger = NULL;
+		size_t total_num_core = num_core * num_node;
+		assert(num_node <= int(scale_factors[0]));
+		CONFIGURE_ISLAND(Tpcc, num_core, num_node, instance_id);
+		IORedirector io_redirector(total_num_core);
+		SET_SOURCE_SELECT(Tpcc, dir_name, num_txn, dist_ratio, total_num_core, instance_id);
+		RELOAD_STORAGE_SELECT(Tpcc, dir_name, true);
+		PRINT_STORAGE_STATUS;
+		delete logger;
+		logger = NULL;
+	}
+	else if (app_type == APP_SERVER_EXECUTE){
+		assert(factor_count == 2);
+		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
+		BenchmarkConfigParser conf_parser;
+		conf_parser.LogConfigFile(true);
+		if (instance_id == -1){
 			// this is client.
 		}
 		else{
+			// reload storage partition.
+			//ShareStorageManager storage_manager(DirName + "/"#BenchmarkName"/Checkpoint", true);
+			//TpccTableInitiator initiator;
+			//initiator.Initialize(&storage_manager);
+			//storage_manager.ReloadCheckpoint();
+			// execute transaction.
 		}
 	}
+#endif
 	std::cout << "finished everything..." << std::endl;
 	return 0;
 }

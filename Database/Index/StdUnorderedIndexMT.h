@@ -12,16 +12,30 @@ namespace Cavalia {
 			StdUnorderedIndexMT() {}
 			virtual ~StdUnorderedIndexMT() {}
 
-			virtual void InsertRecord(const std::string &key, TableRecord *record) {
+			virtual bool InsertRecord(const std::string &key, TableRecord *record) {
 				lock_.AcquireWriteLock();
-				hash_index_[key] = record;
-				lock_.ReleaseWriteLock();
+				if (hash_index_.find(key) == hash_index_.end()){
+					hash_index_[key] = record;
+					lock_.ReleaseWriteLock();
+					return true;
+				}
+				else{
+					lock_.ReleaseWriteLock();
+					return false;
+				}
 			}
 
-			virtual void DeleteRecord(const std::string &key) {
+			virtual bool DeleteRecord(const std::string &key) {
 				lock_.AcquireWriteLock();
-				hash_index_.erase(key);
-				lock_.ReleaseWriteLock();
+				if (hash_index_.find(key) == hash_index_.end()){
+					lock_.ReleaseWriteLock();
+					return false;
+				}
+				else{
+					hash_index_.erase(key);
+					lock_.ReleaseWriteLock();
+					return true;
+				}
 			}
 
 			virtual TableRecord* SearchRecord(const std::string &key) {

@@ -4,6 +4,10 @@ namespace Cavalia{
 	namespace Benchmark{
 		namespace Tpcc{
 			void TpccPopulator::StartPopulate(){
+				StartPopulate(1, scale_params_->num_warehouses_);
+			}
+			
+			void TpccPopulator::StartPopulate(const size_t &min_w_id, const size_t &max_w_id){
 				// load items
 				std::unordered_set<int> original_rows;
 				TpccRandomGenerator::SelectUniqueIds(scale_params_->num_items_ / 10, 1, scale_params_->num_items_, original_rows);
@@ -16,14 +20,13 @@ namespace Cavalia{
 					item_record = NULL;
 				}
 				// load warehouses
-				for (int w_id = 1; w_id <= scale_params_->num_warehouses_; ++w_id){
+				for (int w_id = (int)min_w_id; w_id <= (int)max_w_id; ++w_id){
 					// generate warehouses
 					WarehouseRecord *warehouse_record = GenerateWarehouseRecord(w_id);
 					InsertWarehouseRecord(warehouse_record);
 					delete warehouse_record;
 					warehouse_record = NULL;
 					for (int d_id = 1; d_id <= scale_params_->num_districts_per_warehouse_; ++d_id){
-						//std::cout << "populating w_id=" << w_id << ", d_id=" << d_id << std::endl;
 						int d_next_o_id = scale_params_->num_customers_per_district_ + 1;
 						// generate districts
 						DistrictRecord *district_record = GenerateDistrictRecord(w_id, d_id, d_next_o_id);
@@ -51,9 +54,7 @@ namespace Cavalia{
 						// generate district new order
 						// assume each customer has an order.
 						// that is, num_customers_per_district == num_orders_per_district
-						// TODO: this place should be modified back.
-						//int initial_new_order_id = scale_params_->num_customers_per_district_ - scale_params_->num_new_orders_per_district_ + 1;
-						int initial_new_order_id = 1;
+						int initial_new_order_id = scale_params_->num_customers_per_district_ - scale_params_->num_new_orders_per_district_ + 1;
 						DistrictNewOrderRecord *district_new_order_record = GenerateDistrictNewOrderRecord(w_id, d_id, initial_new_order_id);
 						InsertDistrictNewOrderRecord(district_new_order_record);
 						delete district_new_order_record;

@@ -1,44 +1,37 @@
 #pragma once
-#ifndef __CAVALIA_DATABASE_DIST_EXECUTOR_H__
-#define __CAVALIA_DATABASE_DIST_EXECUTOR_H__
+#ifndef __CAVALIA_DATABASE_ISLAND_EXECUTOR_H__
+#define __CAVALIA_DATABASE_ISLAND_EXECUTOR_H__
 
-#include <FastRandom.h>
 #include <ThreadHelper.h>
 #include <NumaHelper.h>
-#include <fstream>
-#include <iostream>
 #include <unordered_map>
-#include "../Profiler/Profilers.h"
+#include <boost/thread/mutex.hpp>
 #include "../Storage/ShareStorageManager.h"
 #include "../Transaction/StoredProcedure.h"
-#include "../Transaction/ScalableTimestamp.h"
 #include "BaseExecutor.h"
-#if defined(DBX)
-#include <RtmLock.h>
-#endif
+#include "IslandTxnLocation.h"
 
-namespace Cavalia{
-	namespace Database{
-
-		class DistExecutor : public BaseExecutor{
+namespace Cavalia {
+	namespace Database {
+		class IslandExecutor : public BaseExecutor {
 		public:
-			DistExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const size_t &thread_count) : BaseExecutor(redirector, logger, thread_count), storage_manager_(storage_manager){
+			IslandExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const IslandTxnLocation &txn_location) : BaseExecutor(redirector, logger, txn_location.GetThreadCount()), storage_manager_(storage_manager), txn_location_(txn_location){
 				is_begin_ = false;
 				is_finish_ = false;
 				total_count_ = 0;
 				total_abort_count_ = 0;
 				is_ready_ = new volatile bool[thread_count_];
-				for (size_t i = 0; i < thread_count_; ++i){
+				for (size_t i = 0; i < thread_count_; ++i) {
 					is_ready_[i] = false;
 				}
 				memset(&time_lock_, 0, sizeof(time_lock_));
 			}
-			virtual ~DistExecutor(){
+			virtual ~IslandExecutor() {
 				delete[] is_ready_;
 				is_ready_ = NULL;
 			}
 
-			virtual void Start(){
+			void Start() {
 				GlobalTimestamp::thread_count_ = thread_count_;
 				PrepareProcedures();
 				ProcessQuery();
@@ -48,21 +41,21 @@ namespace Cavalia{
 			virtual void PrepareProcedures() = 0;
 			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
 
-			virtual void ProcessQuery(){
+			virtual void ProcessQuery() {
 				boost::thread_group thread_group;
-				for (size_t i = 0; i < this->thread_count_; ++i){
-					size_t core_id = GetCoreId(i);
-					thread_group.create_thread(boost::bind(&DistExecutor::ProcessQueryThread, this, i, core_id));
+				for (size_t thread_id = 0; thread_id < txn_location_.GetThreadCount(); ++thread_id){
+					size_t core_id = txn_location_.Thread2Core(thread_id);
+					thread_group.create_thread(boost::bind(&IslandExecutor::ProcessQueryThread, this, thread_id, core_id));
 				}
 				bool is_all_ready = true;
-				while (1){
-					for (size_t i = 0; i < thread_count_; ++i){
-						if (is_ready_[i] == false){
+				while (1) {
+					for (size_t i = 0; i < thread_count_; ++i) {
+						if (is_ready_[i] == false) {
 							is_all_ready = false;
 							break;
 						}
 					}
-					if (is_all_ready == true){
+					if (is_all_ready == true) {
 						break;
 					}
 					is_all_ready = true;
@@ -71,11 +64,9 @@ namespace Cavalia{
 				ScalableTimestamp scalable_ts;
 #endif
 				std::cout << "start processing..." << std::endl;
-				BEGIN_CACHE_MISS_PROFILE;
 				is_begin_ = true;
 				start_timestamp_ = timer_.GetTimePoint();
 				thread_group.join_all();
-				END_CACHE_MISS_PROFILE;
 				long long elapsed_time = timer_.CalcMilliSecondDiff(start_timestamp_, end_timestamp_);
 				double throughput = total_count_ * 1.0 / elapsed_time;
 				double per_core_throughput = throughput / thread_count_;
@@ -83,13 +74,13 @@ namespace Cavalia{
 				std::cout << "elapsed time=" << elapsed_time << "ms.\nthroughput=" << throughput << "K tps.\nper-core throughput=" << per_core_throughput << "K tps." << std::endl;
 			}
 
-			void ProcessQueryThread(const size_t &thread_id, const size_t &core_id){
+			void ProcessQueryThread(const size_t &part_id, const size_t &core_id) {
 				// note that core_id is not equal to thread_id.
 				PinToCore(core_id);
 				/////////////copy parameter to each core.
 				std::vector<ParamBatch*> execution_batches;
-				std::vector<ParamBatch*> *input_batches = redirector_ptr_->GetParameterBatches(thread_id);
-				for (size_t i = 0; i < input_batches->size(); ++i){
+				std::vector<ParamBatch*> *input_batches = redirector_ptr_->GetParameterBatches(part_id);
+				for (size_t i = 0; i < input_batches->size(); ++i) {
 					ParamBatch *tuple_batch = input_batches->at(i);
 					// copy to local memory.
 					ParamBatch *execution_batch = new ParamBatch(gParamBatchSize);
@@ -111,32 +102,28 @@ namespace Cavalia{
 				/////////////////////////////////////////////////
 				// prepare local managers.
 				size_t node_id = GetNumaNodeId(core_id);
-				TransactionManager *txn_manager = new TransactionManager(storage_manager_, logger_, thread_id, this->thread_count_);
-#if defined(DBX)
-				txn_manager->SetRtmLock(&rtm_lock_);
-#endif
+				TransactionManager txn_manager(storage_manager_, logger_, part_id, this->thread_count_);
 				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
 				for (auto &entry : registers_){
 					procedures[entry.first] = entry.second(node_id);
-					procedures[entry.first]->SetTransactionManager(txn_manager);
+					procedures[entry.first]->SetTransactionManager(&txn_manager);
+					procedures[entry.first]->SetPartitionId(node_id);
+					procedures[entry.first]->SetPartitionCount(txn_location_.GetPartitionCount());
 				}
+#if defined(DBX)
+				txn_manager.SetRtmLock(&rtm_lock_);
+#endif
 				/////////////////////////////////////////////////
-				fast_random r(9084398309893UL);
-				is_ready_[thread_id] = true;
+				is_ready_[part_id] = true;
 				while (is_begin_ == false);
 				int count = 0;
 				int abort_count = 0;
 				CharArray ret;
 				ret.char_ptr_ = new char[1024];
 				ExeContext exe_context;
-				for (auto &tuples : execution_batches){
+				for (auto &tuples : execution_batches) {
 					for (size_t idx = 0; idx < tuples->size(); ++idx) {
 						TxnParam *tuple = tuples->get(idx);
-						//double a = r.next_uniform();
-						//if (a < gAdhocRatio*1.0 / 100){
-						//	is_adhoc = true;
-						//}
-						BEGIN_TRANSACTION_TIME_MEASURE(thread_id);
 						ret.size_ = 0;
 						exe_context.is_retry_ = false;
 						if (procedures[tuple->type_]->Execute(tuple, ret, exe_context) == false){
@@ -145,11 +132,8 @@ namespace Cavalia{
 							if (is_finish_ == true){
 								total_count_ += count;
 								total_abort_count_ += abort_count;
-								END_TRANSACTION_TIME_MEASURE(thread_id, tuple->type_);
-								txn_manager->CleanUp();
 								return;
 							}
-							BEGIN_CC_ABORT_TIME_MEASURE(thread_id);
 							exe_context.is_retry_ = true;
 							while (procedures[tuple->type_]->Execute(tuple, ret, exe_context) == false){
 								exe_context.is_retry_ = true;
@@ -158,20 +142,14 @@ namespace Cavalia{
 								if (is_finish_ == true){
 									total_count_ += count;
 									total_abort_count_ += abort_count;
-									END_CC_ABORT_TIME_MEASURE(thread_id);
-									END_TRANSACTION_TIME_MEASURE(thread_id, tuple->type_);
-									txn_manager->CleanUp();
 									return;
 								}
 							}
-							END_CC_ABORT_TIME_MEASURE(thread_id);
 						}
 						++count;
-						END_TRANSACTION_TIME_MEASURE(thread_id, tuple->type_);
 						if (is_finish_ == true){
 							total_count_ += count;
 							total_abort_count_ += abort_count;
-							txn_manager->CleanUp();
 							return;
 						}
 					}
@@ -182,8 +160,6 @@ namespace Cavalia{
 				time_lock_.unlock();
 				total_count_ += count;
 				total_abort_count_ += abort_count;
-				txn_manager->CleanUp();
-				return;
 				/////////////////////////////////////////////////
 				/*for (auto &entry : deregisters_){
 				entry.second((char*)(procedures[entry.first]));
@@ -194,13 +170,9 @@ namespace Cavalia{
 				/////////////////////////////////////////////////
 			}
 
-			size_t GetCoreId(const size_t &thread_id){
-				return thread_id;
-			}
-
 		private:
-			DistExecutor(const DistExecutor &);
-			DistExecutor& operator=(const DistExecutor &);
+			IslandExecutor(const IslandExecutor &);
+			IslandExecutor& operator=(const IslandExecutor &);
 
 		protected:
 			std::unordered_map<size_t, std::function<StoredProcedure*(size_t)>> registers_;
@@ -217,9 +189,7 @@ namespace Cavalia{
 			volatile bool is_finish_;
 			std::atomic<size_t> total_count_;
 			std::atomic<size_t> total_abort_count_;
-#if defined(DBX)
-			RtmLock rtm_lock_;
-#endif
+			IslandTxnLocation txn_location_;
 		};
 	}
 }

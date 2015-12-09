@@ -3,7 +3,7 @@
 namespace Cavalia{
 	namespace Benchmark{
 		namespace Tpcc{
-			void TpccSource::StartExecution(){
+			void TpccSource::StartGeneration(){
 				double frequency_weights[5];
 				frequency_weights[0] = FREQUENCY_DELIVERY;
 				frequency_weights[1] = FREQUENCY_PAYMENT;
@@ -66,9 +66,11 @@ namespace Cavalia{
 						tuples = NULL;
 					}
 				}
-				else{
-					assert(source_type_ == PARTITION_SOURCE);
+				else if (source_type_ == PARTITION_SOURCE || source_type_ == SELECT_SOURCE){
 					size_t partition_id = 0;
+					if (source_type_ == SELECT_SOURCE){
+						partition_id = partition_id_;
+					}
 					ParamBatch *tuples = new ParamBatch(gParamBatchSize);
 					for (size_t i = 0; i < num_transactions_; ++i){
 						// need to randomly generate one.
@@ -109,7 +111,9 @@ namespace Cavalia{
 							DumpToDisk(tuples);
 							redirector_ptr_->PushParameterBatch(tuples);
 							tuples = new ParamBatch(gParamBatchSize);
-							partition_id = (partition_id + 1) % partition_count_;
+							if (source_type_ == PARTITION_SOURCE){
+								partition_id = (partition_id + 1) % partition_count_;
+							}
 						}
 					}
 					if (tuples->size() != 0){

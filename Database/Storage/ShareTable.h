@@ -54,39 +54,51 @@ namespace Cavalia{
 			}
 
 			///////////////////INSERT//////////////////
-			virtual void InsertRecord(TableRecord *record){
-				primary_index_->InsertRecord(record->record_->GetPrimaryKey(), record);
-				// build secondary index here
-				for (size_t i = 0; i < secondary_count_; ++i){
-					secondary_indexes_[i]->InsertRecord(record->record_->GetSecondaryKey(i), record);
+			virtual bool InsertRecord(TableRecord *record){
+				SchemaRecord *record_ptr = record->record_;
+				if (primary_index_->InsertRecord(record_ptr->GetPrimaryKey(), record) == true){
+					// build secondary index here
+					for (size_t i = 0; i < secondary_count_; ++i){
+						secondary_indexes_[i]->InsertRecord(record_ptr->GetSecondaryKey(i), record);
+					}
+					return true;
+				}
+				else{
+					return false;
 				}
 			}
 
-			virtual void InsertRecord(const std::string &primary_key, TableRecord *record){
-				primary_index_->InsertRecord(primary_key, record);
-				// build secondary index here
-				for (size_t i = 0; i < secondary_count_; ++i){
-					secondary_indexes_[i]->InsertRecord(record->record_->GetSecondaryKey(i), record);
+			virtual bool InsertRecord(const std::string &primary_key, TableRecord *record){
+				if (primary_index_->InsertRecord(primary_key, record) == true){
+					SchemaRecord *record_ptr = record->record_;
+					// build secondary index here
+					for (size_t i = 0; i < secondary_count_; ++i){
+						secondary_indexes_[i]->InsertRecord(record_ptr->GetSecondaryKey(i), record);
+					}
+					return true;
+				}
+				else{
+					return false;
 				}
 			}
 			
 			/////////////////////DELETE//////////////////
 			virtual void DeleteRecord(TableRecord *record){
-				primary_index_->DeleteRecord(record->record_->GetPrimaryKey());
+				SchemaRecord *record_ptr = record->record_;
+				primary_index_->DeleteRecord(record_ptr->GetPrimaryKey());
 				// update secondary index here
 				for (size_t i = 0; i < secondary_count_; ++i){
-					secondary_indexes_[i]->DeleteRecord(record->record_->GetSecondaryKey(i));
+					secondary_indexes_[i]->DeleteRecord(record_ptr->GetSecondaryKey(i));
 				}
 				// ========================IMPORTANT========================
-				// TODO: we do not delete data, potential memory leak problem!
-				//delete record;
-				//record = NULL;
+				// TODO: deletion should rely on a garbage collector. potential memory leak!
 			}
 
 			virtual void DeleteRecord(const std::string &primary_key, TableRecord *record) {
 				primary_index_->DeleteRecord(primary_key);
+				SchemaRecord *record_ptr = record->record_;
 				for (size_t i = 0; i < secondary_count_; ++i) {
-					secondary_indexes_[i]->DeleteRecord(record->record_->GetSecondaryKey(i));
+					secondary_indexes_[i]->DeleteRecord(record_ptr->GetSecondaryKey(i));
 				}
 			}
 

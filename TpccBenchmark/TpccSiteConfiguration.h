@@ -11,7 +11,7 @@ namespace Cavalia {
 			class TpccSiteConfiguration : public BenchmarkSiteConfiguration {
 			public:
 				TpccSiteConfiguration(const size_t &core_count, const size_t &partition_count) : BenchmarkSiteConfiguration(core_count, partition_count) {}
-				~TpccSiteConfiguration() {}
+				virtual ~TpccSiteConfiguration() {}
 
 				virtual size_t GetTableCount() const {
 					return kTableCount;

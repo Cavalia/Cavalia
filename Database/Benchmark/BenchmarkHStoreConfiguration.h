@@ -2,17 +2,19 @@
 #ifndef __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_HSTORE_CONFIGURATION_H__
 #define __CAVALIA_BENCHMARK_FRAMEWORK_BENCHMARK_HSTORE_CONFIGURATION_H__
 
-#include <cmath>
-#include "../Meta/MetaTypes.h"
-#include "NumaTopology.h"
+#include <cassert>
+#include <NumaHelper.h>
+#include "../Storage/ShardTableLocation.h"
+#include "../Executor/HStoreTxnLocation.h"
 
 namespace Cavalia {
 	namespace Benchmark {
 		using namespace Cavalia::Database;
+
 		class BenchmarkHStoreConfiguration {
 		public:
 			BenchmarkHStoreConfiguration(const size_t &core_count, const size_t &node_count) : core_count_(core_count), node_count_(node_count) {}
-			~BenchmarkHStoreConfiguration() {}
+			virtual ~BenchmarkHStoreConfiguration() {}
 
 			void MeasureConfiguration() {
 				NumaTopology topology;
@@ -22,37 +24,30 @@ namespace Cavalia {
 
 				std::vector<std::vector<size_t>> occupied_cores;
 				occupied_cores.resize(node_count_);
-				for (size_t i = 0; i < node_count_; ++i) {
-					std::cout << "cores in node " << i << ":";
-					for (size_t j = 0; j < core_count_; ++j) {
-						std::cout << " " << topology.cores_.at(i).at(j);
-						occupied_cores.at(i).push_back(topology.cores_.at(i).at(j));
+				for (size_t node_id = 0; node_id < node_count_; ++node_id) {
+					std::cout << "cores in node " << node_id << ":";
+					for (size_t k = 0; k < core_count_; ++k) {
+						size_t core_id = topology.cores_.at(node_id).at(k);
+						std::cout << " " << core_id;
+						occupied_cores.at(node_id).push_back(core_id);
 					}
 					std::cout << std::endl;
 				}
 
-				table_locations_.resize(GetTableCount());
-				for (size_t tab_id = 0; tab_id < GetTableCount(); ++tab_id){
-					for (size_t j = 0; j < core_count_; ++j){
-						for (size_t i = 0; i < node_count_; ++i){
-							table_locations_[tab_id].node_ids_.push_back(i);
-						}
-					}
-				}
-				for(size_t j = 0; j < core_count_; ++j){
+				for (size_t k = 0; k < core_count_; ++k){
 					for (size_t i = 0; i < node_count_; ++i){
-						txn_location_.core_ids_.push_back(occupied_cores.at(i).at(j));
+						txn_location_.AddThread(occupied_cores.at(i).at(k));
+						table_location_.AddPartition(i);
 					}
 				}
-				txn_location_.node_count_ = node_count_;
 			}
 
-			const TxnLocation& GetTxnLocation() const {
+			const HStoreTxnLocation& GetHStoreTxnLocation() const {
 				return txn_location_;
 			}
 
-			const std::vector<TableLocation>& GetTableLocations() const {
-				return table_locations_;
+			const ShardTableLocation& GetTableLocation() const {
+				return table_location_;
 			}
 
 		private:
@@ -65,11 +60,10 @@ namespace Cavalia {
 		private:
 			const size_t core_count_;
 			const size_t node_count_;
-			// <partition_id, core_id>
-			// partition_id is essentially the same as thread_id.
-			TxnLocation  txn_location_;
-			// table_id => <partition_id, numa_node_id>
-			std::vector<TableLocation> table_locations_;
+			// <thread_id, core_id>
+			HStoreTxnLocation txn_location_;
+			// <partition_id, numa_node_id>
+			ShardTableLocation table_location_;
 		};
 	}
 }

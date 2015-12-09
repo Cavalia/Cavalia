@@ -1,11 +1,11 @@
 #pragma once
-#ifndef __CAVALIA_DATABASE_SHARD_TABLE_H__
-#define __CAVALIA_DATABASE_SHARD_TABLE_H__
+#ifndef __CAVALIA_DATABASE_ISLAND_TABLE_H__
+#define __CAVALIA_DATABASE_ISLAND_TABLE_H__
 
 #include <NumaHelper.h>
 #include <ThreadHelper.h>
 #include "BaseTable.h"
-#include "ShardTableLocation.h"
+#include "IslandTableLocation.h"
 #include "../Index/StdUnorderedIndex.h"
 #include "../Index/StdUnorderedIndexMT.h"
 #include "../Index/StdOrderedIndex.h"
@@ -16,9 +16,9 @@
 
 namespace Cavalia {
 	namespace Database {
-		class ShardTable : public BaseTable {
+		class IslandTable : public BaseTable {
 		public:
-			ShardTable(const RecordSchema * const schema_ptr, const ShardTableLocation &table_location, bool is_thread_safe) : BaseTable(schema_ptr), partition_count_(table_location.GetPartitionCount()){
+			IslandTable(const RecordSchema * const schema_ptr, const IslandTableLocation &table_location, bool is_thread_safe) : BaseTable(schema_ptr), partition_count_(table_location.GetPartitionCount()), partition_id_(table_location.GetPartitionId()){
 				table_location_ = table_location;
 				if (is_thread_safe == true){
 #if defined(CUCKOO_INDEX)
@@ -68,7 +68,7 @@ namespace Cavalia {
 				}
 			}
 
-			virtual ~ShardTable() {
+			virtual ~IslandTable() {
 				//// records in the table is released by primary index.
 				//for (size_t i = 0; i < partition_count_; ++i){
 				//	MemAllocator::FreeNode((char*)(primary_index_[i]), sizeof(StdUnorderedIndex));
@@ -161,11 +161,11 @@ namespace Cavalia {
 				}
 				record = secondary_indexes_[part_id][idx_id]->SearchRecord(key);
 			}
-			
+
 			virtual void SelectRecord(const size_t &part_id, const size_t &idx_id, const std::string &key, TableRecord *&record) const {
 				record = secondary_indexes_[part_id][idx_id]->SearchRecord(key);
 			}
-			
+
 			virtual void SelectRecords(const size_t &idx_id, const std::string &key, TableRecords *records) const {
 				size_t part_id = 0;
 				if (partition_count_ != 1){
@@ -173,7 +173,7 @@ namespace Cavalia {
 				}
 				secondary_indexes_[part_id][idx_id]->SearchRecords(key, records);
 			}
-			
+
 			virtual void SelectRecords(const size_t &part_id, const size_t &idx_id, const std::string &key, TableRecords *records) const {
 				secondary_indexes_[part_id][idx_id]->SearchRecords(key, records);
 			}
@@ -185,11 +185,11 @@ namespace Cavalia {
 				}
 				secondary_indexes_[part_id][idx_id]->SearchUpperRecords(key, records);
 			}
-			
+
 			virtual void SelectUpperRecords(const size_t part_id, const size_t &idx_id, const std::string &key, TableRecords *records) const {
 				secondary_indexes_[part_id][idx_id]->SearchUpperRecords(key, records);
 			}
-			
+
 			virtual void SelectLowerRecords(const size_t &idx_id, const std::string &key, TableRecords *records) const {
 				size_t part_id = 0;
 				if (partition_count_ != 1){
@@ -197,11 +197,11 @@ namespace Cavalia {
 				}
 				secondary_indexes_[part_id][idx_id]->SearchLowerRecords(key, records);
 			}
-			
+
 			virtual void SelectLowerRecords(const size_t part_id, const size_t &idx_id, const std::string &key, TableRecords *records) const {
 				secondary_indexes_[part_id][idx_id]->SearchLowerRecords(key, records);
 			}
-			
+
 			virtual void SelectRangeRecords(const size_t &idx_id, const std::string &lower_key, std::string &upper_key, TableRecords *records) const {
 				size_t part_id = 0;
 				if (partition_count_ != 1){
@@ -209,7 +209,7 @@ namespace Cavalia {
 				}
 				secondary_indexes_[part_id][idx_id]->SearchRangeRecords(lower_key, upper_key, records);
 			}
-			
+
 			virtual void SelectRangeRecords(const size_t part_id, const size_t &idx_id, const std::string &lower_key, const std::string &upper_key, TableRecords *records) const {
 				secondary_indexes_[part_id][idx_id]->SearchRangeRecords(lower_key, upper_key, records);
 			}
@@ -228,40 +228,38 @@ namespace Cavalia {
 				SchemaRecord *tmp_record = new SchemaRecord(schema_ptr_, NULL);
 				char *tmp_entry = new char[record_size];
 
-				for (size_t part_id = 0; part_id < partition_count_; ++part_id){
-					size_t numa_node_id = table_location_.Partition2Node(part_id);
-					size_t core_id = GetCoreInNode(numa_node_id);
-					PinToCore(core_id);
-					in_stream.seekg(0, std::ios::end);
-					size_t file_size = static_cast<size_t>(in_stream.tellg());
-					in_stream.seekg(0, std::ios::beg);
-					size_t file_pos = 0;
-					while (file_pos < file_size) {
-						in_stream.read(tmp_entry, record_size);
-						tmp_record->data_ptr_ = tmp_entry;
-						if (IsReplication() == true){
-							char *entry = MemAllocator::Alloc(record_size);
+				size_t numa_node_id = table_location_.Partition2Node(partition_id_);
+				size_t core_id = GetCoreInNode(numa_node_id);
+				PinToCore(core_id);
+				in_stream.seekg(0, std::ios::end);
+				size_t file_size = static_cast<size_t>(in_stream.tellg());
+				in_stream.seekg(0, std::ios::beg);
+				size_t file_pos = 0;
+				while (file_pos < file_size) {
+					in_stream.read(tmp_entry, record_size);
+					tmp_record->data_ptr_ = tmp_entry;
+					if (IsReplication() == true){
+						char *entry = MemAllocator::Alloc(record_size);
+						memcpy(entry, tmp_entry, record_size);
+						SchemaRecord *s_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
+						new(s_record)SchemaRecord(schema_ptr_, entry);
+						TableRecord *t_record = (TableRecord*)MemAllocator::Alloc(sizeof(TableRecord));
+						new(t_record)TableRecord(s_record);
+						InsertRecord(partition_id_, t_record);
+					}
+					else{
+						size_t partition_id = GetPartitionId(tmp_record);
+						if (partition_id == partition_id_){
+							char *entry = MemAllocator::AllocNode(record_size, numa_node_id);
 							memcpy(entry, tmp_entry, record_size);
 							SchemaRecord *s_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 							new(s_record)SchemaRecord(schema_ptr_, entry);
 							TableRecord *t_record = (TableRecord*)MemAllocator::Alloc(sizeof(TableRecord));
 							new(t_record)TableRecord(s_record);
-							InsertRecord(part_id, t_record);
+							InsertRecord(t_record);
 						}
-						else{
-							size_t partition_id = GetPartitionId(tmp_record);
-							if (partition_id == part_id){
-								char *entry = MemAllocator::AllocNode(record_size, numa_node_id);
-								memcpy(entry, tmp_entry, record_size);
-								SchemaRecord *s_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
-								new(s_record)SchemaRecord(schema_ptr_, entry);
-								TableRecord *t_record = (TableRecord*)MemAllocator::Alloc(sizeof(TableRecord));
-								new(t_record)TableRecord(s_record);
-								InsertRecord(t_record);
-							}
-						}
-						file_pos += record_size;
 					}
+					file_pos += record_size;
 				}
 
 				delete[] tmp_entry;
@@ -280,12 +278,13 @@ namespace Cavalia {
 			}
 
 		private:
-			ShardTable(const ShardTable&);
-			ShardTable & operator=(const ShardTable&);
+			IslandTable(const IslandTable&);
+			IslandTable & operator=(const IslandTable&);
 
 		protected:
 			const size_t partition_count_;
-			ShardTableLocation table_location_;
+			const size_t partition_id_;
+			IslandTableLocation table_location_;
 			BaseUnorderedIndex **primary_index_;
 			BaseOrderedIndex ***secondary_indexes_;
 		};

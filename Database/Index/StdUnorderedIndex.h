@@ -13,24 +13,29 @@ namespace Cavalia {
 			virtual ~StdUnorderedIndex() {
 				// all the records in the table should be deleted by primary index.
 				// that is, primary index takes the owership of the data. 
-				// TODO: records should be allocated from the ScaleMalloc.
 				// at current stage, we do not deconstruct entries.
 				// tables will only be deleted when the program exits.
-				// as a result, we rely on the OS to reclaim memory.
-				//for (size_t partition = 0; partition < partition_num_; ++partition){
-				//	for (auto &entry : hash_index_[partition]){
-				//		delete entry.second;
-				//		entry.second = NULL;
-				//	}
-				//}
+				// that is, we rely on the OS to reclaim memory.
 			}
 
-			virtual void InsertRecord(const std::string &key, TableRecord *record) {
-				hash_index_[key] = record;
+			virtual bool InsertRecord(const std::string &key, TableRecord *record) {
+				if (hash_index_.find(key) == hash_index_.end()){
+					hash_index_[key] = record;
+					return true;
+				}
+				else{
+					return false;
+				}
 			}
 
-			virtual void DeleteRecord(const std::string &key) {
-				hash_index_.erase(key);
+			virtual bool DeleteRecord(const std::string &key) {
+				if (hash_index_.find(key) == hash_index_.end()){
+					return false;
+				}
+				else{
+					//hash_index_.erase(key);
+					return true;
+				}
 			}
 
 			virtual TableRecord* SearchRecord(const std::string &key) {
@@ -46,7 +51,7 @@ namespace Cavalia {
 				return hash_index_.size();
 			}
 
-			virtual void SaveCheckpoint(std::ofstream &out_stream, const size_t &record_size){
+			virtual void SaveCheckpoint(std::ofstream &out_stream, const size_t &record_size) {
 				for (auto &entry : hash_index_){
 					out_stream.write(entry.second->record_->data_ptr_, record_size);
 				}

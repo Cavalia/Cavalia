@@ -8,6 +8,8 @@
 #include "../Content/LockWaitContent.h"
 #elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(HYBRID)
 #include "../Content/LockContent.h"
+#elif defined(SILOCK) || defined(SIOCC)
+#include "../Content/SiLockContent.h"
 #elif defined(TO)
 #include "../Content/ToContent.h"
 #elif defined(MVTO)
@@ -20,10 +22,6 @@
 #include "../Content/MvLockWaitContent.h"
 #elif defined(MVOCC)
 #include "../Content/MvOccContent.h"
-#elif defined(SIOCC)
-#include "../Content/SiOccContent.h"
-#elif defined(SILOCK)
-#include "../Content/SiLockContent.h"
 #endif
 
 namespace Cavalia{
@@ -45,12 +43,10 @@ namespace Cavalia{
 			SchemaRecord *record_;
 
 #if defined(LOCK_WAIT)
-LockWaitContent content_;
+			LockWaitContent content_;
 #elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(HYBRID)
-LockContent content_;
-#elif defined(SIOCC)
-			SiOccContent content_;
-#elif defined(SILOCK)
+			LockContent content_;
+#elif defined(SILOCK) || defined(SIOCC)
 			SiLockContent content_;
 #elif defined(MVOCC)
 			MvOccContent content_;

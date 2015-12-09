@@ -9,6 +9,7 @@
 #include "../Storage/ShareStorageManager.h"
 #include "../Transaction/StoredProcedure.h"
 #include "BaseExecutor.h"
+#include "SiteTxnLocation.h"
 #if defined(DBX)
 #include <RtmLock.h>
 #endif
@@ -17,7 +18,7 @@ namespace Cavalia {
 	namespace Database {
 		class SiteExecutor : public BaseExecutor {
 		public:
-			SiteExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const TxnLocation &txn_location) : BaseExecutor(redirector, logger, txn_location.GetCoreCount()), storage_manager_(storage_manager), txn_location_(txn_location){
+			SiteExecutor(IORedirector *const redirector, BaseStorageManager *const storage_manager, BaseLogger *const logger, const SiteTxnLocation &txn_location) : BaseExecutor(redirector, logger, txn_location.GetThreadCount()), storage_manager_(storage_manager), txn_location_(txn_location){
 				is_begin_ = false;
 				is_finish_ = false;
 				total_count_ = 0;
@@ -45,9 +46,9 @@ namespace Cavalia {
 
 			virtual void ProcessQuery() {
 				boost::thread_group thread_group;
-				for (size_t part_id = 0; part_id < txn_location_.GetCoreCount(); ++part_id){
-					size_t core_id = txn_location_.core_ids_.at(part_id);
-					thread_group.create_thread(boost::bind(&SiteExecutor::ProcessQueryThread, this, part_id, core_id));
+				for (size_t thread_id = 0; thread_id < txn_location_.GetThreadCount(); ++thread_id){
+					size_t core_id = txn_location_.Thread2Core(thread_id);
+					thread_group.create_thread(boost::bind(&SiteExecutor::ProcessQueryThread, this, thread_id, core_id));
 				}
 				bool is_all_ready = true;
 				while (1) {
@@ -110,7 +111,7 @@ namespace Cavalia {
 					procedures[entry.first] = entry.second(node_id);
 					procedures[entry.first]->SetTransactionManager(&txn_manager);
 					procedures[entry.first]->SetPartitionId(node_id);
-					procedures[entry.first]->SetPartitionCount(txn_location_.node_count_);
+					procedures[entry.first]->SetPartitionCount(txn_location_.GetPartitionCount());
 				}
 #if defined(DBX)
 				txn_manager.SetRtmLock(&rtm_lock_);
@@ -191,7 +192,7 @@ namespace Cavalia {
 			volatile bool is_finish_;
 			std::atomic<size_t> total_count_;
 			std::atomic<size_t> total_abort_count_;
-			TxnLocation txn_location_;
+			SiteTxnLocation txn_location_;
 #if defined(DBX)
 			RtmLock rtm_lock_;
 #endif

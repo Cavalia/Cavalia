@@ -16,6 +16,7 @@ namespace Cavalia{
 				virtual ~TpccPopulator(){}
 
 				virtual void StartPopulate();
+				virtual void StartPopulate(const size_t &min_w_id, const size_t &max_w_id);
 
 			private:
 				ItemRecord* GenerateItemRecord(const int &item_id, bool original) const;

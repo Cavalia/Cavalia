@@ -74,8 +74,11 @@ namespace Cavalia{
 						history_record->SetColumn(4, (char*)(&payment_param->w_id_));
 						history_record->SetColumn(5, (char*)(&payment_param->h_date_));
 						history_record->SetColumn(6, (char*)(&payment_param->h_amount_));
+						memcpy(h_key, &payment_param->c_id_, sizeof(int));
+						memcpy(h_key + sizeof(int), &payment_param->w_id_, sizeof(int));
+						memcpy(h_key + sizeof(int)+sizeof(int), &payment_param->h_date_, sizeof(int64_t));
 						// "insertHistory": "INSERT INTO HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-						DB_QUERY(InsertRecord(&context_, HISTORY_TABLE_ID, history_record));
+						DB_QUERY(InsertRecord(&context_, HISTORY_TABLE_ID, std::string(h_key, sizeof(int)+sizeof(int)+sizeof(int64_t)), history_record));
 
 						return transaction_manager_->CommitTransaction(&context_, param, ret);
 					}
@@ -88,6 +91,7 @@ namespace Cavalia{
 					char d_key[sizeof(int)* 2];
 					char c_key[sizeof(int)* 3];
 					char cname_key[sizeof(int)+sizeof(int)+32];
+					char h_key[sizeof(int)+sizeof(int)+sizeof(int64_t)];
 				};
 			}
 		}

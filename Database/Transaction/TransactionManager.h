@@ -32,6 +32,10 @@ namespace Cavalia{
 				global_ts_ = 0;
 				local_ts_ = 0;
 				t_records_ = new TableRecords(64);
+				
+				// for multi-version concurrency-control schemes.
+				this->progress_ts_ = 0;
+				GlobalTimestamp::thread_timestamp_[thread_id_] = &(this->progress_ts_);
 			}
 
 			// for replayer.
@@ -52,7 +56,7 @@ namespace Cavalia{
 			}
 
 			// shared
-			bool SelectKeyRecord(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *&record, const AccessType access_type, const size_t &access_id){
+			bool SelectKeyRecord(TxnContext *context, const size_t &table_id, const std::string &primary_key, SchemaRecord *&record, const AccessType access_type){
 				BEGIN_INDEX_TIME_MEASURE(thread_id_);
 				TableRecord *t_record = NULL;
 				storage_manager_->tables_[table_id]->SelectKeyRecord(primary_key, t_record);
@@ -63,7 +67,11 @@ namespace Cavalia{
 					END_PHASE_MEASURE(thread_id_, SELECT_PHASE);
 					return rt;
 				}
-				return true;
+				else{
+					//assert(false);
+					// if no record is found, then a "virtual record" should be inserted as the placeholder so that we can lock it.
+					return true;
+				}
 			}
 
 			// partition
@@ -78,11 +86,15 @@ namespace Cavalia{
 					END_PHASE_MEASURE(thread_id_, SELECT_PHASE);
 					return rt;
 				}
-				return true;
+				else{
+					//assert(false);
+					// if no record is found, then a "virtual record" should be inserted as the placeholder so that we can lock it.
+					return true;
+				}
 			}
 
 			// shared
-			bool SelectRecord(TxnContext *context, const size_t &table_id, const size_t &idx_id, const std::string &secondary_key, SchemaRecord *&record, const AccessType access_type, const size_t &access_id){
+			bool SelectRecord(TxnContext *context, const size_t &table_id, const size_t &idx_id, const std::string &secondary_key, SchemaRecord *&record, const AccessType access_type){
 				BEGIN_INDEX_TIME_MEASURE(thread_id_);
 				TableRecord *t_record = NULL;
 				storage_manager_->tables_[table_id]->SelectRecord(idx_id, secondary_key, t_record);
@@ -112,7 +124,7 @@ namespace Cavalia{
 			}
 
 			// shared
-			bool SelectRecords(TxnContext *context, const size_t &table_id, const size_t &idx_id, const std::string &secondary_key, SchemaRecords *records, const AccessType access_type, const size_t &access_id) {
+			bool SelectRecords(TxnContext *context, const size_t &table_id, const size_t &idx_id, const std::string &secondary_key, SchemaRecords *records, const AccessType access_type) {
 				BEGIN_INDEX_TIME_MEASURE(thread_id_);
 				storage_manager_->tables_[table_id]->SelectRecords(idx_id, secondary_key, t_records_);
 				END_INDEX_TIME_MEASURE(thread_id_);
@@ -148,8 +160,8 @@ namespace Cavalia{
 			}
 
 		private:
-			bool SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type, const size_t &access_id = SIZE_MAX, bool is_key_access = true);
-			bool SelectRecordsCC(TxnContext *context, const size_t &table_id, TableRecords *t_records, SchemaRecords *records, const AccessType access_type, const size_t &access_id = SIZE_MAX){
+			bool SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type);
+			bool SelectRecordsCC(TxnContext *context, const size_t &table_id, TableRecords *t_records, SchemaRecords *records, const AccessType access_type){
 				for (size_t i = 0; i < t_records->curr_size_; ++i) {
 					SchemaRecord **s_record = &(records->records_[i]);
 					TableRecord *t_record = t_records->records_[i];
@@ -160,9 +172,9 @@ namespace Cavalia{
 				return true;
 			}
 
-			uint64_t GenerateTimestamp(const uint64_t curr_ts, const uint64_t &max_write_ts){
-				uint64_t max_global_ts = max_write_ts >> 32;
-				uint32_t max_local_ts = max_write_ts & 0xFFFFFFFF;
+			uint64_t GenerateTimestamp(const uint64_t curr_ts, const uint64_t &max_rw_ts){
+				uint64_t max_global_ts = max_rw_ts >> 32;
+				uint32_t max_local_ts = max_rw_ts & 0xFFFFFFFF;
 				assert(curr_ts >= max_global_ts);
 				assert(curr_ts >= this->global_ts_);
 				// init.
@@ -182,7 +194,7 @@ namespace Cavalia{
 				assert(this->global_ts_ == max_global_ts && this->local_ts_ >= max_local_ts || this->global_ts_ > max_global_ts);
 
 				uint64_t commit_ts = (this->global_ts_ << 32) | this->local_ts_;
-				assert(commit_ts >= max_write_ts);
+				assert(commit_ts >= max_rw_ts);
 				return commit_ts;
 			}
 
@@ -200,6 +212,7 @@ namespace Cavalia{
 			bool is_first_access_;
 			uint64_t global_ts_;
 			uint32_t local_ts_;
+			std::atomic<uint64_t> progress_ts_;
 			AccessList<kMaxAccessNum> access_list_;
 			TableRecords *t_records_;
 
