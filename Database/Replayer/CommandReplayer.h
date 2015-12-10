@@ -82,19 +82,40 @@ namespace Cavalia{
 				for (size_t i = 0; i < thread_count_; ++i){
 					std::cout << "thread id=" << i << ", size=" << log_batches_[i].size() << std::endl;
 				}
-				//size_t finish_counter = thread_count_;
-				//size_t *bookmarks = new size_t[thread_count_];
-				//while (finish_counter != 0){
-				//	size_t thread_id = 0;
-
-				//}
-				//delete[] bookmarks;
-				//bookmarks = NULL;
+				LogEntries::iterator *iterators = new LogEntries::iterator[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
-					for (size_t k = 0; k < log_batches_[i].size(); ++k){
-						ordered_logs_.push_back(log_batches_[i].at(k));
+					iterators[i] = log_batches_[i].begin();
+				}
+				while (true){
+					bool all_finished = true;
+					uint64_t min_ts = -1;
+					LogEntries::iterator min_thread;
+					for (size_t i = 0; i < thread_count_; ++i){
+						if (iterators[i] != log_batches_[i].end()){
+							if (min_ts == -1 || iterators[i]->timestamp_ < min_ts){
+								min_ts = iterators[i]->timestamp_;
+								min_thread = iterators[i];
+							}
+							++iterators[i];
+							all_finished = false;
+						}
+					}
+					if (all_finished == true){
+						assert(min_ts == -1);
+						break;
+					}
+					else{
+						assert(min_ts != -1);
+						ordered_logs_.push_back(*min_thread);
 					}
 				}
+				delete[] iterators;
+				iterators = NULL;
+				//for (size_t i = 0; i < thread_count_; ++i){
+				//	for (size_t k = 0; k < log_batches_[i].size(); ++k){
+				//		ordered_logs_.push_back(log_batches_[i].at(k));
+				//	}
+				//}
 				std::cout << "full log size=" << ordered_logs_.size() << std::endl;
 			
 			}
