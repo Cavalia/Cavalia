@@ -90,14 +90,10 @@ namespace Cavalia{
 			END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 
 			// setp 2: validate read.
-			uint64_t max_rw_ts = 0;
 			bool is_success = true;
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
 				auto &content_ref = access_ptr->access_record_->content_;
-				if (access_ptr->timestamp_ > max_rw_ts){
-					max_rw_ts = access_ptr->timestamp_;
-				}
 				if (access_ptr->access_type_ == READ_WRITE){
 					if (content_ref.GetTimestamp() != access_ptr->timestamp_){
 						is_success = false;
@@ -113,9 +109,25 @@ namespace Cavalia{
 				}
 			}
 
+#if defined(SCALABLE_TIMESTAMP)
+			uint64_t max_rw_ts = 0;
+			for (size_t i = 0; i < access_list_.access_count_; ++i){
+				Access *access_ptr = access_list_.GetAccess(i);
+				if (access_ptr->timestamp_ > max_rw_ts){
+					max_rw_ts = access_ptr->timestamp_;
+				}
+			}
+#endif
+
 			// step 3: if success, then overwrite and commit
 			if (is_success == true){
+				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
+#if defined(SCALABLE_TIMESTAMP)
 				uint64_t commit_ts = GenerateTimestamp(global_ts, max_rw_ts);
+#else
+				uint64_t commit_ts = GlobalTimestamp::GetMonotoneTimestamp();
+#endif
+				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 
 				for (size_t i = 0; i < write_list_.access_count_; ++i){
 					Access *access_ptr = write_list_.accesses_[i];
@@ -151,7 +163,7 @@ namespace Cavalia{
 #if defined(VALUE_LOGGING)
 				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts);
 #elif defined(COMMAND_LOGGING)
-				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, context->txn_type_, param);
+				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts, context->txn_type_, param);
 #endif
 
 				// step 4: release locks and clean up.

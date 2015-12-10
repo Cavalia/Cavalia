@@ -136,7 +136,7 @@ namespace Cavalia{
 #if defined(VALUE_LOGGING)
 			((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts);
 #elif defined(COMMAND_LOGGING)
-			((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, context->txn_type_, param);
+			((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts, context->txn_type_, param);
 #endif
 			// release locks.
 			for (size_t i = 0; i < access_list_.access_count_; ++i){

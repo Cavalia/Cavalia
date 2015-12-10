@@ -83,7 +83,7 @@ namespace Cavalia {
 				last_timestamps_ = NULL;
 			}
 
-			void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts, const size_t &txn_type, TxnParam *param) {
+			void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param) {
 				if (global_ts == -1){
 					FILE *file_ptr = outfiles_[thread_id];
 #if defined(COMPRESSION)

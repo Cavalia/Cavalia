@@ -47,6 +47,7 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 
 ###Timestamp allocation
 * BATCH_TIMESTAMP: allocate timestamp in batch.
+* SCALABLE_TIMESTAMP: allocate timestamp in Silo's style [TZK+13].
 
 ###Profiler
 * MUTE: mute profiling.

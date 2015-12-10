@@ -159,7 +159,7 @@ namespace Cavalia {
 				// commit.
 				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts);
 #elif defined(COMMAND_LOGGING)
-				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, context->txn_type_, param);
+				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts, context->txn_type_, param);
 #endif
 
 				// clean up.

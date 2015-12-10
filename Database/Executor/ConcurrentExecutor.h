@@ -67,7 +67,8 @@ namespace Cavalia{
 					}
 					is_all_ready = true;
 				}
-#if defined(LOCK_WAIT) || defined(LOCK) || defined(OCC) || defined(SILO) || defined(MVOCC) || defined(DBX) || defined(HRTM)
+//#if defined(LOCK_WAIT) || defined(LOCK) || defined(OCC) || defined(SILO) || defined(MVOCC) || defined(DBX) || defined(HRTM)
+#if defined(SCALABLE_TIMESTAMP)
 				ScalableTimestamp scalable_ts;
 #endif
 				std::cout << "start processing..." << std::endl;
