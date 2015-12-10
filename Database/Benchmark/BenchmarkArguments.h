@@ -43,7 +43,7 @@ static void PrintUsage() {
 	std::cout << "\t\t3: HSTORE_EXECUTE" << std::endl;
 	std::cout << "\t\t4: SITE_EXECUTE" << std::endl;
 	std::cout << "\t\t5: ISLAND_EXECUTE" << std::endl;
-	std::cout << "\t\t6: NODE_EXECUTE" << std::endl;
+	std::cout << "\t\t6: SERVER_EXECUTE" << std::endl;
 	std::cout << "\t-sfDOUBLE: SCALE_FACTOR" << std::endl;
 	std::cout << "\t-tINT: TXN_COUNT" << std::endl;
 	std::cout << "\t-dINT: DIST_TXN_RATIO" << std::endl;
@@ -55,7 +55,7 @@ static void PrintUsage() {
 	std::cout << "===========================" << std::endl;
 	std::cout << "==========[EXAMPLES]==========" << std::endl;
 	std::cout << "<POPULATE> Benchmark -a0 -sf10 -sf100" << std::endl;
-	std::cout << "<REPLAY> Benchmark -a1 -sf10 -sf100 [-r2] [-s10] [-c32]" << std::endl;
+	std::cout << "<REPLAY> Benchmark -a1 -c1 [-r2]" << std::endl;
 	std::cout << "<CC_EXECUTE> Benchmark -a2 -sf10 -sf100 -t100000 -c32" << std::endl;
 	std::cout << "<HSTORE_EXECUTE> Benchmark -a3 -sf10 -sf100 -t100000 -c4 -n5 -d20" << std::endl;
 	std::cout << "<SITE_EXECUTE> Benchmark -a4 -sf10 -sf100 -t100000 -c4 -n5 -d20" << std::endl;
@@ -80,10 +80,6 @@ static void ArgumentsChecker() {
 		}
 	}
 	else if (app_type == APP_REPLAY) {
-		if (factor_count == 0) {
-			std::cout << "SCALE_FACTOR (-sf) should be set." << std::endl;
-			exit(0);
-		}
 		if (num_core == -1) {
 			std::cout << "CORE_COUNT (-c) should be set." << std::endl;
 			exit(0);
