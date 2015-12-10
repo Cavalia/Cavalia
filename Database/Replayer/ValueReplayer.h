@@ -109,10 +109,11 @@ namespace Cavalia{
 			}
 
 			void ProcessLog(const size_t &thread_id){
-				auto &log_ref = txn_logs_[thread_id];
-				for (size_t i = 0; i < log_ref.size(); ++i){
-					for (size_t k = 0; k < log_ref.at(i)->log_count_; ++k){
-						AccessLog *log_ptr = &(log_ref.at(i)->logs_[k]);
+				for (size_t i = 0; i < txn_logs_[thread_id].size(); ++i){
+					auto *txn_log_ptr = txn_logs_[thread_id].at(i);
+					uint64_t txn_ts = txn_log_ptr->commit_ts_;
+					for (size_t k = 0; k < txn_log_ptr->log_count_; ++k){
+						AccessLog *log_ptr = &(txn_log_ptr->logs_[k]);
 						if (log_ptr->type_ == kInsert){
 							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_ptr->table_id_), log_ptr->data_ptr_);
 							//storage_manager_->tables_[log_ptr->table_id_]->InsertRecord(new TableRecord(record_ptr));
@@ -121,7 +122,16 @@ namespace Cavalia{
 							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_ptr->table_id_), log_ptr->data_ptr_);
 							TableRecord *tb_record_ptr = NULL;
 							storage_manager_->tables_[log_ptr->table_id_]->SelectKeyRecord(record_ptr->GetPrimaryKey(), tb_record_ptr);
-							tb_record_ptr->record_ = record_ptr;
+							if (txn_ts > tb_record_ptr->content_.GetTimestamp()){
+								SchemaRecord *tmp_ptr = tb_record_ptr->record_;
+								tb_record_ptr->record_ = record_ptr;
+								delete tmp_ptr;
+								tmp_ptr = NULL;
+							}
+							else{
+								delete record_ptr;
+								record_ptr = NULL;
+							}
 						}
 						else if (log_ptr->type_ == kDelete){
 							//storage_manager_->tables_[log_ptr->table_id_]->DeleteRecord();
