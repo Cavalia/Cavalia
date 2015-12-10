@@ -116,6 +116,7 @@ namespace Cavalia{
 
 		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str){
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
+#if defined(SCALABLE_TIMESTAMP)
 			uint64_t max_rw_ts = 0;
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
@@ -123,12 +124,16 @@ namespace Cavalia{
 					max_rw_ts = access_ptr->timestamp_;
 				}
 			}
+#endif
 
 			BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-			uint64_t global_ts = ScalableTimestamp::GetTimestamp();
+			uint64_t curr_epoch = ScalableTimestamp::GetTimestamp();
+#if defined(SCALABLE_TIMESTAMP)
+			uint64_t commit_ts = GenerateScalableTimestamp(curr_epoch, max_rw_ts);
+#else
+			uint64_t commit_ts = GenerateMonotoneTimestamp(curr_epoch, GlobalTimestamp::GetMonotoneTimestamp());
+#endif
 			END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-			uint64_t commit_ts = GenerateTimestamp(global_ts, max_rw_ts);
-			assert(commit_ts >= max_rw_ts);
 
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
@@ -157,9 +162,9 @@ namespace Cavalia{
 			}
 			// commit.
 #if defined(VALUE_LOGGING)
-			((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts);
+			((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch, commit_ts);
 #elif defined(COMMAND_LOGGING)
-			((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts, context->txn_type_, param);
+			((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, context->txn_type_, param);
 #endif
 			
 			// release locks.

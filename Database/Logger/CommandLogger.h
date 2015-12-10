@@ -19,9 +19,9 @@ namespace Cavalia {
 					buffers_[i] = new char[kCommandLogBufferSize];
 					buffer_offsets_[i] = 0;
 				}
-				last_timestamps_ = new uint64_t[thread_count_];
+				last_epochs_ = new uint64_t[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
-					last_timestamps_[i] = 0;
+					last_epochs_[i] = 0;
 				}
 #if defined(COMPRESSION)
 				compression_contexts_ = new LZ4F_compressionContext_t[thread_count_];
@@ -79,12 +79,12 @@ namespace Cavalia {
 				buffers_ = NULL;
 				delete[] buffer_offsets_;
 				buffer_offsets_ = NULL;
-				delete[] last_timestamps_;
-				last_timestamps_ = NULL;
+				delete[] last_epochs_;
+				last_epochs_ = NULL;
 			}
 
-			void CommitTransaction(const size_t &thread_id, const uint64_t &global_ts, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param) {
-				if (global_ts == -1){
+			void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param) {
+				if (epoch == -1){
 					FILE *file_ptr = outfiles_[thread_id];
 #if defined(COMPRESSION)
 					size_t& offset = compressed_buf_offsets_[thread_id];
@@ -110,8 +110,8 @@ namespace Cavalia {
 				char *buffer_ptr = buffers_[thread_id];
 				size_t &offset_ref = buffer_offsets_[thread_id];
 				// write timestamp.
-				memcpy(buffer_ptr + offset_ref, (char*)(&global_ts), sizeof(global_ts));
-				offset_ref += sizeof(global_ts);
+				memcpy(buffer_ptr + offset_ref, (char*)(&commit_ts), sizeof(commit_ts));
+				offset_ref += sizeof(commit_ts);
 				// write stored procedure type.
 				memcpy(buffer_ptr + offset_ref, (char*)(&txn_type), sizeof(txn_type));
 				offset_ref += sizeof(txn_type);
@@ -122,9 +122,9 @@ namespace Cavalia {
 				memcpy(buffer_ptr + offset_ref, (char*)(&tmp_size), sizeof(tmp_size));
 				offset_ref += sizeof(tmp_size)+tmp_size;
 
-				if (global_ts != last_timestamps_[thread_id] || global_ts == (uint64_t)(-1)){
+				if (epoch != last_epochs_[thread_id] || epoch == (uint64_t)(-1)){
 					FILE *file_ptr = outfiles_[thread_id];
-					last_timestamps_[thread_id] = global_ts;
+					last_epochs_[thread_id] = epoch;
 #if defined(COMPRESSION)
 					size_t& offset = compressed_buf_offsets_[thread_id];
 					size_t n = LZ4F_compressUpdate(compression_contexts_[thread_id], compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
@@ -155,7 +155,7 @@ namespace Cavalia {
 		private:
 			char **buffers_;
 			size_t *buffer_offsets_;
-			uint64_t *last_timestamps_;
+			uint64_t *last_epochs_;
 #if defined(COMPRESSION)
 			LZ4F_compressionContext_t* compression_contexts_;
 			char **compressed_buffers_;

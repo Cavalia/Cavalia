@@ -1,9 +1,8 @@
 #pragma once
-#ifndef __CAVALIA_DATABASE_SCALABLE_TIMESTAMP_H__
-#define __CAVALIA_DATABASE_SCALABLE_TIMESTAMP_H__
+#ifndef __CAVALIA_DATABASE_EPOCH_H__
+#define __CAVALIA_DATABASE_EPOCH_H__
 
 #include <cstdint>
-#include <ThreadHelper.h>
 #include <boost/thread.hpp>
 
 #if defined(__linux__)
@@ -14,20 +13,20 @@
 
 namespace Cavalia {
 	namespace Database {
-		class ScalableTimestamp {
+		class Epoch {
 		public:
-			ScalableTimestamp() {
-				ts_thread_ = new boost::thread(boost::bind(&ScalableTimestamp::Start, this));
+			Epoch() {
+				ts_thread_ = new boost::thread(boost::bind(&Epoch::Start, this));
 			}
 
-			~ScalableTimestamp() {
+			~Epoch() {
 				delete ts_thread_;
 				ts_thread_ = NULL;
 			}
 
-			static uint64_t GetTimestamp() {
+			static uint64_t GetEpoch() {
 				COMPILER_MEMORY_FENCE;
-				uint64_t ret_ts = curr_ts_;
+				uint64_t ret_ts = curr_epoch_;
 				COMPILER_MEMORY_FENCE;
 				return ret_ts;
 			}
@@ -36,12 +35,12 @@ namespace Cavalia {
 			void Start() {
 				while (true) {
 					boost::this_thread::sleep(boost::posix_time::milliseconds(40));
-					++curr_ts_;
+					++curr_epoch_;
 				}
 			}
 
 		private:
-			static volatile uint64_t curr_ts_;
+			static volatile uint64_t curr_epoch_;
 			boost::thread *ts_thread_;
 		};
 	}

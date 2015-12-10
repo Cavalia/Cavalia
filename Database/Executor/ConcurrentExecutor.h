@@ -11,7 +11,7 @@
 #include "../Profiler/Profilers.h"
 #include "../Storage/ShareStorageManager.h"
 #include "../Transaction/StoredProcedure.h"
-#include "../Transaction/ScalableTimestamp.h"
+#include "../Transaction/Epoch.h"
 #include "BaseExecutor.h"
 #if defined(DBX) || defined(HRTM)
 #include <RtmLock.h>
@@ -67,10 +67,8 @@ namespace Cavalia{
 					}
 					is_all_ready = true;
 				}
-//#if defined(LOCK_WAIT) || defined(LOCK) || defined(OCC) || defined(SILO) || defined(MVOCC) || defined(DBX) || defined(HRTM)
-#if defined(SCALABLE_TIMESTAMP)
-				ScalableTimestamp scalable_ts;
-#endif
+				// epoch generator.
+				Epoch epoch;
 				std::cout << "start processing..." << std::endl;
 				BEGIN_CACHE_MISS_PROFILE;
 				is_begin_ = true;

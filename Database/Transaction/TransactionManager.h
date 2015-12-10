@@ -15,7 +15,7 @@
 #include "TxnContext.h"
 #include "GlobalTimestamp.h"
 #include "BatchTimestamp.h"
-#include "ScalableTimestamp.h"
+#include "Epoch.h"
 #if defined(DBX) || defined(HRTM)
 #include <RtmLock.h>
 #endif
@@ -29,7 +29,7 @@ namespace Cavalia{
 			TransactionManager(BaseStorageManager *const storage_manager, BaseLogger *const logger, const size_t &thread_id, const size_t &thread_count) : storage_manager_(storage_manager), logger_(logger), thread_id_(thread_id), thread_count_(thread_count){
 				table_count_ = storage_manager->table_count_;
 				is_first_access_ = true;
-				global_ts_ = 0;
+				local_epoch_ = 0;
 				local_ts_ = 0;
 				t_records_ = new TableRecords(64);
 				
@@ -172,29 +172,35 @@ namespace Cavalia{
 				return true;
 			}
 
-			uint64_t GenerateTimestamp(const uint64_t curr_ts, const uint64_t &max_rw_ts){
+			uint64_t GenerateScalableTimestamp(const uint64_t &curr_epoch, const uint64_t &max_rw_ts){
 				uint64_t max_global_ts = max_rw_ts >> 32;
 				uint32_t max_local_ts = max_rw_ts & 0xFFFFFFFF;
-				assert(curr_ts >= max_global_ts);
-				assert(curr_ts >= this->global_ts_);
+				assert(curr_epoch >= max_global_ts);
+				assert(curr_epoch >= this->local_epoch_);
 				// init.
-				if (curr_ts > this->global_ts_) {
-					this->global_ts_ = curr_ts;
+				if (curr_epoch > this->local_epoch_) {
+					this->local_epoch_ = curr_epoch;
 					this->local_ts_ = this->thread_id_;
 				}
-				assert(this->global_ts_ == curr_ts);
+				assert(this->local_epoch_ == curr_epoch);
 				// compute commit timestamp.
-				if (curr_ts == max_global_ts) {
+				if (curr_epoch == max_global_ts) {
 					if (this->local_ts_ <= max_local_ts) {
 						this->local_ts_ = (max_local_ts / thread_count_ + 1)*thread_count_ + thread_id_;
 						assert(this->local_ts_ > max_local_ts);
 					}
 					assert(this->local_ts_ > max_local_ts);
 				}
-				assert(this->global_ts_ == max_global_ts && this->local_ts_ >= max_local_ts || this->global_ts_ > max_global_ts);
+				assert(this->local_epoch_ == max_global_ts && this->local_ts_ >= max_local_ts || this->local_epoch_ > max_global_ts);
 
-				uint64_t commit_ts = (this->global_ts_ << 32) | this->local_ts_;
+				uint64_t commit_ts = (this->local_epoch_ << 32) | this->local_ts_;
 				assert(commit_ts >= max_rw_ts);
+				return commit_ts;
+			}
+
+			uint64_t GenerateMonotoneTimestamp(const uint64_t &curr_epoch, const uint64_t &monotone_ts){
+				uint32_t lower_bits = monotone_ts & 0xFFFFFFFF;
+				uint64_t commit_ts = (curr_epoch << 32) | lower_bits;
 				return commit_ts;
 			}
 
@@ -210,7 +216,7 @@ namespace Cavalia{
 			size_t table_count_;
 			uint64_t start_timestamp_;
 			bool is_first_access_;
-			uint64_t global_ts_;
+			uint64_t local_epoch_;
 			uint32_t local_ts_;
 			std::atomic<uint64_t> progress_ts_;
 			AccessList<kMaxAccessNum> access_list_;
