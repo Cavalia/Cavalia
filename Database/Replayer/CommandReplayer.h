@@ -21,12 +21,23 @@ namespace Cavalia{
 			}
 
 			virtual void Start(){
+				TimeMeasurer timer;
+				timer.StartTimer();
 				boost::thread_group reloaders;
 				for (size_t i = 0; i < thread_count_; ++i){
 					reloaders.create_thread(boost::bind(&CommandReplayer::ReloadLog, this, i));
 				}
 				reloaders.join_all();
+				timer.EndTimer();
+				std::cout << "Reload log elapsed time=" << timer.GetElapsedMilliSeconds() << "ms." << std::endl;
+				timer.StartTimer();
+				ReorderLog();
+				timer.EndTimer();
+				std::cout << "Reorder log elapsed time=" << timer.GetElapsedMilliSeconds() << "ms." << std::endl;
+				timer.StartTimer();
 				ProcessLog();
+				timer.EndTimer();
+				std::cout << "Process log elapsed time=" << timer.GetElapsedMilliSeconds() << "ms." << std::endl;
 			}
 
 		private:
@@ -67,19 +78,10 @@ namespace Cavalia{
 				entry.Release();
 			}
 
-			void ProcessLog(){
-				PrepareProcedures();
-				TransactionManager *txn_manager = new TransactionManager(storage_manager_, NULL);
-				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
-				for (auto &entry : registers_){
-					procedures[entry.first] = entry.second();
-					procedures[entry.first]->SetTransactionManager(txn_manager);
-				}
-
+			void ReorderLog(){
 				for (size_t i = 0; i < thread_count_; ++i){
 					std::cout << "thread id=" << i << ", size=" << log_batches_[i].size() << std::endl;
 				}
-				LogEntries full_log;
 				//size_t finish_counter = thread_count_;
 				//size_t *bookmarks = new size_t[thread_count_];
 				//while (finish_counter != 0){
@@ -90,15 +92,26 @@ namespace Cavalia{
 				//bookmarks = NULL;
 				for (size_t i = 0; i < thread_count_; ++i){
 					for (size_t k = 0; k < log_batches_[i].size(); ++k){
-						full_log.push_back(log_batches_[i].at(k));
+						ordered_logs_.push_back(log_batches_[i].at(k));
 					}
 				}
-				std::cout << "full log size=" << full_log.size() << std::endl;
+				std::cout << "full log size=" << ordered_logs_.size() << std::endl;
+			
+			}
+
+			void ProcessLog(){
+				PrepareProcedures();
+				TransactionManager *txn_manager = new TransactionManager(storage_manager_, NULL);
+				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
+				for (auto &entry : registers_){
+					procedures[entry.first] = entry.second();
+					procedures[entry.first]->SetTransactionManager(txn_manager);
+				}
 				CharArray ret;
 				ret.char_ptr_ = new char[1024];
 				ExeContext exe_context;
-				for (size_t i = 0; i < full_log.size(); ++i){
-					TxnParam *param = full_log.at(i).param_;
+				for (size_t i = 0; i < ordered_logs_.size(); ++i){
+					TxnParam *param = ordered_logs_.at(i).param_;
 					ret.size_ = 0;
 					procedures[param->type_]->Execute(param, ret, exe_context);
 				}
@@ -113,6 +126,7 @@ namespace Cavalia{
 
 		private:
 			LogEntries *log_batches_;
+			LogEntries ordered_logs_;
 		};
 	}
 }
