@@ -89,14 +89,15 @@ namespace Cavalia{
 				while (true){
 					bool all_finished = true;
 					uint64_t min_ts = -1;
-					LogEntries::iterator min_thread;
+					size_t thread_id = SIZE_MAX;
+					LogEntries::iterator min_entry;
 					for (size_t i = 0; i < thread_count_; ++i){
 						if (iterators[i] != log_batches_[i].end()){
 							if (min_ts == -1 || iterators[i]->timestamp_ < min_ts){
 								min_ts = iterators[i]->timestamp_;
-								min_thread = iterators[i];
+								min_entry = iterators[i];
+								thread_id = i;
 							}
-							++iterators[i];
 							all_finished = false;
 						}
 					}
@@ -106,16 +107,12 @@ namespace Cavalia{
 					}
 					else{
 						assert(min_ts != -1);
-						ordered_logs_.push_back(*min_thread);
+						ordered_logs_.push_back(*min_entry);
+						++iterators[thread_id];
 					}
 				}
 				delete[] iterators;
 				iterators = NULL;
-				//for (size_t i = 0; i < thread_count_; ++i){
-				//	for (size_t k = 0; k < log_batches_[i].size(); ++k){
-				//		ordered_logs_.push_back(log_batches_[i].at(k));
-				//	}
-				//}
 				std::cout << "full log size=" << ordered_logs_.size() << std::endl;
 			
 			}
