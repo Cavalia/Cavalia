@@ -109,15 +109,19 @@ namespace Cavalia {
 				}
 				char *buffer_ptr = buffers_[thread_id];
 				size_t &offset_ref = buffer_offsets_[thread_id];
+				// write timestamp.
+				memcpy(buffer_ptr + offset_ref, (char*)(&global_ts), sizeof(global_ts));
+				offset_ref += sizeof(global_ts);
 				// write stored procedure type.
 				memcpy(buffer_ptr + offset_ref, (char*)(&txn_type), sizeof(txn_type));
+				offset_ref += sizeof(txn_type);
 				size_t tmp_size = 0;
 				// write parameters. get tmp_size first.
-				param->Serialize(buffer_ptr + offset_ref + sizeof(txn_type)+sizeof(tmp_size), tmp_size);
+				param->Serialize(buffer_ptr + offset_ref + sizeof(tmp_size), tmp_size);
 				// write parameter size.
-				memcpy(buffer_ptr + offset_ref + sizeof(txn_type), (char*)(&tmp_size), sizeof(tmp_size));
+				memcpy(buffer_ptr + offset_ref, (char*)(&tmp_size), sizeof(tmp_size));
+				offset_ref += sizeof(tmp_size)+tmp_size;
 
-				offset_ref += sizeof(txn_type)+sizeof(tmp_size)+tmp_size;
 				if (global_ts != last_timestamps_[thread_id] || global_ts == (uint64_t)(-1)){
 					FILE *file_ptr = outfiles_[thread_id];
 					last_timestamps_[thread_id] = global_ts;
