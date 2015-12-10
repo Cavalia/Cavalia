@@ -10,8 +10,8 @@ namespace Cavalia{
 
 		struct AccessLog{
 			uint8_t type_;
-			size_t table_id_;
-			size_t data_size_;
+			uint8_t table_id_;
+			uint8_t data_size_;
 			char *data_ptr_;
 		};
 
@@ -39,20 +39,32 @@ namespace Cavalia{
 
 		class ValueReplayer : public BaseReplayer{
 		public:
-			ValueReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : BaseReplayer(filename, storage_manager, thread_count, true){}
-			virtual ~ValueReplayer(){}
+			ValueReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : BaseReplayer(filename, storage_manager, thread_count, true){
+				txn_logs_ = new std::vector<TxnLog*>[thread_count_];
+			}
+			virtual ~ValueReplayer(){
+				delete[] txn_logs_;
+				txn_logs_ = NULL;
+			}
 
 			virtual void Start(){
+				TimeMeasurer timer;
+				timer.StartTimer();
 				boost::thread_group reloaders;
 				for (size_t i = 0; i < thread_count_; ++i){
 					reloaders.create_thread(boost::bind(&ValueReplayer::ReloadLog, this, i));
 				}
 				reloaders.join_all();
+				timer.EndTimer();
+				std::cout << "Reload log elapsed time=" << timer.GetElapsedMilliSeconds() << "ms." << std::endl;
+				timer.StartTimer();
 				boost::thread_group processors;
 				for (size_t i = 0; i < thread_count_; ++i){
 					processors.create_thread(boost::bind(&ValueReplayer::ProcessLog, this, i));
 				}
 				processors.join_all();
+				timer.EndTimer();
+				std::cout << "Process log elapsed time=" << timer.GetElapsedMilliSeconds() << "ms." << std::endl;
 			}
 
 			void ReloadLog(const size_t &thread_id){
@@ -91,15 +103,16 @@ namespace Cavalia{
 					}
 					assert(txn_pos == txn_size);
 					file_pos += txn_size;
-					txn_logs_.push_back(txn_log);
+					txn_logs_[thread_id].push_back(txn_log);
 				}
 				assert(file_pos == file_size);
 			}
 
 			void ProcessLog(const size_t &thread_id){
-				for (size_t i = 0; i < txn_logs_.size(); ++i){
-					for (size_t k = 0; k < txn_logs_.at(i)->log_count_; ++k){
-						AccessLog *log_ptr = &(txn_logs_.at(i)->logs_[k]);
+				auto &log_ref = txn_logs_[thread_id];
+				for (size_t i = 0; i < log_ref.size(); ++i){
+					for (size_t k = 0; k < log_ref.at(i)->log_count_; ++k){
+						AccessLog *log_ptr = &(log_ref.at(i)->logs_[k]);
 						if (log_ptr->type_ == kInsert){
 							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_ptr->table_id_), log_ptr->data_ptr_);
 							//storage_manager_->tables_[log_ptr->table_id_]->InsertRecord(new TableRecord(record_ptr));
@@ -124,7 +137,7 @@ namespace Cavalia{
 			ValueReplayer& operator=(const ValueReplayer &);
 
 		private:
-			std::vector<TxnLog*> txn_logs_;
+			std::vector<TxnLog*> *txn_logs_;
 		};
 	}
 }
