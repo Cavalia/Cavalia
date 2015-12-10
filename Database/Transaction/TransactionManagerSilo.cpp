@@ -147,7 +147,7 @@ namespace Cavalia{
 						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
+						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
 #endif
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY){

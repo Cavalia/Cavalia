@@ -102,7 +102,7 @@ namespace Cavalia{
 						AccessLog *log_ptr = &(txn_logs_.at(i)->logs_[k]);
 						if (log_ptr->type_ == kInsert){
 							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_ptr->table_id_), log_ptr->data_ptr_);
-							storage_manager_->tables_[log_ptr->table_id_]->InsertRecord(new TableRecord(record_ptr));
+							//storage_manager_->tables_[log_ptr->table_id_]->InsertRecord(new TableRecord(record_ptr));
 						}
 						else if (log_ptr->type_ == kUpdate){
 							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_ptr->table_id_), log_ptr->data_ptr_);

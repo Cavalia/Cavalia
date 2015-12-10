@@ -137,26 +137,28 @@ namespace Cavalia{
 
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
-				TableRecord *access_record = access_ptr->access_record_;
+				SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
+				SchemaRecord *local_record_ptr = access_ptr->local_record_;
+				auto &content_ref = access_ptr->access_record_->content_;
 				if (access_ptr->access_type_ == READ_WRITE){
 					assert(commit_ts >= access_ptr->timestamp_);
-					access_record->content_.SetTimestamp(commit_ts);
+					content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-					((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, access_ptr->local_record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+					((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
 #endif
 				}
 				else if (access_ptr->access_type_ == INSERT_ONLY){
 					assert(commit_ts >= access_ptr->timestamp_);
-					access_ptr->access_record_->content_.SetTimestamp(commit_ts);
+					content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-					((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->data_ptr_, access_record->record_->schema_ptr_->GetSchemaSize());
+					((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
 #endif
 				}
 				else if (access_ptr->access_type_ == DELETE_ONLY){
 					assert(commit_ts >= access_ptr->timestamp_);
-					access_ptr->access_record_->content_.SetTimestamp(commit_ts);
+					content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-					((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, access_record->record_->GetPrimaryKey());
+					((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
 #endif
 				}
 			}
