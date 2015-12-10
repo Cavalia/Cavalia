@@ -18,14 +18,14 @@ namespace Cavalia{
 				// is value logging
 				if (is_vl == true){
 					for (size_t i = 0; i < thread_count_; ++i){
-						outfiles_[i] = fopen((dir_name_ + "/vl" + std::to_string(i)).c_str(), "wb");
+						outfiles_[i] = fopen((dir_name_ + "/valuelog" + std::to_string(i)).c_str(), "wb");
 						assert(outfiles_[i] != NULL);
 					}
 				}
 				// is command logging
 				else{
 					for (size_t i = 0; i < thread_count_; ++i){
-						outfiles_[i] = fopen((dir_name_ + "/cl" + std::to_string(i)).c_str(), "wb");
+						outfiles_[i] = fopen((dir_name_ + "/commandlog" + std::to_string(i)).c_str(), "wb");
 						assert(outfiles_[i] != NULL);
 					}
 				}

@@ -12,17 +12,17 @@ namespace Cavalia{
 		public:
 			BaseReplayer(const std::string &dir_name, BaseStorageManager *const storage_manager, const size_t &thread_count, bool is_vl) : dir_name_(dir_name), storage_manager_(storage_manager), thread_count_(thread_count){
 				infiles_ = new FILE*[thread_count_];
-				// is value logging
+				// for value logging
 				if (is_vl == true){
 					for (size_t i = 0; i < thread_count_; ++i){
-						infiles_[i] = fopen((dir_name_ + "/vl" + std::to_string(i)).c_str(), "rb");
+						infiles_[i] = fopen((dir_name_ + "/valuelog" + std::to_string(i)).c_str(), "rb");
 						assert(infiles_[i] != NULL);
 					}
 				}
-				// is command logging
+				// for command logging
 				else{
 					for (size_t i = 0; i < thread_count_; ++i){
-						infiles_[i] = fopen((dir_name_ + "/cl" + std::to_string(i)).c_str(), "rb");
+						infiles_[i] = fopen((dir_name_ + "/commandlog" + std::to_string(i)).c_str(), "rb");
 						assert(infiles_[i] != NULL);
 					}
 				}

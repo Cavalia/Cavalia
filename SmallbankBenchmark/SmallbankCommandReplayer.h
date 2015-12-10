@@ -24,53 +24,23 @@ namespace Cavalia{
 				private:
 					virtual void PrepareProcedures(){
 						using namespace AtomicProcedures;
-						registers_[TupleType::AMALGAMATE] = [](size_t node_id){
-							AmalgamateProcedure *procedure = (AmalgamateProcedure*)MemAllocator::AllocNode(sizeof(AmalgamateProcedure), node_id);
-							new(procedure)AmalgamateProcedure(TupleType::AMALGAMATE);
-							return procedure;
+						registers_[TupleType::AMALGAMATE] = [](){
+							return new AmalgamateProcedure(TupleType::AMALGAMATE);
 						};
-						deregisters_[TupleType::AMALGAMATE] = [](char *ptr){
-							MemAllocator::FreeNode(ptr, sizeof(AmalgamateProcedure));
+						registers_[TupleType::BALANCE] = [](){
+							return new BalanceProcedure(TupleType::BALANCE);
 						};
-						registers_[TupleType::BALANCE] = [](size_t node_id){
-							BalanceProcedure *procedure = (BalanceProcedure*)MemAllocator::AllocNode(sizeof(BalanceProcedure), node_id);
-							new(procedure)BalanceProcedure(TupleType::BALANCE);
-							return procedure;
+						registers_[TupleType::DEPOSIT_CHECKING] = [](){
+							return new DepositCheckingProcedure(TupleType::DEPOSIT_CHECKING);
 						};
-						deregisters_[TupleType::BALANCE] = [](char *ptr){
-							MemAllocator::FreeNode(ptr, sizeof(BalanceProcedure));
+						registers_[TupleType::SEND_PAYMENT] = [](){
+							return new SendPaymentProcedure(TupleType::SEND_PAYMENT);
 						};
-						registers_[TupleType::DEPOSIT_CHECKING] = [](size_t node_id){
-							DepositCheckingProcedure *procedure = (DepositCheckingProcedure*)MemAllocator::AllocNode(sizeof(DepositCheckingProcedure), node_id);
-							new(procedure)DepositCheckingProcedure(TupleType::DEPOSIT_CHECKING);
-							return procedure;
+						registers_[TupleType::TRANSACT_SAVINGS] = [](){
+							return new TransactSavingsProcedure(TupleType::TRANSACT_SAVINGS);
 						};
-						deregisters_[TupleType::DEPOSIT_CHECKING] = [](char *ptr){
-							MemAllocator::FreeNode(ptr, sizeof(DepositCheckingProcedure));
-						};
-						registers_[TupleType::SEND_PAYMENT] = [](size_t node_id){
-							SendPaymentProcedure *procedure = (SendPaymentProcedure*)MemAllocator::AllocNode(sizeof(SendPaymentProcedure), node_id);
-							new(procedure)SendPaymentProcedure(TupleType::SEND_PAYMENT);
-							return procedure;
-						};
-						deregisters_[TupleType::SEND_PAYMENT] = [](char *ptr){
-							MemAllocator::FreeNode(ptr, sizeof(SendPaymentProcedure));
-						};
-						registers_[TupleType::TRANSACT_SAVINGS] = [](size_t node_id){
-							TransactSavingsProcedure *procedure = (TransactSavingsProcedure*)MemAllocator::AllocNode(sizeof(TransactSavingsProcedure), node_id);
-							new(procedure)TransactSavingsProcedure(TupleType::TRANSACT_SAVINGS);
-							return procedure;
-						};
-						deregisters_[TupleType::TRANSACT_SAVINGS] = [](char *ptr){
-							MemAllocator::FreeNode(ptr, sizeof(TransactSavingsProcedure));
-						};
-						registers_[TupleType::WRITE_CHECK] = [](size_t node_id){
-							WriteCheckProcedure *procedure = (WriteCheckProcedure*)MemAllocator::AllocNode(sizeof(WriteCheckProcedure), node_id);
-							new(procedure)WriteCheckProcedure(TupleType::WRITE_CHECK);
-							return procedure;
-						};
-						deregisters_[TupleType::WRITE_CHECK] = [](char *ptr){
-							MemAllocator::FreeNode(ptr, sizeof(WriteCheckProcedure));
+						registers_[TupleType::WRITE_CHECK] = [](){
+							return new WriteCheckProcedure(TupleType::WRITE_CHECK);
 						};
 					}
 

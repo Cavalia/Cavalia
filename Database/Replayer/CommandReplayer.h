@@ -25,7 +25,7 @@ namespace Cavalia{
 				TransactionManager *txn_manager = new TransactionManager(storage_manager_, NULL);
 				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
 				for (auto &entry : registers_){
-					procedures[entry.first] = entry.second(0);
+					procedures[entry.first] = entry.second();
 					procedures[entry.first]->SetTransactionManager(txn_manager);
 				}
 				boost::thread_group reloaders;
@@ -33,7 +33,7 @@ namespace Cavalia{
 					reloaders.create_thread(boost::bind(&CommandReplayer::ReloadLog, this, i));
 				}
 				reloaders.join_all();
-				//ProcessLog();
+				ProcessLog();
 			}
 
 		private:
@@ -71,6 +71,9 @@ namespace Cavalia{
 			}
 
 			void ProcessLog(){
+				for (size_t i = 0; i < thread_count_; ++i){
+					std::cout << "thread id=" << i << ", size=" << input_batches_[i].size() << std::endl;
+				}
 				//std::string ret;
 				//for (auto &log_pair : log_buffer_){
 				//	procedures_[log_pair.first]->Execute(log_pair.second, ret);
@@ -82,8 +85,7 @@ namespace Cavalia{
 			CommandReplayer& operator=(const CommandReplayer &);
 
 		protected:
-			std::unordered_map<size_t, std::function<StoredProcedure*(size_t)>> registers_;
-			std::unordered_map<size_t, std::function<void(char*)>> deregisters_;
+			std::unordered_map<size_t, std::function<StoredProcedure*()>> registers_;
 
 		private:
 			VariableParamBatch *input_batches_;
