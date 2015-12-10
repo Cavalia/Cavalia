@@ -60,7 +60,18 @@ namespace Cavalia{
 			size_t batch_size_;
 		};
 
-		typedef std::vector<TxnParam*> VariableParamBatch;
+		struct LogEntry{
+			LogEntry(){}
+			LogEntry(const uint64_t &timestamp, TxnParam *param){
+				timestamp_ = timestamp;
+				param_ = param;
+			}
+
+			uint64_t timestamp_;
+			TxnParam *param_;
+		};
+
+		typedef std::vector<LogEntry> LogEntries;
 	}
 }
 

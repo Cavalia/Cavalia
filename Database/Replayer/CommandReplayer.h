@@ -13,21 +13,14 @@ namespace Cavalia{
 		class CommandReplayer : public BaseReplayer{
 		public:
 			CommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : BaseReplayer(filename, storage_manager, thread_count, false){
-				input_batches_ = new VariableParamBatch[thread_count_];
+				log_batches_ = new LogEntries[thread_count_];
 			}
 			virtual ~CommandReplayer(){
-				delete[] input_batches_;
-				input_batches_ = NULL;
+				delete[] log_batches_;
+				log_batches_ = NULL;
 			}
 
 			virtual void Start(){
-				PrepareProcedures();
-				TransactionManager *txn_manager = new TransactionManager(storage_manager_, NULL);
-				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
-				for (auto &entry : registers_){
-					procedures[entry.first] = entry.second();
-					procedures[entry.first]->SetTransactionManager(txn_manager);
-				}
 				boost::thread_group reloaders;
 				for (size_t i = 0; i < thread_count_; ++i){
 					reloaders.create_thread(boost::bind(&CommandReplayer::ReloadLog, this, i));
@@ -42,7 +35,7 @@ namespace Cavalia{
 
 			void ReloadLog(const size_t &thread_id){
 				FILE *infile_ptr = infiles_[thread_id];
-				VariableParamBatch &input_batch = input_batches_[thread_id];
+				LogEntries &log_batch = log_batches_[thread_id];
 				fseek(infile_ptr, 0L, SEEK_END);
 				size_t file_size = ftell(infile_ptr);
 				rewind(infile_ptr);
@@ -66,7 +59,7 @@ namespace Cavalia{
 					assert(result == entry.size_);
 					TxnParam* event_tuple = DeserializeParam(param_type, entry);
 					if (event_tuple != NULL){
-						input_batch.push_back(event_tuple);
+						log_batch.push_back(LogEntry(timestamp, event_tuple));
 					}
 					file_pos += entry.size_;
 				}
@@ -75,13 +68,40 @@ namespace Cavalia{
 			}
 
 			void ProcessLog(){
-				for (size_t i = 0; i < thread_count_; ++i){
-					std::cout << "thread id=" << i << ", size=" << input_batches_[i].size() << std::endl;
+				PrepareProcedures();
+				TransactionManager *txn_manager = new TransactionManager(storage_manager_, NULL);
+				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
+				for (auto &entry : registers_){
+					procedures[entry.first] = entry.second();
+					procedures[entry.first]->SetTransactionManager(txn_manager);
 				}
-				//std::string ret;
-				//for (auto &log_pair : log_buffer_){
-				//	procedures_[log_pair.first]->Execute(log_pair.second, ret);
+
+				for (size_t i = 0; i < thread_count_; ++i){
+					std::cout << "thread id=" << i << ", size=" << log_batches_[i].size() << std::endl;
+				}
+				LogEntries full_log;
+				//size_t finish_counter = thread_count_;
+				//size_t *bookmarks = new size_t[thread_count_];
+				//while (finish_counter != 0){
+				//	size_t thread_id = 0;
+
 				//}
+				//delete[] bookmarks;
+				//bookmarks = NULL;
+				for (size_t i = 0; i < thread_count_; ++i){
+					for (size_t k = 0; k < log_batches_[i].size(); ++k){
+						full_log.push_back(log_batches_[i].at(k));
+					}
+				}
+				std::cout << "full log size=" << full_log.size() << std::endl;
+				CharArray ret;
+				ret.char_ptr_ = new char[1024];
+				ExeContext exe_context;
+				for (size_t i = 0; i < full_log.size(); ++i){
+					TxnParam *param = full_log.at(i).param_;
+					ret.size_ = 0;
+					procedures[param->type_]->Execute(param, ret, exe_context);
+				}
 			}
 
 		private:
@@ -92,7 +112,7 @@ namespace Cavalia{
 			std::unordered_map<size_t, std::function<StoredProcedure*()>> registers_;
 
 		private:
-			VariableParamBatch *input_batches_;
+			LogEntries *log_batches_;
 		};
 	}
 }
