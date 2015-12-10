@@ -63,9 +63,8 @@ namespace Cavalia {
 					}
 					is_all_ready = true;
 				}
-#if defined(LOCK_WAIT) || defined(LOCK) || defined(OCC) || defined(SILO)
-				ScalableTimestamp scalable_ts;
-#endif
+				// epoch generator.
+				Epoch epoch;
 				std::cout << "start processing..." << std::endl;
 				is_begin_ = true;
 				start_timestamp_ = timer_.GetTimePoint();
