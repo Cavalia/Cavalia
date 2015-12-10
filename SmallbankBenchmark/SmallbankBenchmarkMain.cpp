@@ -16,6 +16,8 @@
 #include "SmallbankTableInitiator.h"
 #include "SmallbankPopulator.h"
 #include "SmallbankSource.h"
+#include "SmallbankCommandReplayer.h"
+#include "SmallbankValueReplayer.h"
 #include "SmallbankConcurrentExecutor.h"
 
 #if defined(__linux__)
@@ -29,6 +31,7 @@
 using namespace Cavalia;
 using namespace Cavalia::Benchmark::Smallbank;
 using namespace Cavalia::Benchmark::Smallbank::Executor;
+using namespace Cavalia::Benchmark::Smallbank::Replayer;
 
 int main(int argc, char *argv[]) {
 	ArgumentsParser(argc, argv);
@@ -41,17 +44,17 @@ int main(int argc, char *argv[]) {
 		PRINT_STORAGE_STATUS;
 		CHECKPOINT_STORAGE;
 	}
-	//else if (app_type == APP_REPLAY) {
-	//	RELOAD_STORAGE(Smallbank, dir_name, false);
-	//	PRINT_STORAGE_STATUS;
-	//	if (replay_type == APP_COMMAND_REPLAY) {
-	//		COMMAND_REPLAY(Smallbank, dir_name, num_core);
-	//	}
-	//	else if (replay_type == APP_VALUE_REPLAY) {
-	//		VALUE_REPLAY(Smallbank, dir_name, num_core);
-	//	}
-	//	PRINT_STORAGE_STATUS;
-	//}
+	else if (app_type == APP_REPLAY) {
+		RELOAD_STORAGE(Smallbank, dir_name, false);
+		PRINT_STORAGE_STATUS;
+		if (replay_type == APP_COMMAND_REPLAY) {
+			COMMAND_REPLAY(Smallbank, dir_name, num_core);
+		}
+		else if (replay_type == APP_VALUE_REPLAY) {
+			VALUE_REPLAY(Smallbank, dir_name, num_core);
+		}
+		PRINT_STORAGE_STATUS;
+	}
 	else if (app_type == APP_CC_EXECUTE || app_type == APP_HSTORE_EXECUTE || app_type == APP_SITE_EXECUTE){
 		assert(factor_count == 2);
 		SmallbankScaleParams params(scale_factors[0], scale_factors[1]);
