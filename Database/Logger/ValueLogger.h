@@ -22,7 +22,7 @@ namespace Cavalia{
 
 				compression_contexts_ = new LZ4F_compressionContext_t*[thread_count_];
 				compressed_buffers_ = new char*[thread_count_];
-				compressed_buf_offsets_ = new size_t[thread_count_];
+				compressed_buf_offsets_ = new size_t*[thread_count_];
 #endif
 			}
 
@@ -154,7 +154,7 @@ namespace Cavalia{
 				char *buffer_ptr = buffers_[thread_id] + *(buffer_offsets_[thread_id]);
 				memcpy(buffer_ptr, (char*)(txn_offsets_[thread_id]), sizeof(size_t));
 				memcpy(buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
-				buffer_offsets_[thread_id] += *(txn_offsets_[thread_id]);
+				*(buffer_offsets_[thread_id]) += *(txn_offsets_[thread_id]);
 				assert(*(buffer_offsets_[thread_id]) < kLogBufferSize);
 				if (epoch != *(last_epochs_[thread_id])){
 					FILE *file_ptr = outfiles_[thread_id];
@@ -178,7 +178,7 @@ namespace Cavalia{
 					ret = fsync(fileno(file_ptr));
 					assert(ret == 0);
 #endif
-					buffer_offsets_[thread_id] = 0;
+					*(buffer_offsets_[thread_id]) = 0;
 				}
 				*(txn_offsets_[thread_id]) = sizeof(size_t) + sizeof(uint64_t);
 			}

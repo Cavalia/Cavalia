@@ -121,6 +121,8 @@ namespace Cavalia{
 				}
 #if defined(COMMAND_LOGGING)
 				((CommandLogger*)logger_)->RegisterThread(thread_id, core_id);
+#elif defined(VALUE_LOGGING)
+				((ValueLogger*)logger_)->RegisterThread(thread_id, core_id);
 #endif
 				/////////////////////////////////////////////////
 				fast_random r(9084398309893UL);
