@@ -93,7 +93,7 @@ namespace Cavalia {
 					FILE *file_ptr = outfiles_[thread_id];
 #if defined(COMPRESSION)
 					size_t& offset = *(compressed_buf_offsets_[thread_id]);
-					size_t n = LZ4F_compressUpdate(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
+					size_t n = LZ4F_compressUpdate(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], *(buffer_offsets_[thread_id]), NULL);
 					assert(LZ4F_isError(n) == false);
 					offset += n;
 					
@@ -132,7 +132,7 @@ namespace Cavalia {
 					*(last_epochs_[thread_id]) = epoch;
 #if defined(COMPRESSION)
 					size_t& offset = *(compressed_buf_offsets_[thread_id]);
-					size_t n = LZ4F_compressUpdate(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
+					size_t n = LZ4F_compressUpdate(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], *(buffer_offsets_[thread_id]), NULL);
 					assert(LZ4F_isError(n) == false);
 					offset += n;
 					
