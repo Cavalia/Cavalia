@@ -83,7 +83,8 @@ namespace Cavalia {
 				assert(LZ4F_isError(err) == false);
 				compressed_buffers_[thread_id] = new char[compressed_buf_size_];
 				// compress begin: put header
-				compressed_buf_offsets_[thread_id] = LZ4F_compressBegin(compression_contexts_[thread_id], compressed_buffers_[thread_id], compressed_buf_size_, NULL);
+				compressed_buf_offsets_[thread_id] = (size_t*)(MemAllocator::AllocNode(sizeof(size_t), numa_node_id));
+				*(compressed_buf_offsets_[thread_id]) = LZ4F_compressBegin(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id], compressed_buf_size_, NULL);
 #endif
 			}
 
@@ -91,8 +92,8 @@ namespace Cavalia {
 				if (epoch == -1){
 					FILE *file_ptr = outfiles_[thread_id];
 #if defined(COMPRESSION)
-					size_t& offset = compressed_buf_offsets_[thread_id];
-					size_t n = LZ4F_compressUpdate(compression_contexts_[thread_id], compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
+					size_t& offset = *(compressed_buf_offsets_[thread_id]);
+					size_t n = LZ4F_compressUpdate(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
 					assert(LZ4F_isError(n) == false);
 					offset += n;
 					
@@ -130,8 +131,8 @@ namespace Cavalia {
 					FILE *file_ptr = outfiles_[thread_id];
 					*(last_epochs_[thread_id]) = epoch;
 #if defined(COMPRESSION)
-					size_t& offset = compressed_buf_offsets_[thread_id];
-					size_t n = LZ4F_compressUpdate(compression_contexts_[thread_id], compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
+					size_t& offset = *(compressed_buf_offsets_[thread_id]);
+					size_t n = LZ4F_compressUpdate(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buffer_offsets_[thread_id], NULL);
 					assert(LZ4F_isError(n) == false);
 					offset += n;
 					
