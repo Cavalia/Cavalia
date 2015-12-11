@@ -6,6 +6,7 @@
 #include "../Meta/MetaTypes.h"
 #include "../Profiler/Profilers.h"
 #include "../Logger/ValueLogger.h"
+#include "../Logger/AccessLogger.h"
 #include "../Logger/CommandLogger.h"
 #include "../Content/ContentCommon.h"
 #include "../Storage/TableRecords.h"
@@ -16,7 +17,7 @@
 #include "GlobalTimestamp.h"
 #include "BatchTimestamp.h"
 #include "Epoch.h"
-#if defined(DBX) || defined(HRTM)
+#if defined(DBX) || defined(PRTM)
 #include <RtmLock.h>
 #endif
 
@@ -44,7 +45,7 @@ namespace Cavalia{
 			// destruction.
 			virtual ~TransactionManager(){}
 
-#if defined(DBX) || defined(HRTM)
+#if defined(DBX) || defined(PRTM)
 			void SetRtmLock(RtmLock *rtm_lock){
 				rtm_lock_ = rtm_lock;
 			}
@@ -231,7 +232,7 @@ namespace Cavalia{
 #if defined(MVTO) || defined(MVLOCK) || defined(MVLOCK_WAIT) || defined(MVOCC)
 			std::vector<SchemaRecord*> read_only_set_;
 #endif
-#if defined(DBX) || defined(HRTM)
+#if defined(DBX) || defined(PRTM)
 			RtmLock *rtm_lock_;
 #endif
 		};

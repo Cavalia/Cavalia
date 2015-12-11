@@ -16,9 +16,7 @@ namespace Cavalia{
 			TableRecord *access_record_;
 			SchemaRecord *local_record_;
 			size_t table_id_;
-#if defined(LOCK_WAIT) || defined(LOCK) || defined(OCC) || defined(SILO) || defined(MVOCC) || defined(DBX) || defined(HRTM) 
 			uint64_t timestamp_;
-#endif
 		};
 
 		template<int N>

@@ -68,6 +68,8 @@ namespace Cavalia{
 				Access *access = access_list_.NewAccess();
 				access->access_type_ = DELETE_ONLY;
 				access->access_record_ = t_record;
+				access->local_record_ = NULL;
+				access->table_id_ = table_id;
 				s_record = t_record->record_;
 				return true;
 			}
@@ -103,7 +105,7 @@ namespace Cavalia{
 			if (is_success == true) {
 				// get global epoch id for commit
 				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-				//uint64_t global_ts = ScalableTimestamp::GetTimestamp();
+				uint64_t curr_epoch = Epoch::GetEpoch();
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
@@ -112,7 +114,7 @@ namespace Cavalia{
 					if (access_ptr->access_type_ == READ_WRITE) {
 						// exchanging pointers, the old version would be recycled
 						std::swap(access_record->record_, access_ptr->local_record_);
-						access_record->content_.IncrementTimestamp();
+						access_ptr->timestamp_ = access_record->content_.IncrementTimestamp();
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY){
 						access_ptr->access_record_->record_->is_visible_ = true;
@@ -120,7 +122,7 @@ namespace Cavalia{
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
 						access_record->record_->is_visible_ = false;
 						// update timestamp to invalidate concurrent reads
-						access_record->content_.IncrementTimestamp();
+						access_ptr->timestamp_ = access_record->content_.IncrementTimestamp();
 					}
 				}
 				// end hardware transaction.
@@ -132,18 +134,16 @@ namespace Cavalia{
 					Access* access_ptr = access_list_.GetAccess(i);
 					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
 					if (access_ptr->access_type_ == READ_WRITE){
-						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
+						((AccessLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize(), access_ptr->timestamp_);
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY){
-						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
+						((AccessLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize(), 0);
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY){
-						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->GetPrimaryKey());
+						((AccessLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->GetPrimaryKey(), access_ptr->timestamp_);
 					}
 				}
-				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts);
-#elif defined(COMMAND_LOGGING)
-				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts, context->txn_type_, param);
+				((AccessLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch);
 #endif
 				// clean up.
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {

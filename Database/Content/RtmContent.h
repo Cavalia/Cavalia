@@ -19,8 +19,8 @@ namespace Cavalia {
 				return timestamp_.load(std::memory_order_relaxed);
 			}
 
-			void IncrementTimestamp() {
-				timestamp_.fetch_add(1, std::memory_order_relaxed);
+			uint64_t IncrementTimestamp() {
+				return timestamp_.fetch_add(1, std::memory_order_relaxed);
 			}
 
 		private:

@@ -1,4 +1,4 @@
-#if defined(HRTM)
+#if defined(PRTM)
 #include "TransactionManager.h"
 
 namespace Cavalia {
@@ -77,7 +77,6 @@ namespace Cavalia {
 		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str){
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
 			// step 1: acquire lock and validate
-			uint64_t max_rw_ts = 0;
 			bool is_success = true;
 
 			// begin hardware transaction.
@@ -104,16 +103,28 @@ namespace Cavalia {
 				else {
 					// insert_only or delete_only
 				}
+			}
+
+#if defined(SCALABLE_TIMESTAMP)
+			uint64_t max_rw_ts = 0;
+			for (size_t i = 0; i < access_list_.access_count_; ++i){
+				Access *access_ptr = access_list_.GetAccess(i);
 				if (access_ptr->timestamp_ > max_rw_ts){
 					max_rw_ts = access_ptr->timestamp_;
 				}
 			}
+#endif
+
 			// step 2: if success, then overwrite and commit
 			if (is_success == true) {
 				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-				uint64_t global_ts = ScalableTimestamp::GetTimestamp();
+				uint64_t curr_epoch = Epoch::GetEpoch();
+#if defined(SCALABLE_TIMESTAMP)
+				uint64_t commit_ts = GenerateScalableTimestamp(curr_epoch, max_rw_ts);
+#else
+				uint64_t commit_ts = GenerateMonotoneTimestamp(curr_epoch, GlobalTimestamp::GetMonotoneTimestamp());
+#endif
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-				uint64_t commit_ts = GenerateTimestamp(global_ts, max_rw_ts);
 
 				for (size_t i = 0; i < access_list_.access_count_; ++i){
 					Access *access_ptr = access_list_.GetAccess(i);
@@ -122,7 +133,8 @@ namespace Cavalia {
 					auto &content_ref = access_ptr->access_record_->content_;
 					if (access_ptr->access_type_ == READ_WRITE){
 						assert(commit_ts > access_ptr->timestamp_);
-						global_record_ptr->CopyFrom(local_record_ptr);
+						std::swap(global_record_ptr, local_record_ptr);
+						//global_record_ptr->CopyFrom(local_record_ptr);
 						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
 					}
@@ -131,7 +143,6 @@ namespace Cavalia {
 						global_record_ptr->is_visible_ = true;
 						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
-					
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY){
 						assert(commit_ts > access_ptr->timestamp_);
@@ -145,33 +156,34 @@ namespace Cavalia {
 #if defined(VALUE_LOGGING)
 				for (size_t i = 0; i < access_list_.access_count_; ++i){
 					Access *access_ptr = access_list_.GetAccess(i);
+					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
 					SchemaRecord *local_record_ptr = access_ptr->local_record_;
 					if (access_ptr->access_type_ == READ_WRITE) {
 						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY) {
-						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
+						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
 						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
 					}
 				}
 				// commit.
-				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts);
+				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch, commit_ts);
 #elif defined(COMMAND_LOGGING)
-				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, global_ts, commit_ts, context->txn_type_, param);
+				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, context->txn_type_, param);
 #endif
 
 				// clean up.
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE) {
-						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						SchemaRecord *local_record_ptr = access_ptr->local_record_;
-						MemAllocator::Free(local_record_ptr->data_ptr_);
-						local_record_ptr->~SchemaRecord();
-						MemAllocator::Free((char*)local_record_ptr);
-						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						//BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						//SchemaRecord *local_record_ptr = access_ptr->local_record_;
+						//MemAllocator::Free(local_record_ptr->data_ptr_);
+						//local_record_ptr->~SchemaRecord();
+						//MemAllocator::Free((char*)local_record_ptr);
+						//END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
 				}
 			}

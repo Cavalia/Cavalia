@@ -131,7 +131,6 @@ namespace Cavalia {
 #endif
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 
-
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
 					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
