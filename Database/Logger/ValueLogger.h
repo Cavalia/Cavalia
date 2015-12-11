@@ -2,7 +2,6 @@
 #ifndef __CAVALIA_DATABASE_VALUE_LOGGER_H__
 #define __CAVALIA_DATABASE_VALUE_LOGGER_H__
 
-#include "../Meta/MetaConstants.h"
 #include "BaseLogger.h"
 #if defined(COMPRESSION)
 #include <lz4frame.h>
@@ -11,14 +10,12 @@ namespace Cavalia{
 	namespace Database{
 		class ValueLogger : public BaseLogger{
 		public:
-			static const int LZ4_HEADER_SIZE = 19;
-			static const int LZ4_FOOTER_SIZE = 4;
 			ValueLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, true){
 				buffers_ = new char*[thread_count_];
 				buffer_offsets_ = new size_t[thread_count_];
 				txn_offsets_ = new size_t[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
-					buffers_[i] = new char[kValueLogBufferSize];
+					buffers_[i] = new char[kLogBufferSize];
 					buffer_offsets_[i] = 0;
 					txn_offsets_[i] = sizeof(size_t)+sizeof(uint64_t);
 				}
@@ -32,7 +29,7 @@ namespace Cavalia{
 					LZ4F_errorCode_t err = LZ4F_createCompressionContext(&compression_contexts_[i], LZ4F_VERSION);
 					assert(LZ4F_isError(err) == false);
 				}
-				size_t frame_size = LZ4F_compressBound(kValueLogBufferSize, NULL);
+				size_t frame_size = LZ4F_compressBound(kLogBufferSize, NULL);
 				// compressed_buf_size_ is the max size of file write
 				compressed_buf_size_ = frame_size + LZ4_HEADER_SIZE + LZ4_FOOTER_SIZE;
 				
@@ -49,6 +46,7 @@ namespace Cavalia{
 				}
 #endif
 			}
+
 			virtual ~ValueLogger(){
 #if defined(COMPRESSION)
 				for (size_t i = 0; i < thread_count_; ++i){
@@ -156,7 +154,7 @@ namespace Cavalia{
 				memcpy(buffer_ptr, (char*)(&txn_offsets_[thread_id]), sizeof(size_t));
 				memcpy(buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
 				buffer_offsets_[thread_id] += txn_offsets_[thread_id];
-				assert(buffer_offsets_[thread_id] < kValueLogBufferSize);
+				assert(buffer_offsets_[thread_id] < kLogBufferSize);
 				if (epoch != last_epochs_[thread_id]){
 					FILE *file_ptr = outfiles_[thread_id];
 					last_epochs_[thread_id] = epoch;

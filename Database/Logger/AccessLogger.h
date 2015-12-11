@@ -18,7 +18,7 @@ namespace Cavalia{
 				buffer_offsets_ = new size_t[thread_count_];
 				txn_offsets_ = new size_t[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
-					buffers_[i] = new char[kValueLogBufferSize];
+					buffers_[i] = new char[kLogBufferSize];
 					buffer_offsets_[i] = 0;
 					txn_offsets_[i] = sizeof(size_t);
 				}
@@ -32,7 +32,7 @@ namespace Cavalia{
 					LZ4F_errorCode_t err = LZ4F_createCompressionContext(&compression_contexts_[i], LZ4F_VERSION);
 					assert(LZ4F_isError(err) == false);
 				}
-				size_t frame_size = LZ4F_compressBound(kValueLogBufferSize, NULL);
+				size_t frame_size = LZ4F_compressBound(kLogBufferSize, NULL);
 				// compressed_buf_size_ is the max size of file write
 				compressed_buf_size_ = frame_size + LZ4_HEADER_SIZE + LZ4_FOOTER_SIZE;
 
@@ -161,7 +161,7 @@ namespace Cavalia{
 				char *buffer_ptr = buffers_[thread_id] + buffer_offsets_[thread_id];
 				memcpy(buffer_ptr, (char*)(&txn_offsets_[thread_id]), sizeof(size_t));
 				buffer_offsets_[thread_id] += txn_offsets_[thread_id];
-				assert(buffer_offsets_[thread_id] < kValueLogBufferSize);
+				assert(buffer_offsets_[thread_id] < kLogBufferSize);
 				if (epoch != last_epochs_[thread_id]){
 					FILE *file_ptr = outfiles_[thread_id];
 					last_epochs_[thread_id] = epoch;
