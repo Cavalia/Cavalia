@@ -55,14 +55,14 @@ namespace Cavalia{
 				entry.Allocate(1024);
 				int result = 0;
 				while (file_pos < file_size){
-					uint64_t timestamp;
-					result = fread(&timestamp, sizeof(timestamp), 1, infile_ptr);
-					assert(result == 1);
-					file_pos += sizeof(timestamp);
 					size_t param_type;
 					result = fread(&param_type, sizeof(param_type), 1, infile_ptr);
 					assert(result == 1);
 					file_pos += sizeof(param_type);
+					uint64_t timestamp;
+					result = fread(&timestamp, sizeof(timestamp), 1, infile_ptr);
+					assert(result == 1);
+					file_pos += sizeof(timestamp);
 					result = fread(&entry.size_, sizeof(entry.size_), 1, infile_ptr);
 					assert(result == 1);
 					file_pos += sizeof(entry.size_);

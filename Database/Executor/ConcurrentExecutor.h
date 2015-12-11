@@ -119,6 +119,9 @@ namespace Cavalia{
 					procedures[entry.first] = entry.second(node_id);
 					procedures[entry.first]->SetTransactionManager(txn_manager);
 				}
+#if defined(COMMAND_LOGGING)
+				((CommandLogger*)logger_)->RegisterThread(thread_id, core_id);
+#endif
 				/////////////////////////////////////////////////
 				fast_random r(9084398309893UL);
 				is_ready_[thread_id] = true;
