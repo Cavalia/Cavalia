@@ -7,6 +7,7 @@
 #if defined(__linux__)
 #include <unistd.h>
 #endif
+#include <NumaHelper.h>
 #include "../Meta/MetaConstants.h"
 
 namespace Cavalia{

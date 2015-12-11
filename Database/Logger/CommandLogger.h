@@ -24,7 +24,7 @@ namespace Cavalia {
 
 				compression_contexts_ = new LZ4F_compressionContext_t*[thread_count_];
 				compressed_buffers_ = new char*[thread_count_];
-				compressed_buf_offsets_ = new size_t[thread_count_];
+				compressed_buf_offsets_ = new size_t*[thread_count_];
 #endif
 			}
 
