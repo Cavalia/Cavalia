@@ -153,9 +153,9 @@ namespace Cavalia{
 
 			void CleanUp(){
 #if defined(VALUE_LOGGING)
-				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, -1, -1);
+				((ValueLogger*)logger_)->CleanUp(this->thread_id_);
 #elif defined(COMMAND_LOGGING)
-				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, -1, -1, -1, NULL);
+				((CommandLogger*)logger_)->CleanUp(this->thread_id_);
 #endif
 
 			}

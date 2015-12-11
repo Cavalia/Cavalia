@@ -29,29 +29,18 @@ namespace Cavalia {
 			}
 
 			virtual ~CommandLogger() {
-//#if defined(COMPRESSION)
-//				for (size_t i = 0; i < thread_count_; ++i){
-//					size_t& offset = compressed_buf_offsets_[i];
-//					size_t n = LZ4F_compressEnd(compression_contexts_[i], compressed_buffers_[i] + offset, compressed_buf_size_ - offset, NULL);
-//					assert(LZ4F_isError(n) == false);
-//					offset += n;
-//
-//					FILE *file_ptr = outfiles_[i];
-//					fwrite(compressed_buffers_[i], sizeof(char), offset, file_ptr);
-//
-//					LZ4F_freeCompressionContext(compression_contexts_[i]);
-//				}
-//				delete[] compression_contexts_;
-//				compression_contexts_ = NULL;
-//				for (size_t i = 0; i < thread_count_; ++i){
-//					delete[] compressed_buffers_[i];
-//					compressed_buffers_[i] = NULL;
-//				}
-//				delete[] compressed_buffers_;
-//				compressed_buffers_ = NULL;
-//				delete[] compressed_buf_offsets_;
-//				compressed_buf_offsets_ = NULL;
-//#endif
+				//#if defined(COMPRESSION)
+				//				delete[] compression_contexts_;
+				//				compression_contexts_ = NULL;
+				//				for (size_t i = 0; i < thread_count_; ++i){
+				//					delete[] compressed_buffers_[i];
+				//					compressed_buffers_[i] = NULL;
+				//				}
+				//				delete[] compressed_buffers_;
+				//				compressed_buffers_ = NULL;
+				//				delete[] compressed_buf_offsets_;
+				//				compressed_buf_offsets_ = NULL;
+				//#endif
 				//for (size_t i = 0; i < thread_count_; ++i){
 				//	delete[] buffers_[i];
 				//	buffers_[i] = NULL;
@@ -89,29 +78,6 @@ namespace Cavalia {
 			}
 
 			void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param) {
-				if (epoch == -1){
-					FILE *file_ptr = outfiles_[thread_id];
-#if defined(COMPRESSION)
-					size_t& offset = *(compressed_buf_offsets_[thread_id]);
-					size_t n = LZ4F_compressUpdate(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], *(buffer_offsets_[thread_id]), NULL);
-					assert(LZ4F_isError(n) == false);
-					offset += n;
-					
-					// after compression, write into file
-					fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
-					offset = 0;
-#else
-					fwrite(buffers_[thread_id], sizeof(char), *(buffer_offsets_[thread_id]), file_ptr);
-#endif
-					int ret;
-					ret = fflush(file_ptr);
-					assert(ret == 0);
-#if defined(__linux__)
-					ret = fsync(fileno(file_ptr));
-					assert(ret == 0);
-#endif
-					return;
-				}
 				char *buffer_ptr = buffers_[thread_id];
 				size_t &offset_ref = *(buffer_offsets_[thread_id]);
 				// write stored procedure type.
@@ -135,7 +101,7 @@ namespace Cavalia {
 					size_t n = LZ4F_compressUpdate(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], *(buffer_offsets_[thread_id]), NULL);
 					assert(LZ4F_isError(n) == false);
 					offset += n;
-					
+
 					// after compression, write into file
 					fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
 					offset = 0;
@@ -151,6 +117,35 @@ namespace Cavalia {
 #endif
 					offset_ref = 0;
 				}
+			}
+
+			void CleanUp(const size_t &thread_id){
+				FILE *file_ptr = outfiles_[thread_id];
+#if defined(COMPRESSION)
+				size_t& offset = *(compressed_buf_offsets_[thread_id]);
+				size_t n = LZ4F_compressUpdate(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], *(buffer_offsets_[thread_id]), NULL);
+				assert(LZ4F_isError(n) == false);
+				offset += n;
+				// after compression, write into file
+				fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
+				offset = 0;
+
+				n = LZ4F_compressEnd(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, NULL);
+				assert(LZ4F_isError(n) == false);
+				offset += n;
+				fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
+				LZ4F_freeCompressionContext(compression_contexts_[thread_id]);
+#else
+				fwrite(buffers_[thread_id], sizeof(char), *(buffer_offsets_[thread_id]), file_ptr);
+#endif
+				int ret;
+				ret = fflush(file_ptr);
+				assert(ret == 0);
+#if defined(__linux__)
+				ret = fsync(fileno(file_ptr));
+				assert(ret == 0);
+#endif
+				return;
 			}
 
 		private:
