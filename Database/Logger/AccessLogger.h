@@ -2,20 +2,16 @@
 #ifndef __CAVALIA_DATABASE_ACCESS_LOGGER_H__
 #define __CAVALIA_DATABASE_ACCESS_LOGGER_H__
 
-#include "../Meta/MetaConstants.h"
 #include "BaseLogger.h"
-#if defined(COMPRESSION)
-#include <lz4frame.h>
-#endif
+
 namespace Cavalia{
 	namespace Database{
 		class AccessLogger : public BaseLogger{
 		public:
-			static const int LZ4_HEADER_SIZE = 19;
-			static const int LZ4_FOOTER_SIZE = 4;
 			AccessLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, true){
 				txn_header_size_ = sizeof(size_t);
 			}
+
 			virtual ~AccessLogger(){}
 
 			void InsertRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size, const uint64_t &commit_ts) {
