@@ -15,7 +15,7 @@ namespace Cavalia{
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
 				char *buffer_ptr = buffers_[thread_id] + buf_struct_ptr->buffer_offset_;
-				memcpy(buffer_ptr, (char*)(buf_struct_ptr->txn_offset_), sizeof(size_t));
+				memcpy(buffer_ptr, (char*)(&(buf_struct_ptr->txn_offset_)), sizeof(size_t));
 				memcpy(buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
 				buf_struct_ptr->buffer_offset_ += buf_struct_ptr->txn_offset_;
 				assert(buf_struct_ptr->buffer_offset_ < kLogBufferSize);
