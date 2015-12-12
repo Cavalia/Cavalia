@@ -7,7 +7,11 @@
 #if defined(__linux__)
 #include <unistd.h>
 #endif
+#if defined(COMPRESSION)
+#include <lz4frame.h>
+#endif
 #include <NumaHelper.h>
+#include "../Transaction/TxnParam.h"
 #include "../Meta/MetaConstants.h"
 
 namespace Cavalia{
@@ -149,7 +153,7 @@ namespace Cavalia{
 				assert(LZ4F_isError(n) == false);
 				offset += n;
 				fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
-				LZ4F_freeCompressionContext(compression_contexts_[thread_id]);
+				LZ4F_freeCompressionContext(*(compression_contexts_[thread_id]));
 #else
 				fwrite(buffers_[thread_id], sizeof(char), *(buffer_offsets_[thread_id]), file_ptr);
 #endif

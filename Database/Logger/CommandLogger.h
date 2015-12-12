@@ -2,11 +2,7 @@
 #ifndef __CAVALIA_DATABASE_COMMAND_LOGGER_H__
 #define __CAVALIA_DATABASE_COMMAND_LOGGER_H__
 
-#include "../Transaction/TxnParam.h"
 #include "BaseLogger.h"
-#if defined(COMPRESSION)
-#include <lz4frame.h>
-#endif
 
 namespace Cavalia {
 	namespace Database {
@@ -15,7 +11,6 @@ namespace Cavalia {
 			CommandLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, false) {}
 
 			virtual ~CommandLogger() {}
-
 
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){}
 
@@ -35,7 +30,7 @@ namespace Cavalia {
 				memcpy(buffer_ptr + offset_ref, (char*)(&tmp_size), sizeof(tmp_size));
 				offset_ref += sizeof(tmp_size)+tmp_size;
 
-				if (epoch != *(last_epochs_[thread_id]) || epoch == (uint64_t)(-1)){
+				if (epoch != *(last_epochs_[thread_id])){
 					FILE *file_ptr = outfiles_[thread_id];
 					*(last_epochs_[thread_id]) = epoch;
 #if defined(COMPRESSION)

@@ -3,9 +3,7 @@
 #define __CAVALIA_DATABASE_VALUE_LOGGER_H__
 
 #include "BaseLogger.h"
-#if defined(COMPRESSION)
-#include <lz4frame.h>
-#endif
+
 namespace Cavalia{
 	namespace Database{
 		class ValueLogger : public BaseLogger{
@@ -33,7 +31,7 @@ namespace Cavalia{
 					fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
 					offset = 0;
 #else
-					fwrite(buffers_[thread_id], sizeof(char), *(buffer_offsets_[thread_id]), file_ptr);
+					//fwrite(buffers_[thread_id], sizeof(char), *(buffer_offsets_[thread_id]), file_ptr);
 #endif
 					int ret;
 					ret = fflush(file_ptr);
