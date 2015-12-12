@@ -142,7 +142,11 @@ namespace Cavalia {
 						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
+						logger_->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
+#elif defined(COMMAND_LOGGING)
+						if (context->is_adhoc_ == true){
+							logger_->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
+						}
 #endif
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY) {
@@ -151,7 +155,11 @@ namespace Cavalia {
 						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
+						logger_->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
+#elif defined(COMMAND_LOGGING)
+						if (context->is_adhoc_ == true){
+							logger_->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
+						}
 #endif
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
@@ -160,15 +168,22 @@ namespace Cavalia {
 						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
 #if defined(VALUE_LOGGING)
-						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
+						logger_->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
+#elif defined(COMMAND_LOGGING)
+						if (context->is_adhoc_ == true){
+							logger_->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
+						}
 #endif
 					}
 				}
 				// commit.
 #if defined(VALUE_LOGGING)
-				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch, commit_ts);
+				logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts);
 #elif defined(COMMAND_LOGGING)
-				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, context->txn_type_, param);
+				if (context->is_adhoc_ == true){
+					logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts);
+				}
+				logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, context->txn_type_, param);
 #endif
 
 				// step 3: release locks and clean up.

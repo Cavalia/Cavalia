@@ -152,12 +152,9 @@ namespace Cavalia{
 			void AbortTransaction();
 
 			void CleanUp(){
-#if defined(VALUE_LOGGING)
-				((ValueLogger*)logger_)->CleanUp(this->thread_id_);
-#elif defined(COMMAND_LOGGING)
-				((CommandLogger*)logger_)->CleanUp(this->thread_id_);
+#if defined(VALUE_LOGGING) || defined(COMMAND_LOGGING)
+				logger_->CleanUp(this->thread_id_);
 #endif
-
 			}
 
 		private:

@@ -19,15 +19,15 @@ namespace Cavalia{
 	namespace Database{
 		struct ThreadBufferStruct{
 #if !defined(COMPRESSION)
-			ThreadBufferStruct(){
+			ThreadBufferStruct(const size_t &txn_header_size){
 				buffer_offset_ = 0;
-				txn_offset_ = sizeof(size_t)+sizeof(uint64_t);
+				txn_offset_ = txn_header_size;
 				last_epoch_ = 0;
 			}
 #else
-			ThreadBufferStruct(char *compressed_buffer, const size_t &compressed_buf_size){
+			ThreadBufferStruct(const size_t &txn_header_size, char *compressed_buffer, const size_t &compressed_buf_size){
 				buffer_offset_ = 0;
-				txn_offset_ = sizeof(size_t)+sizeof(uint64_t);
+				txn_offset_ = txn_header_size;
 				last_epoch_ = 0;
 
 				LZ4F_errorCode_t err = LZ4F_createCompressionContext(&compression_context_, LZ4F_VERSION);
@@ -96,10 +96,10 @@ namespace Cavalia{
 #if defined(COMPRESSION)
 				compressed_buffers_[thread_id] = MemAllocator::AllocNode(compressed_buf_size_, numa_node_id);
 				thread_buf_structs_[thread_id] = (ThreadBufferStruct*)MemAllocator::AllocNode(sizeof(ThreadBufferStruct), numa_node_id);
-				new(thread_buf_structs_[thread_id])ThreadBufferStruct(compressed_buffers_[thread_id], compressed_buf_size_);
+				new(thread_buf_structs_[thread_id])ThreadBufferStruct(txn_header_size_, compressed_buffers_[thread_id], compressed_buf_size_);
 #else
 				thread_buf_structs_[thread_id] = (ThreadBufferStruct*)MemAllocator::AllocNode(sizeof(ThreadBufferStruct), numa_node_id);
-				new(thread_buf_structs_[thread_id])ThreadBufferStruct();
+				new(thread_buf_structs_[thread_id])ThreadBufferStruct(txn_header_size_);
 #endif
 			}
 
@@ -151,11 +151,52 @@ namespace Cavalia{
 
 			// abort value logging.
 			void AbortTransaction(const size_t &thread_id){
-				thread_buf_structs_[thread_id]->txn_offset_ = sizeof(size_t)+sizeof(uint64_t);
+				thread_buf_structs_[thread_id]->txn_offset_ = txn_header_size_;
 			}
 
 			// commit command logging.
-			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param) = 0;
+			void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param){
+				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				char *buffer_ptr = buffers_[thread_id];
+				size_t &offset_ref = buf_struct_ptr->buffer_offset_;
+				// write stored procedure type.
+				memcpy(buffer_ptr + offset_ref, (char*)(&txn_type), sizeof(txn_type));
+				offset_ref += sizeof(txn_type);
+				// write timestamp.
+				memcpy(buffer_ptr + offset_ref, (char*)(&commit_ts), sizeof(commit_ts));
+				offset_ref += sizeof(commit_ts);
+				size_t tmp_size = 0;
+				// write parameters. get tmp_size first.
+				param->Serialize(buffer_ptr + offset_ref + sizeof(tmp_size), tmp_size);
+				// write parameter size.
+				memcpy(buffer_ptr + offset_ref, (char*)(&tmp_size), sizeof(tmp_size));
+				offset_ref += sizeof(tmp_size)+tmp_size;
+
+				if (epoch != buf_struct_ptr->last_epoch_){
+					FILE *file_ptr = outfiles_[thread_id];
+					buf_struct_ptr->last_epoch_ = epoch;
+#if defined(COMPRESSION)
+					size_t& offset = buf_struct_ptr->compressed_buf_offset_;
+					size_t n = LZ4F_compressUpdate(buf_struct_ptr->compression_context_, compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], offset_ref, NULL);
+					assert(LZ4F_isError(n) == false);
+					offset += n;
+
+					// after compression, write into file
+					fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
+					offset = 0;
+#else
+					fwrite(buffer_ptr, sizeof(char), offset_ref, file_ptr);
+#endif
+					int ret;
+					ret = fflush(file_ptr);
+					assert(ret == 0);
+#if defined(__linux__)
+					ret = fsync(fileno(file_ptr));
+					assert(ret == 0);
+#endif
+					offset_ref = 0;
+				}
+			}
 
 			void CleanUp(const size_t &thread_id){
 				FILE *file_ptr = outfiles_[thread_id];
@@ -202,6 +243,7 @@ namespace Cavalia{
 			char **compressed_buffers_;
 			size_t compressed_buf_size_;
 #endif
+			size_t txn_header_size_;
 		};
 	}
 }

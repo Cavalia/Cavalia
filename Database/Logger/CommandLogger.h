@@ -8,29 +8,21 @@ namespace Cavalia {
 	namespace Database {
 		class CommandLogger : public BaseLogger {
 		public:
-			CommandLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, false) {}
+			CommandLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, false) {
+				txn_header_size_ = sizeof(size_t)+sizeof(size_t)+sizeof(uint64_t);
+			}
 
 			virtual ~CommandLogger() {}
 
-			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){}
-
-			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param) {
+			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
-				char *buffer_ptr = buffers_[thread_id];
 				size_t &offset_ref = buf_struct_ptr->buffer_offset_;
-				// write stored procedure type.
-				memcpy(buffer_ptr + offset_ref, (char*)(&txn_type), sizeof(txn_type));
-				offset_ref += sizeof(txn_type);
-				// write timestamp.
-				memcpy(buffer_ptr + offset_ref, (char*)(&commit_ts), sizeof(commit_ts));
-				offset_ref += sizeof(commit_ts);
-				size_t tmp_size = 0;
-				// write parameters. get tmp_size first.
-				param->Serialize(buffer_ptr + offset_ref + sizeof(tmp_size), tmp_size);
-				// write parameter size.
-				memcpy(buffer_ptr + offset_ref, (char*)(&tmp_size), sizeof(tmp_size));
-				offset_ref += sizeof(tmp_size)+tmp_size;
-
+				char *buffer_ptr = buffers_[thread_id] + offset_ref;
+				memcpy(buffer_ptr, (char*)(&kAdHoc), sizeof(size_t));
+				memcpy(buffer_ptr, (char*)(&(buf_struct_ptr->txn_offset_)), sizeof(size_t));
+				memcpy(buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
+				offset_ref += buf_struct_ptr->txn_offset_;
+				assert(offset_ref < kLogBufferSize);
 				if (epoch != buf_struct_ptr->last_epoch_){
 					FILE *file_ptr = outfiles_[thread_id];
 					buf_struct_ptr->last_epoch_ = epoch;
@@ -44,7 +36,7 @@ namespace Cavalia {
 					fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
 					offset = 0;
 #else
-					fwrite(buffer_ptr, sizeof(char), offset_ref, file_ptr);
+					fwrite(buffers_[thread_id], sizeof(char), offset_ref, file_ptr);
 #endif
 					int ret;
 					ret = fflush(file_ptr);
@@ -55,6 +47,7 @@ namespace Cavalia {
 #endif
 					offset_ref = 0;
 				}
+				buf_struct_ptr->txn_offset_ = txn_header_size_;
 			}
 
 		private:

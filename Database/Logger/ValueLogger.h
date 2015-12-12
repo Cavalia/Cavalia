@@ -8,23 +8,26 @@ namespace Cavalia{
 	namespace Database{
 		class ValueLogger : public BaseLogger{
 		public:
-			ValueLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, true){}
+			ValueLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, true){
+				txn_header_size_ = sizeof(size_t)+sizeof(uint64_t);
+			}
 
 			virtual ~ValueLogger(){}
 
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
-				char *buffer_ptr = buffers_[thread_id] + buf_struct_ptr->buffer_offset_;
-				memcpy(buffer_ptr, (char*)(buf_struct_ptr->txn_offset_), sizeof(size_t));
+				size_t &offset_ref = buf_struct_ptr->buffer_offset_;
+				char *buffer_ptr = buffers_[thread_id] + offset_ref;
+				memcpy(buffer_ptr, (char*)(&(buf_struct_ptr->txn_offset_)), sizeof(size_t));
 				memcpy(buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
-				buf_struct_ptr->buffer_offset_ += buf_struct_ptr->txn_offset_;
-				assert(buf_struct_ptr->buffer_offset_ < kLogBufferSize);
+				offset_ref += buf_struct_ptr->txn_offset_;
+				assert(offset_ref < kLogBufferSize);
 				if (epoch != buf_struct_ptr->last_epoch_){
 					FILE *file_ptr = outfiles_[thread_id];
 					buf_struct_ptr->last_epoch_ = epoch;
 #if defined(COMPRESSION)
 					size_t& offset = buf_struct_ptr->compressed_buf_offset_;
-					size_t n = LZ4F_compressUpdate(buf_struct_ptr->compression_context_, compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buf_struct_ptr->buffer_offset_, NULL);
+					size_t n = LZ4F_compressUpdate(buf_struct_ptr->compression_context_, compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], offset_ref, NULL);
 					assert(LZ4F_isError(n) == false);
 					offset += n;
 
@@ -32,7 +35,7 @@ namespace Cavalia{
 					fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
 					offset = 0;
 #else
-					fwrite(buffers_[thread_id], sizeof(char), buf_struct_ptr->buffer_offset_, file_ptr);
+					fwrite(buffers_[thread_id], sizeof(char), offset_ref, file_ptr);
 #endif
 					int ret;
 					ret = fflush(file_ptr);
@@ -41,12 +44,10 @@ namespace Cavalia{
 					ret = fsync(fileno(file_ptr));
 					assert(ret == 0);
 #endif
-					buf_struct_ptr->buffer_offset_ = 0;
+					offset_ref = 0;
 				}
-				buf_struct_ptr->txn_offset_ = sizeof(size_t)+sizeof(uint64_t);
+				buf_struct_ptr->txn_offset_ = txn_header_size_;
 			}
-
-			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param){}
 
 		private:
 			ValueLogger(const ValueLogger &);
