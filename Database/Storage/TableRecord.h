@@ -38,7 +38,11 @@ namespace Cavalia{
 #elif defined(TO)
 			TableRecord(SchemaRecord *record) : record_(record), content_(record->data_ptr_, record->schema_ptr_->GetSchemaSize()) {}
 #else
-			TableRecord(SchemaRecord *record) : record_(record) {}
+			TableRecord(SchemaRecord *record) : record_(record) {
+#if defined(ST)
+				timestamp_ = 0;
+#endif
+			}
 #endif
 			~TableRecord(){}
 			
@@ -64,6 +68,8 @@ namespace Cavalia{
 			MvOccContent content_;
 #elif defined(DBX) || defined(PRTM)
 			RtmContent content_;
+#elif defined(ST)
+			uint64_t timestamp_;
 #endif
 		};
 	}

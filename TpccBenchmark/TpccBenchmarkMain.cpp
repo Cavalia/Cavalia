@@ -16,10 +16,11 @@
 #include "TpccTableInitiator.h"
 #include "TpccPopulator.h"
 #include "TpccSource.h"
+#include "TpccConcurrentExecutor.h"
+#if defined(ST)
 #include "TpccCommandReplayer.h"
 #include "TpccValueReplayer.h"
-#include "TpccConcurrentExecutor.h"
-
+#endif
 #if defined(__linux__)
 #include "TpccShardStorageManager.h"
 #include "TpccHStoreConfiguration.h"
@@ -34,7 +35,9 @@
 using namespace Cavalia;
 using namespace Cavalia::Benchmark::Tpcc;
 using namespace Cavalia::Benchmark::Tpcc::Executor;
+#if defined(ST)
 using namespace Cavalia::Benchmark::Tpcc::Replayer;
+#endif
 
 int main(int argc, char *argv[]) {
 	ArgumentsParser(argc, argv);
@@ -47,17 +50,22 @@ int main(int argc, char *argv[]) {
 		PRINT_STORAGE_STATUS;
 		CHECKPOINT_STORAGE;
 	}
+#if defined(ST)
 	else if (app_type == APP_REPLAY) {
-		RELOAD_STORAGE(Tpcc, dir_name, false);
-		PRINT_STORAGE_STATUS;
 		if (replay_type == APP_COMMAND_REPLAY) {
+			RELOAD_STORAGE(Tpcc, dir_name, false);
+			PRINT_STORAGE_STATUS;
 			COMMAND_REPLAY(Tpcc, dir_name, num_core);
+			PRINT_STORAGE_STATUS;
 		}
 		else if (replay_type == APP_VALUE_REPLAY) {
+			RELOAD_STORAGE(Tpcc, dir_name, true);
+			PRINT_STORAGE_STATUS;
 			VALUE_REPLAY(Tpcc, dir_name, num_core);
+			PRINT_STORAGE_STATUS;
 		}
-		PRINT_STORAGE_STATUS;
 	}
+#endif
 	else if (app_type == APP_CC_EXECUTE || app_type == APP_HSTORE_EXECUTE || app_type == APP_SITE_EXECUTE){
 		assert(factor_count == 2);
 		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);

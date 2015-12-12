@@ -20,7 +20,7 @@ namespace Cavalia{
 		const size_t kMaxThreadNum = 48;
 		const size_t kMaxAccessNum = 256;
 		const size_t kBatchTsNum = 16;
-		const size_t kLogBufferSize = 16384000;
+		const size_t kLogBufferSize = 8192000;
 
 		enum LockType : size_t{ NO_LOCK, READ_LOCK, WRITE_LOCK, CERTIFY_LOCK };
 		enum AccessType : size_t { READ_ONLY, READ_WRITE, INSERT_ONLY, DELETE_ONLY };
