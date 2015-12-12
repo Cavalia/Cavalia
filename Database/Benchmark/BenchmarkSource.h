@@ -11,7 +11,7 @@
 
 namespace Cavalia{
 	namespace Benchmark{
-		using namespace Database;
+		using namespace Cavalia::Database;
 
 		enum SourceType : size_t { RANDOM_SOURCE, PARTITION_SOURCE, SELECT_SOURCE };
 		class BenchmarkSource{

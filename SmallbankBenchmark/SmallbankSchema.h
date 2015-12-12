@@ -8,7 +8,7 @@
 namespace Cavalia{
 	namespace Benchmark{
 		namespace Smallbank{
-			using namespace Database;
+			using namespace Cavalia::Database;
 			class SmallbankSchema{
 			public:
 				static RecordSchema* GenerateAccountsSchema(){

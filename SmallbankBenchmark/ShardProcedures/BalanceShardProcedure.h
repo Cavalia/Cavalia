@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_SMALLBANK_BENCHMARK_SHARD_PROCEDURES_BALANCE_PROCEDURE_H__
 #define __CAVALIA_SMALLBANK_BENCHMARK_SHARD_PROCEDURES_BALANCE_PROCEDURE_H__
 
-#include <StoredProcedure.h>
+#include <Transaction/StoredProcedure.h>
 #include "../SmallbankInformation.h"
 
 namespace Cavalia{

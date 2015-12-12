@@ -44,6 +44,12 @@ namespace Cavalia{
 				int w_id_;
 				int o_carrier_id_;
 				int64_t ol_delivery_d_;
+//#if defined(SLICE)
+				// additional parameters
+				int no_o_ids_[DISTRICTS_PER_WAREHOUSE];
+				double sums_[DISTRICTS_PER_WAREHOUSE];
+				int c_ids_[DISTRICTS_PER_WAREHOUSE];
+//#endif
 			};
 
 			class NewOrderParam : public TxnParam{
@@ -123,6 +129,12 @@ namespace Cavalia{
 				int i_ids_[15];
 				int i_w_ids_[15];
 				int i_qtys_[15];
+//#if defined(SLICE)
+				// additional parameters
+				int next_o_id_;
+				std::string s_dists_[15];
+				double ol_amounts_[15];
+//#endif
 			};
 
 			class PaymentParam : public TxnParam{

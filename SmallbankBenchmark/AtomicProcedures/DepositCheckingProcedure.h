@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_SMALLBANK_BENCHMARK_ATOMIC_PROCEDURES_DEPOSIT_CHECKING_PROCEDURE_H__
 #define __CAVALIA_SMALLBANK_BENCHMARK_ATOMIC_PROCEDURES_DEPOSIT_CHECKING_PROCEDURE_H__
 
-#include <StoredProcedure.h>
+#include <Transaction/StoredProcedure.h>
 #include "../SmallbankInformation.h"
 
 namespace Cavalia{
@@ -18,10 +18,10 @@ namespace Cavalia{
 						context_.PassContext(exe_context);
 						const DepositCheckingParam * dc_param = static_cast<const DepositCheckingParam*>(param);
 						SchemaRecord *cust_record = NULL;
-						DB_QUERY(SelectKeyRecord(&context_, ACCOUNTS_TABLE_ID, std::string((char*)(&dc_param->custid_), sizeof(int64_t)), cust_record, READ_ONLY, 0));
+						DB_QUERY(SelectKeyRecord(&context_, ACCOUNTS_TABLE_ID, std::string((char*)(&dc_param->custid_), sizeof(int64_t)), cust_record, READ_ONLY));
 						assert(cust_record != NULL);
 						SchemaRecord *checking_record = NULL;
-						DB_QUERY(SelectKeyRecord(&context_, CHECKING_TABLE_ID, std::string((char*)(&dc_param->custid_), sizeof(int64_t)), checking_record, READ_WRITE, 0));
+						DB_QUERY(SelectKeyRecord(&context_, CHECKING_TABLE_ID, std::string((char*)(&dc_param->custid_), sizeof(int64_t)), checking_record, READ_WRITE));
 						assert(checking_record != NULL);
 						float final_amount = *(float*)(checking_record->GetColumn(1)) + dc_param->amount_;
 						checking_record->UpdateColumn(1, (char*)(&final_amount));

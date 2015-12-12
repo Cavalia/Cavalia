@@ -8,7 +8,7 @@
 namespace Cavalia{
 	namespace Benchmark{
 		namespace Tpcc{
-			using namespace Database;
+			using namespace Cavalia::Database;
 			class TpccSchema{
 			public:
 				static RecordSchema* GetTableSchema(const size_t &table_id){

@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_SMALLBANK_BENCHMARK_ATOMIC_PROCEDURES_SEND_PAYMENT_PROCEDURE_H__
 #define __CAVALIA_SMALLBANK_BENCHMARK_ATOMIC_PROCEDURES_SEND_PAYMENT_PROCEDURE_H__
 
-#include <StoredProcedure.h>
+#include <Transaction/StoredProcedure.h>
 #include "../SmallbankInformation.h"
 
 namespace Cavalia{
@@ -18,16 +18,16 @@ namespace Cavalia{
 						context_.PassContext(exe_context);
 						const SendPaymentParam* sp_param = static_cast<const SendPaymentParam*>(param);
 						SchemaRecord *custid_0_record = NULL;
-						DB_QUERY(SelectKeyRecord(&context_, ACCOUNTS_TABLE_ID, std::string((char*)(&sp_param->custid_0_), sizeof(int64_t)), custid_0_record, READ_ONLY, 0));
+						DB_QUERY(SelectKeyRecord(&context_, ACCOUNTS_TABLE_ID, std::string((char*)(&sp_param->custid_0_), sizeof(int64_t)), custid_0_record, READ_ONLY));
 						SchemaRecord *custid_1_record = NULL;
-						DB_QUERY(SelectKeyRecord(&context_, ACCOUNTS_TABLE_ID, std::string((char*)(&sp_param->custid_1_), sizeof(int64_t)), custid_1_record, READ_ONLY, 1));
+						DB_QUERY(SelectKeyRecord(&context_, ACCOUNTS_TABLE_ID, std::string((char*)(&sp_param->custid_1_), sizeof(int64_t)), custid_1_record, READ_ONLY));
 						assert(custid_0_record != NULL);
 						assert(custid_1_record != NULL);
 						SchemaRecord *sendacct_checking_record = NULL;
-						DB_QUERY(SelectKeyRecord(&context_, CHECKING_TABLE_ID, std::string((char*)(&sp_param->custid_0_), sizeof(int64_t)), sendacct_checking_record, READ_WRITE, 0));
+						DB_QUERY(SelectKeyRecord(&context_, CHECKING_TABLE_ID, std::string((char*)(&sp_param->custid_0_), sizeof(int64_t)), sendacct_checking_record, READ_WRITE));
 						assert(sendacct_checking_record != NULL);
 						SchemaRecord *destacct_checking_record = NULL;
-						DB_QUERY(SelectKeyRecord(&context_, CHECKING_TABLE_ID, std::string((char*)(&sp_param->custid_1_), sizeof(int64_t)), destacct_checking_record, READ_WRITE, 1));
+						DB_QUERY(SelectKeyRecord(&context_, CHECKING_TABLE_ID, std::string((char*)(&sp_param->custid_1_), sizeof(int64_t)), destacct_checking_record, READ_WRITE));
 						assert(destacct_checking_record != NULL);
 						float sendacct_checking = *(float*)(sendacct_checking_record->GetColumn(1));
 						//if (sp_param->amount_ > sendacct_checking){

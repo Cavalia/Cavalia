@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_SMALLBANK_BENCHMARK_ATOMIC_PROCEDURES_TRANSACT_SAVINGS_PROCEDURE_H__
 #define __CAVALIA_SMALLBANK_BENCHMARK_ATOMIC_PROCEDURES_TRANSACT_SAVINGS_PROCEDURE_H__
 
-#include <StoredProcedure.h>
+#include <Transaction/StoredProcedure.h>
 #include "../SmallbankInformation.h"
 
 namespace Cavalia{
@@ -18,10 +18,10 @@ namespace Cavalia{
 						context_.PassContext(exe_context);
 						const TransactSavingsParam* ts_param = static_cast<const TransactSavingsParam*>(param);
 						SchemaRecord *cust_record = NULL;
-						DB_QUERY(SelectKeyRecord(&context_, ACCOUNTS_TABLE_ID, std::string((char*)(&ts_param->custid_), sizeof(int64_t)), cust_record, READ_ONLY, 0));
+						DB_QUERY(SelectKeyRecord(&context_, ACCOUNTS_TABLE_ID, std::string((char*)(&ts_param->custid_), sizeof(int64_t)), cust_record, READ_ONLY));
 						assert(cust_record != NULL);
 						SchemaRecord *savings_record = NULL;
-						DB_QUERY(SelectKeyRecord(&context_, SAVINGS_TABLE_ID, std::string((char*)(&ts_param->custid_), sizeof(int64_t)), savings_record, READ_WRITE, 0));
+						DB_QUERY(SelectKeyRecord(&context_, SAVINGS_TABLE_ID, std::string((char*)(&ts_param->custid_), sizeof(int64_t)), savings_record, READ_WRITE));
 						assert(savings_record != NULL);
 						float cur_savings = *(float*)(savings_record->GetColumn(1));
 						//if (cur_savings < ts_param->amount_){
