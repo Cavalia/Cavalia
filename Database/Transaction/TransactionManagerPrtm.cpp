@@ -159,19 +159,19 @@ namespace Cavalia {
 					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
 					SchemaRecord *local_record_ptr = access_ptr->local_record_;
 					if (access_ptr->access_type_ == READ_WRITE) {
-						((ValueLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
+						logger_->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY) {
-						((ValueLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
+						logger_->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
-						((ValueLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
+						logger_->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
 					}
 				}
 				// commit.
-				((ValueLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch, commit_ts);
+				logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts);
 #elif defined(COMMAND_LOGGING)
-				((CommandLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, context->txn_type_, param);
+				logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, context->txn_type_, param);
 #endif
 
 				// clean up.
