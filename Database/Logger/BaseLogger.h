@@ -2,6 +2,7 @@
 #ifndef __CAVALIA_DATABASE_BASE_LOGGER_H__
 #define __CAVALIA_DATABASE_BASE_LOGGER_H__
 
+#include <atomic>
 #include <string>
 #include <cstdio>
 #if defined(__linux__)
@@ -16,6 +17,34 @@
 
 namespace Cavalia{
 	namespace Database{
+		struct ThreadBufferStruct{
+#if !defined(COMPRESSION)
+			ThreadBufferStruct(){
+				buffer_offset_ = 0;
+				txn_offset_ = sizeof(size_t)+sizeof(uint64_t);
+				last_epoch_ = 0;
+			}
+#else
+			ThreadBufferStruct(char *compressed_buffer, const size_t &compressed_buf_size){
+				buffer_offset_ = 0;
+				txn_offset_ = sizeof(size_t)+sizeof(uint64_t);
+				last_epoch_ = 0;
+
+				LZ4F_errorCode_t err = LZ4F_createCompressionContext(&compression_context_, LZ4F_VERSION);
+				assert(LZ4F_isError(err) == false);
+				// compress begin: put header
+				compressed_buf_offset_ = LZ4F_compressBegin(compression_context_, compressed_buffer, compressed_buf_size, NULL);
+			}
+#endif
+			size_t buffer_offset_;
+			size_t txn_offset_;
+			uint64_t last_epoch_;
+#if defined(COMPRESSION)
+			LZ4F_compressionContext_t compression_context_;
+			size_t compressed_buf_offset_;
+#endif
+		};
+
 		class BaseLogger{
 		public:
 			BaseLogger(const std::string &dir_name, const size_t &thread_count, bool is_vl) : dir_name_(dir_name), thread_count_(thread_count){
@@ -34,19 +63,13 @@ namespace Cavalia{
 						assert(outfiles_[i] != NULL);
 					}
 				}
-
+				thread_buf_structs_ = new ThreadBufferStruct*[thread_count_];
 				buffers_ = new char*[thread_count_];
-				buffer_offsets_ = new size_t*[thread_count_];
-				txn_offsets_ = new size_t*[thread_count_];
-				last_epochs_ = new uint64_t*[thread_count_];
 #if defined(COMPRESSION)
 				size_t frame_size = LZ4F_compressBound(kLogBufferSize, NULL);
 				// compressed_buf_size_ is the max size of file write
 				compressed_buf_size_ = frame_size + LZ4_HEADER_SIZE + LZ4_FOOTER_SIZE;
-
-				compression_contexts_ = new LZ4F_compressionContext_t*[thread_count_];
 				compressed_buffers_ = new char*[thread_count_];
-				compressed_buf_offsets_ = new size_t*[thread_count_];
 #endif
 			}
 			virtual ~BaseLogger(){
@@ -63,33 +86,27 @@ namespace Cavalia{
 				}
 				delete[] outfiles_;
 				outfiles_ = NULL;
+				delete[] thread_buf_structs_;
+				thread_buf_structs_ = NULL;
 			}
 
 			void RegisterThread(const size_t &thread_id, const size_t &core_id){
 				size_t numa_node_id = GetNumaNodeId(core_id);
 				buffers_[thread_id] = MemAllocator::AllocNode(kLogBufferSize, numa_node_id);
-				buffer_offsets_[thread_id] = (size_t*)MemAllocator::AllocNode(sizeof(size_t), numa_node_id);
-				txn_offsets_[thread_id] = (size_t*)MemAllocator::AllocNode(sizeof(size_t), numa_node_id);
-				last_epochs_[thread_id] = (uint64_t*)MemAllocator::AllocNode(sizeof(uint64_t), numa_node_id);
-				*(buffer_offsets_[thread_id]) = 0;
-				*(txn_offsets_[thread_id]) = sizeof(size_t)+sizeof(uint64_t);
-				*(last_epochs_[thread_id]) = 0;
-
 #if defined(COMPRESSION)
-				compression_contexts_[thread_id] = (LZ4F_compressionContext_t*)(MemAllocator::AllocNode(sizeof(LZ4F_compressionContext_t), numa_node_id));
-				new(compression_contexts_[thread_id])LZ4F_compressionContext_t();
-				LZ4F_errorCode_t err = LZ4F_createCompressionContext(compression_contexts_[thread_id], LZ4F_VERSION);
-				assert(LZ4F_isError(err) == false);
-				compressed_buffers_[thread_id] = new char[compressed_buf_size_];
-				// compress begin: put header
-				compressed_buf_offsets_[thread_id] = (size_t*)(MemAllocator::AllocNode(sizeof(size_t), numa_node_id));
-				*(compressed_buf_offsets_[thread_id]) = LZ4F_compressBegin(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id], compressed_buf_size_, NULL);
+				compressed_buffers_[thread_id] = MemAllocator::AllocNode(compressed_buf_size_, numa_node_id);
+				thread_buf_structs_[thread_id] = (ThreadBufferStruct*)MemAllocator::AllocNode(sizeof(ThreadBufferStruct), numa_node_id);
+				new(thread_buf_structs_[thread_id])ThreadBufferStruct(compressed_buffers_[thread_id], compressed_buf_size_);
+#else
+				thread_buf_structs_[thread_id] = (ThreadBufferStruct*)MemAllocator::AllocNode(sizeof(ThreadBufferStruct), numa_node_id);
+				new(thread_buf_structs_[thread_id])ThreadBufferStruct();
 #endif
 			}
 
 			void InsertRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size) {
-				char *buffer_ptr = buffers_[thread_id] + *(buffer_offsets_[thread_id]);
-				size_t &offset_ref = *(txn_offsets_[thread_id]);
+				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				char *buffer_ptr = buffers_[thread_id] + buf_struct_ptr->buffer_offset_;
+				size_t &offset_ref = buf_struct_ptr->txn_offset_;
 				memcpy(buffer_ptr + offset_ref, (char*)(&kInsert), sizeof(uint8_t));
 				offset_ref += sizeof(uint8_t);
 				memcpy(buffer_ptr + offset_ref, (char*)(&table_id), sizeof(uint8_t));
@@ -101,8 +118,9 @@ namespace Cavalia{
 			}
 
 			void UpdateRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size) {
-				char *buffer_ptr = buffers_[thread_id] + *(buffer_offsets_[thread_id]);
-				size_t &offset_ref = *(txn_offsets_[thread_id]);
+				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				char *buffer_ptr = buffers_[thread_id] + buf_struct_ptr->buffer_offset_;
+				size_t &offset_ref = buf_struct_ptr->txn_offset_;
 				memcpy(buffer_ptr + offset_ref, (char*)(&kUpdate), sizeof(uint8_t));
 				offset_ref += sizeof(uint8_t);
 				memcpy(buffer_ptr + offset_ref, (char*)(&table_id), sizeof(uint8_t));
@@ -114,8 +132,9 @@ namespace Cavalia{
 			}
 
 			void DeleteRecord(const size_t &thread_id, const uint8_t &table_id, const std::string &primary_key) {
-				char *buffer_ptr = buffers_[thread_id] + *(buffer_offsets_[thread_id]);
-				size_t &offset_ref = *(txn_offsets_[thread_id]);
+				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				char *buffer_ptr = buffers_[thread_id] + buf_struct_ptr->buffer_offset_;
+				size_t &offset_ref = buf_struct_ptr->txn_offset_;
 				memcpy(buffer_ptr + offset_ref, (char*)(&kDelete), sizeof(uint8_t));
 				offset_ref += sizeof(uint8_t);
 				memcpy(buffer_ptr + offset_ref, (char*)(&table_id), sizeof(uint8_t));
@@ -132,7 +151,7 @@ namespace Cavalia{
 
 			// abort value logging.
 			void AbortTransaction(const size_t &thread_id){
-				*(txn_offsets_[thread_id]) = sizeof(size_t)+sizeof(uint64_t);
+				thread_buf_structs_[thread_id]->txn_offset_ = sizeof(size_t)+sizeof(uint64_t);
 			}
 
 			// commit command logging.
@@ -140,22 +159,23 @@ namespace Cavalia{
 
 			void CleanUp(const size_t &thread_id){
 				FILE *file_ptr = outfiles_[thread_id];
+				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
 #if defined(COMPRESSION)
-				size_t& offset = *(compressed_buf_offsets_[thread_id]);
-				size_t n = LZ4F_compressUpdate(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], *(buffer_offsets_[thread_id]), NULL);
+				size_t& offset = buf_struct_ptr->compressed_buf_offset_;
+				size_t n = LZ4F_compressUpdate(buf_struct_ptr->compression_context_, compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], buf_struct_ptr->buffer_offset_, NULL);
 				assert(LZ4F_isError(n) == false);
 				offset += n;
 				// after compression, write into file
 				fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
 				offset = 0;
 
-				n = LZ4F_compressEnd(*(compression_contexts_[thread_id]), compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, NULL);
+				n = LZ4F_compressEnd(buf_struct_ptr->compression_context_, compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, NULL);
 				assert(LZ4F_isError(n) == false);
 				offset += n;
 				fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
-				LZ4F_freeCompressionContext(*(compression_contexts_[thread_id]));
+				LZ4F_freeCompressionContext(buf_struct_ptr->compression_context_));
 #else
-				fwrite(buffers_[thread_id], sizeof(char), *(buffer_offsets_[thread_id]), file_ptr);
+				fwrite(buffers_[thread_id], sizeof(char), buf_struct_ptr->buffer_offset_, file_ptr);
 #endif
 				int ret;
 				ret = fflush(file_ptr);
@@ -176,14 +196,10 @@ namespace Cavalia{
 			FILE **outfiles_;
 
 		protected:
+			ThreadBufferStruct **thread_buf_structs_;
 			char **buffers_;
-			size_t **buffer_offsets_;
-			size_t **txn_offsets_;
-			uint64_t **last_epochs_;
 #if defined(COMPRESSION)
-			LZ4F_compressionContext_t **compression_contexts_;
 			char **compressed_buffers_;
-			size_t **compressed_buf_offsets_;
 			size_t compressed_buf_size_;
 #endif
 		};
