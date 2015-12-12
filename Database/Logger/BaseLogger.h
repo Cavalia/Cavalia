@@ -214,7 +214,7 @@ namespace Cavalia{
 				assert(LZ4F_isError(n) == false);
 				offset += n;
 				fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
-				LZ4F_freeCompressionContext(buf_struct_ptr->compression_context_));
+				LZ4F_freeCompressionContext(buf_struct_ptr->compression_context_);
 #else
 				fwrite(buffers_[thread_id], sizeof(char), buf_struct_ptr->buffer_offset_, file_ptr);
 #endif
