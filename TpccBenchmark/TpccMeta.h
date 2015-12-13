@@ -14,6 +14,20 @@ namespace Cavalia{
 				kProcedureCount 
 			};
 
+			enum SliceType : size_t {
+				WAREHOUSE_SLICE, 
+				DISTRICT_9_SLICE, 
+				DISTRICT_10_SLICE, 
+				CUSTOMER_SLICE,
+				HISTORY_SLICE,
+				ITEM_SLICE, 
+				STOCK_SLICE,
+				NEW_ORDER_SLICE, 
+				ORDER_SLICE, 
+				ORDER_LINE_SLICE,
+				kSliceCount
+			};
+
 			enum TableType : size_t { 
 				ITEM_TABLE_ID, 
 				STOCK_TABLE_ID, 

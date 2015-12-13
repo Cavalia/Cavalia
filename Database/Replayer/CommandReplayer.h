@@ -13,11 +13,11 @@ namespace Cavalia{
 		class CommandReplayer : public BaseReplayer{
 		public:
 			CommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : BaseReplayer(filename, storage_manager, thread_count, false){
-				log_batches_ = new LogEntries[thread_count_];
+				log_entries_ = new CommandLogEntries[thread_count_];
 			}
 			virtual ~CommandReplayer(){
-				delete[] log_batches_;
-				log_batches_ = NULL;
+				delete[] log_entries_;
+				log_entries_ = NULL;
 			}
 
 			virtual void Start(){
@@ -46,7 +46,7 @@ namespace Cavalia{
 
 			void ReloadLog(const size_t &thread_id){
 				FILE *infile_ptr = infiles_[thread_id];
-				LogEntries &log_batch = log_batches_[thread_id];
+				CommandLogEntries &log_batch = log_entries_[thread_id];
 				fseek(infile_ptr, 0L, SEEK_END);
 				size_t file_size = ftell(infile_ptr);
 				rewind(infile_ptr);
@@ -70,7 +70,7 @@ namespace Cavalia{
 					assert(result == entry.size_);
 					TxnParam* event_tuple = DeserializeParam(param_type, entry);
 					if (event_tuple != NULL){
-						log_batch.push_back(LogEntry(timestamp, event_tuple));
+						log_batch.push_back(new CommandLogEntry(timestamp, event_tuple));
 					}
 					file_pos += entry.size_;
 				}
@@ -80,21 +80,21 @@ namespace Cavalia{
 
 			void ReorderLog(){
 				for (size_t i = 0; i < thread_count_; ++i){
-					std::cout << "thread id=" << i << ", size=" << log_batches_[i].size() << std::endl;
+					std::cout << "thread id=" << i << ", size=" << log_entries_[i].size() << std::endl;
 				}
-				LogEntries::iterator *iterators = new LogEntries::iterator[thread_count_];
+				CommandLogEntries::iterator *iterators = new CommandLogEntries::iterator[thread_count_];
 				for (size_t i = 0; i < thread_count_; ++i){
-					iterators[i] = log_batches_[i].begin();
+					iterators[i] = log_entries_[i].begin();
 				}
 				while (true){
 					bool all_finished = true;
 					uint64_t min_ts = -1;
 					size_t thread_id = SIZE_MAX;
-					LogEntries::iterator min_entry;
+					CommandLogEntries::iterator min_entry;
 					for (size_t i = 0; i < thread_count_; ++i){
-						if (iterators[i] != log_batches_[i].end()){
-							if (min_ts == -1 || iterators[i]->timestamp_ < min_ts){
-								min_ts = iterators[i]->timestamp_;
+						if (iterators[i] != log_entries_[i].end()){
+							if (min_ts == -1 || (*iterators[i])->timestamp_ < min_ts){
+								min_ts = (*iterators[i])->timestamp_;
 								min_entry = iterators[i];
 								thread_id = i;
 							}
@@ -107,13 +107,13 @@ namespace Cavalia{
 					}
 					else{
 						assert(min_ts != -1);
-						ordered_logs_.push_back(*min_entry);
+						ordered_log_entries_.push_back(*min_entry);
 						++iterators[thread_id];
 					}
 				}
 				delete[] iterators;
 				iterators = NULL;
-				std::cout << "full log size=" << ordered_logs_.size() << std::endl;
+				std::cout << "full log size=" << ordered_log_entries_.size() << std::endl;
 			
 			}
 
@@ -128,8 +128,8 @@ namespace Cavalia{
 				CharArray ret;
 				ret.char_ptr_ = new char[1024];
 				ExeContext exe_context;
-				for (size_t i = 0; i < ordered_logs_.size(); ++i){
-					TxnParam *param = ordered_logs_.at(i).param_;
+				for (size_t i = 0; i < ordered_log_entries_.size(); ++i){
+					TxnParam *param = ordered_log_entries_.at(i)->param_;
 					ret.size_ = 0;
 					procedures[param->type_]->Execute(param, ret, exe_context);
 				}
@@ -143,8 +143,8 @@ namespace Cavalia{
 			std::unordered_map<size_t, std::function<StoredProcedure*()>> registers_;
 
 		private:
-			LogEntries *log_batches_;
-			LogEntries ordered_logs_;
+			CommandLogEntries *log_entries_;
+			CommandLogEntries ordered_log_entries_;
 		};
 	}
 }

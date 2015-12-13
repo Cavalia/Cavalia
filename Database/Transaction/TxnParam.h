@@ -102,19 +102,6 @@ namespace Cavalia{
 			size_t param_count_;
 			size_t batch_size_;
 		};
-
-		struct LogEntry{
-			LogEntry(){}
-			LogEntry(const uint64_t &timestamp, TxnParam *param){
-				timestamp_ = timestamp;
-				param_ = param;
-			}
-
-			uint64_t timestamp_;
-			TxnParam *param_;
-		};
-
-		typedef std::vector<LogEntry> LogEntries;
 	}
 }
 

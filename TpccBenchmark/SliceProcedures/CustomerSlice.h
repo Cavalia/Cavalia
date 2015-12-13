@@ -11,10 +11,10 @@ namespace Cavalia {
 		namespace Tpcc {
 			namespace ReplaySlices {
 				using namespace Cavalia::Database;
-				class Customer16Slice : public StoredProcedure {
+				class CustomerSlice : public StoredProcedure {
 				public:
-					Customer16Slice() {}
-					virtual ~Customer16Slice() {}
+					CustomerSlice() {}
+					virtual ~CustomerSlice() {}
 
 					// access customer_table.
 					void Execute(const ParamBatch *params) {
@@ -58,8 +58,8 @@ namespace Cavalia {
 					}
 
 				private:
-					Customer16Slice(const Customer16Slice&);
-					Customer16Slice& operator=(const Customer16Slice&);
+					CustomerSlice(const CustomerSlice&);
+					CustomerSlice& operator=(const CustomerSlice&);
 
 				private:
 					char c_key[sizeof(int) * 3];
