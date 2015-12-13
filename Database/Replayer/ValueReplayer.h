@@ -42,6 +42,7 @@ namespace Cavalia{
 				fseek(infile_ptr, 0L, SEEK_END);
 				size_t file_size = ftell(infile_ptr);
 				rewind(infile_ptr);
+				ValueLogEntries &log_batch = log_entries_[thread_id];
 				size_t file_pos = 0;
 				int result = 0;
 				while (file_pos < file_size){
@@ -73,7 +74,7 @@ namespace Cavalia{
 					}
 					assert(txn_pos == txn_size);
 					file_pos += txn_size;
-					log_entries_[thread_id].push_back(log_entry);
+					log_batch.push_back(log_entry);
 				}
 				assert(file_pos == file_size);
 			}

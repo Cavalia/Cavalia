@@ -45,10 +45,10 @@ namespace Cavalia{
 
 			void ReloadLog(const size_t &thread_id){
 				FILE *infile_ptr = infiles_[thread_id];
-				CommandLogEntries &log_batch = log_entries_[thread_id];
 				fseek(infile_ptr, 0L, SEEK_END);
 				size_t file_size = ftell(infile_ptr);
 				rewind(infile_ptr);
+				CommandLogEntries &log_batch = log_entries_[thread_id];
 				size_t file_pos = 0;
 				CharArray entry;
 				entry.Allocate(1024);
@@ -67,9 +67,9 @@ namespace Cavalia{
 					file_pos += sizeof(entry.size_);
 					result = fread(entry.char_ptr_, 1, entry.size_, infile_ptr);
 					assert(result == entry.size_);
-					TxnParam* event_tuple = DeserializeParam(param_type, entry);
-					if (event_tuple != NULL){
-						log_batch.push_back(new CommandLogEntry(timestamp, event_tuple));
+					TxnParam* txn_param = DeserializeParam(param_type, entry);
+					if (txn_param != NULL){
+						log_batch.push_back(new CommandLogEntry(timestamp, txn_param));
 					}
 					file_pos += entry.size_;
 				}
@@ -106,13 +106,13 @@ namespace Cavalia{
 					}
 					else{
 						assert(min_ts != -1);
-						ordered_log_entries_.push_back(*min_entry);
+						serial_log_entries_.push_back(*min_entry);
 						++iterators[thread_id];
 					}
 				}
 				delete[] iterators;
 				iterators = NULL;
-				std::cout << "full log size=" << ordered_log_entries_.size() << std::endl;
+				std::cout << "full log size=" << serial_log_entries_.size() << std::endl;
 			
 			}
 
@@ -127,8 +127,8 @@ namespace Cavalia{
 				CharArray ret;
 				ret.char_ptr_ = new char[1024];
 				ExeContext exe_context;
-				for (size_t i = 0; i < ordered_log_entries_.size(); ++i){
-					TxnParam *param = ordered_log_entries_.at(i)->param_;
+				for (size_t i = 0; i < serial_log_entries_.size(); ++i){
+					TxnParam *param = serial_log_entries_.at(i)->param_;
 					ret.size_ = 0;
 					procedures[param->type_]->Execute(param, ret, exe_context);
 				}
@@ -143,7 +143,7 @@ namespace Cavalia{
 
 		private:
 			CommandLogEntries *log_entries_;
-			CommandLogEntries ordered_log_entries_;
+			CommandLogEntries serial_log_entries_;
 		};
 	}
 }
