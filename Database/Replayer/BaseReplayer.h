@@ -4,56 +4,12 @@
 
 #include <boost/thread.hpp>
 #include <TimeMeasurer.h>
-#include <cstdio>
 #include "../Storage/BaseStorageManager.h"
 #include "../Meta/MetaConstants.h"
+#include "LogEntry.h"
 
 namespace Cavalia{
 	namespace Database{
-
-		struct CommandLogEntry{
-			CommandLogEntry(){}
-			CommandLogEntry(const uint64_t &timestamp, TxnParam *param){
-				timestamp_ = timestamp;
-				param_ = param;
-			}
-
-			uint64_t timestamp_;
-			TxnParam *param_;
-		};
-
-		typedef std::vector<CommandLogEntry*> CommandLogEntries;
-
-		struct ValueLogElement{
-			uint8_t type_;
-			uint8_t table_id_;
-			uint8_t data_size_;
-			char *data_ptr_;
-		};
-
-		struct ValueLogEntry{
-			ValueLogEntry(){
-				element_count_ = 0;
-				timestamp_ = 0;
-			}
-
-			ValueLogElement* NewValueLogElement(){
-				assert(element_count_ < kMaxAccessNum);
-				ValueLogElement *ret = &elements_[element_count_];
-				++element_count_;
-				return ret;
-			}
-
-			void Clear(){
-				element_count_ = 0;
-			}
-
-			ValueLogElement elements_[kMaxAccessNum];
-			size_t element_count_;
-			uint64_t timestamp_;
-		};
-
-		typedef std::vector<ValueLogEntry*> ValueLogEntries;
 
 		class BaseReplayer{
 		public:
