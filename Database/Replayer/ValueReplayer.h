@@ -42,6 +42,7 @@ namespace Cavalia{
 				fseek(infile_ptr, 0L, SEEK_END);
 				size_t file_size = ftell(infile_ptr);
 				rewind(infile_ptr);
+				ValueLogEntries &log_batch = log_entries_[thread_id];
 				size_t file_pos = 0;
 				int result = 0;
 				while (file_pos < file_size){
@@ -73,7 +74,7 @@ namespace Cavalia{
 					}
 					assert(txn_pos == txn_size);
 					file_pos += txn_size;
-					log_entries_[thread_id].push_back(log_entry);
+					log_batch.push_back(log_entry);
 				}
 				assert(file_pos == file_size);
 			}
@@ -92,13 +93,17 @@ namespace Cavalia{
 							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_element_ptr->table_id_), log_element_ptr->data_ptr_);
 							TableRecord *tb_record_ptr = NULL;
 							storage_manager_->tables_[log_element_ptr->table_id_]->SelectKeyRecord(record_ptr->GetPrimaryKey(), tb_record_ptr);
-							if (txn_ts > tb_record_ptr->timestamp_){
+							tb_record_ptr->content_.AcquireWriteLock();
+							if (txn_ts > tb_record_ptr->content_.GetTimestamp()){
 								SchemaRecord *tmp_ptr = tb_record_ptr->record_;
 								tb_record_ptr->record_ = record_ptr;
+								tb_record_ptr->content_.SetTimestamp(txn_ts);
+								tb_record_ptr->content_.ReleaseWriteLock();
 								delete tmp_ptr;
 								tmp_ptr = NULL;
 							}
 							else{
+								tb_record_ptr->content_.ReleaseWriteLock();
 								delete record_ptr;
 								record_ptr = NULL;
 							}

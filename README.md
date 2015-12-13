@@ -10,7 +10,6 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 
 ##Project Schedule
 * Wiki (https://github.com/Cavalia/Cavalia/wiki) on running and tuning Cavalia. 31st December, 2015.
-* Smallbank benchmark. 31st December, 2015.
 
 ##Linux Platform Installation
 
@@ -35,19 +34,19 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 * OCC: optimistic concurrency control [BHG87, YBP+14].
 * SILO: an implementation following silo's design [TZK+13].
 * DBX: an implementation following DBX's design [WQLC14].
-* ST: disable cc.
+* ST: disable concurrency control. must be turned on when performing log replay [MWMS14, ZTKL14].
 
 ###Index
 * CUCKOO_INDEX: enable cuckoo index (See https://github.com/efficient/libcuckoo).
 
 ###Logging
-* VALUE_LOGGING: enable value logging.
+* VALUE_LOGGING: enable value logging [MWMS14, ZTKL14].
 * COMMAND_LOGGING: enable command logging.
 * COMPRESSION: enable log compression.
 
 ###Timestamp allocation
 * BATCH_TIMESTAMP: allocate timestamp in batch.
-* SCALABLE_TIMESTAMP: allocate timestamp in Silo's style [TZK+13].
+* SCALABLE_TIMESTAMP: allocate timestamp in Silo's style [TZK+13,].
 
 ###Profiler
 * MUTE: mute profiling.
@@ -75,6 +74,9 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 * [BHG87] Philip A Bernstein, Vassos Hadzilacos, and Nathan Goodman. Concurrency control and recovery in database systems. 1987.
 * [CM86] Michael J Carey and Waleed A Muhanna. The performance of multiversion concurrency control
 algorithms. TOCS, 1986.
+* [MWMS14] Nirmesh Malviya, Ariel Weisberg, Samuel Madden,
+and Michael Stonebraker. Rethinking main memory
+oltp recovery. In ICDE, 2014.
 * [TZK+13] Stephen Tu, Wenting Zheng, Eddie Kohler, Barbara
 Liskov, and Samuel Madden. Speedy transactions in
 multicore in-memory databases. In SOSP, 2013.
@@ -85,6 +87,11 @@ a scalable in-memory database. In EuroSys, 2014.
 Srinivas Devadas, and Michael Stonebraker. Staring
 into the abyss: An evaluation of concurrency control
 with one thousand cores. In VLDB, 2014.
+* [ZTKL14] Wenting Zheng, Stephen Tu, Eddie Kohler, and
+Barbara Liskov. Fast databases with fast durability
+and recovery through multicore parallelism. In
+OSDI, 2014.
+
 
 ##Authors
 * Yingjun Wu \<yingjun AT comp.nus.edu.sg\>
