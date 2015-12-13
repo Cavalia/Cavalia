@@ -6,7 +6,7 @@
 
 #if defined(LOCK_WAIT)
 #include "../Content/LockWaitContent.h"
-#elif defined(LOCK) || defined(OCC) || defined(SILO)
+#elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(ST)
 #include "../Content/LockContent.h"
 #elif defined(SILOCK) || defined(SIOCC)
 #include "../Content/SiLockContent.h"
@@ -38,11 +38,7 @@ namespace Cavalia{
 #elif defined(TO)
 			TableRecord(SchemaRecord *record) : record_(record), content_(record->data_ptr_, record->schema_ptr_->GetSchemaSize()) {}
 #else
-			TableRecord(SchemaRecord *record) : record_(record) {
-#if defined(ST)
-				timestamp_ = 0;
-#endif
-			}
+			TableRecord(SchemaRecord *record) : record_(record) {}
 #endif
 			~TableRecord(){}
 			
@@ -50,7 +46,7 @@ namespace Cavalia{
 
 #if defined(LOCK_WAIT)
 			LockWaitContent content_;
-#elif defined(LOCK) || defined(OCC) || defined(SILO)
+#elif defined(LOCK) || defined(OCC) || defined(SILO) || defined(ST)
 			LockContent content_;
 #elif defined(SILOCK) || defined(SIOCC)
 			SiLockContent content_;
@@ -68,8 +64,6 @@ namespace Cavalia{
 			MvOccContent content_;
 #elif defined(DBX) || defined(PRTM)
 			RtmContent content_;
-#elif defined(ST)
-			uint64_t timestamp_;
 #endif
 		};
 	}
