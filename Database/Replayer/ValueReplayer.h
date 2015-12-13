@@ -2,7 +2,6 @@
 #ifndef __CAVALIA_DATABASE_VALUE_REPLAYER_H__
 #define __CAVALIA_DATABASE_VALUE_REPLAYER_H__
 
-#include "../Storage/BaseStorageManager.h"
 #include "BaseReplayer.h"
 
 namespace Cavalia{

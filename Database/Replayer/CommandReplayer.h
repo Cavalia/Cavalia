@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include "../Transaction/TransactionManager.h"
 #include "../Transaction/StoredProcedure.h"
-#include "../Transaction/TxnParam.h"
 #include "BaseReplayer.h"
 
 namespace Cavalia{
