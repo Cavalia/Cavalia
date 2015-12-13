@@ -2,9 +2,11 @@
 #ifndef __CAVALIA_DATABASE_BASE_REPLAYER_H__
 #define __CAVALIA_DATABASE_BASE_REPLAYER_H__
 
+#include <boost/thread.hpp>
 #include <TimeMeasurer.h>
 #include <cstdio>
 #include "../Storage/BaseStorageManager.h"
+#include "../Meta/MetaConstants.h"
 
 namespace Cavalia{
 	namespace Database{
