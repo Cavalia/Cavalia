@@ -8,43 +8,14 @@
 namespace Cavalia{
 	namespace Database{
 
-		struct AccessLog{
-			uint8_t type_;
-			uint8_t table_id_;
-			uint8_t data_size_;
-			char *data_ptr_;
-		};
-
-		struct TxnLog{
-			TxnLog(){
-				log_count_ = 0;
-				commit_ts_ = 0;
-			}
-
-			AccessLog* NewAccessLog(){
-				assert(log_count_ < kMaxAccessNum);
-				AccessLog *ret = &logs_[log_count_];
-				++log_count_;
-				return ret;
-			}
-
-			void Clear(){
-				log_count_ = 0;
-			}
-
-			AccessLog logs_[kMaxAccessNum];
-			size_t log_count_;
-			uint64_t commit_ts_;
-		};
-
 		class ValueReplayer : public BaseReplayer{
 		public:
 			ValueReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : BaseReplayer(filename, storage_manager, thread_count, true){
-				txn_logs_ = new std::vector<TxnLog*>[thread_count_];
+				log_entries_ = new ValueLogEntries[thread_count_];
 			}
 			virtual ~ValueReplayer(){
-				delete[] txn_logs_;
-				txn_logs_ = NULL;
+				delete[] log_entries_;
+				log_entries_ = NULL;
 			}
 
 			virtual void Start(){
@@ -75,53 +46,53 @@ namespace Cavalia{
 				size_t file_pos = 0;
 				int result = 0;
 				while (file_pos < file_size){
-					TxnLog *txn_log = new TxnLog();
+					ValueLogEntry *log_entry = new ValueLogEntry();
 					size_t txn_size;
 					result = fread(&txn_size, sizeof(txn_size), 1, infile_ptr);
 					assert(result == 1);
-					uint64_t commit_ts;
-					result = fread(&commit_ts, sizeof(commit_ts), 1, infile_ptr);
+					uint64_t timestamp;
+					result = fread(&timestamp, sizeof(timestamp), 1, infile_ptr);
 					assert(result == 1);
 					// set commit timestamp.
-					txn_log->commit_ts_ = commit_ts;
-					size_t txn_pos = sizeof(txn_size) + sizeof(commit_ts);
+					log_entry->timestamp_ = timestamp;
+					size_t txn_pos = sizeof(txn_size) + sizeof(timestamp);
 					while (txn_pos < txn_size){
-						AccessLog *access_log = txn_log->NewAccessLog();
-						result = fread(&access_log->type_, sizeof(access_log->type_), 1, infile_ptr);
+						ValueLogElement *log_element = log_entry->NewValueLogElement();
+						result = fread(&log_element->type_, sizeof(log_element->type_), 1, infile_ptr);
 						assert(result == 1);
-						txn_pos += sizeof(access_log->type_);
-						result = fread(&access_log->table_id_, sizeof(access_log->table_id_), 1, infile_ptr);
+						txn_pos += sizeof(log_element->type_);
+						result = fread(&log_element->table_id_, sizeof(log_element->table_id_), 1, infile_ptr);
 						assert(result == 1);
-						txn_pos += sizeof(access_log->table_id_);
-						result = fread(&access_log->data_size_, sizeof(access_log->data_size_), 1, infile_ptr);
+						txn_pos += sizeof(log_element->table_id_);
+						result = fread(&log_element->data_size_, sizeof(log_element->data_size_), 1, infile_ptr);
 						assert(result == 1);
-						txn_pos += sizeof(access_log->data_size_);
-						access_log->data_ptr_ = new char[access_log->data_size_];
-						result = fread(access_log->data_ptr_, 1, access_log->data_size_, infile_ptr);
-						assert(result == access_log->data_size_);
-						txn_pos += access_log->data_size_;
+						txn_pos += sizeof(log_element->data_size_);
+						log_element->data_ptr_ = new char[log_element->data_size_];
+						result = fread(log_element->data_ptr_, 1, log_element->data_size_, infile_ptr);
+						assert(result == log_element->data_size_);
+						txn_pos += log_element->data_size_;
 					}
 					assert(txn_pos == txn_size);
 					file_pos += txn_size;
-					txn_logs_[thread_id].push_back(txn_log);
+					log_entries_[thread_id].push_back(log_entry);
 				}
 				assert(file_pos == file_size);
 			}
 
 			void ProcessLog(const size_t &thread_id){
-				for (size_t i = 0; i < txn_logs_[thread_id].size(); ++i){
-					auto *txn_log_ptr = txn_logs_[thread_id].at(i);
-					uint64_t txn_ts = txn_log_ptr->commit_ts_;
-					for (size_t k = 0; k < txn_log_ptr->log_count_; ++k){
-						AccessLog *log_ptr = &(txn_log_ptr->logs_[k]);
-						if (log_ptr->type_ == kInsert){
-							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_ptr->table_id_), log_ptr->data_ptr_);
-							//storage_manager_->tables_[log_ptr->table_id_]->InsertRecord(new TableRecord(record_ptr));
+				for (size_t i = 0; i < log_entries_[thread_id].size(); ++i){
+					auto *log_entry_ptr = log_entries_[thread_id].at(i);
+					uint64_t txn_ts = log_entry_ptr->timestamp_;
+					for (size_t k = 0; k < log_entry_ptr->element_count_; ++k){
+						ValueLogElement *log_element_ptr = &(log_entry_ptr->elements_[k]);
+						if (log_element_ptr->type_ == kInsert){
+							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_element_ptr->table_id_), log_element_ptr->data_ptr_);
+							//storage_manager_->tables_[log_element_ptr->table_id_]->InsertRecord(new TableRecord(record_ptr));
 						}
-						else if (log_ptr->type_ == kUpdate){
-							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_ptr->table_id_), log_ptr->data_ptr_);
+						else if (log_element_ptr->type_ == kUpdate){
+							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_element_ptr->table_id_), log_element_ptr->data_ptr_);
 							TableRecord *tb_record_ptr = NULL;
-							storage_manager_->tables_[log_ptr->table_id_]->SelectKeyRecord(record_ptr->GetPrimaryKey(), tb_record_ptr);
+							storage_manager_->tables_[log_element_ptr->table_id_]->SelectKeyRecord(record_ptr->GetPrimaryKey(), tb_record_ptr);
 							if (txn_ts > tb_record_ptr->timestamp_){
 								SchemaRecord *tmp_ptr = tb_record_ptr->record_;
 								tb_record_ptr->record_ = record_ptr;
@@ -133,8 +104,8 @@ namespace Cavalia{
 								record_ptr = NULL;
 							}
 						}
-						else if (log_ptr->type_ == kDelete){
-							//storage_manager_->tables_[log_ptr->table_id_]->DeleteRecord();
+						else if (log_element_ptr->type_ == kDelete){
+							//storage_manager_->tables_[log_element_ptr->table_id_]->DeleteRecord();
 						}
 					}
 				}
@@ -147,7 +118,7 @@ namespace Cavalia{
 			ValueReplayer& operator=(const ValueReplayer &);
 
 		private:
-			std::vector<TxnLog*> *txn_logs_;
+			ValueLogEntries *log_entries_;
 		};
 	}
 }
