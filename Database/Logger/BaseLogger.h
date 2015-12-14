@@ -11,6 +11,7 @@
 #if defined(COMPRESSION)
 #include <lz4frame.h>
 #endif
+#include <AllocatorHelper.h>
 #include <NumaHelper.h>
 #include "../Transaction/TxnParam.h"
 #include "../Meta/MetaConstants.h"
