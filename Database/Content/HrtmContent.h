@@ -9,7 +9,7 @@ namespace Cavalia {
 	namespace Database {
 		class HrtmContent {
 		public:
-			HrtmContent() : timestamp_(0) {}
+			HrtmContent() : timestamp_(0), counter_(0) {}
 
 			void SetTimestamp(const uint64_t &timestamp) {
 				assert(timestamp_ <= timestamp);
@@ -20,12 +20,21 @@ namespace Cavalia {
 				return timestamp_.load(std::memory_order_relaxed);
 			}
 
-			uint64_t IncrementTimestamp() {
-				return timestamp_.fetch_add(1, std::memory_order_relaxed);
+			size_t GetCounter() const {
+				return counter_.load(std::memory_order_relaxed);
+			}
+
+			size_t IncrementCounter() {
+				return counter_.fetch_add(1, std::memory_order_relaxed);
+			}
+
+			size_t DecrementCounter() {
+				return counter_.fetch_sub(1, std::memory_order_relaxed);
 			}
 
 		private:
 			std::atomic<uint64_t> timestamp_;
+			std::atomic<size_t> counter_;
 		};
 	}
 }
