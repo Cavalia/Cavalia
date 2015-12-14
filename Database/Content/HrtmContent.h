@@ -3,6 +3,7 @@
 #define __CAVALIA_DATABASE_HRTM_CONTENT_H__
 
 #include <atomic>
+#include <cstdint>
 
 namespace Cavalia {
 	namespace Database {

@@ -34,6 +34,8 @@ namespace Cavalia{
 				access->table_id_ = table_id;
 				// ensure consistent view of timestamp_ and record_
 				rtm_lock_->Lock();
+				// increment reference counter.
+				t_record->content_.IncrementCounter();
 				access->timestamp_ = t_record->content_.GetTimestamp();
 				s_record = t_record->record_;
 				rtm_lock_->Unlock();
@@ -47,6 +49,8 @@ namespace Cavalia{
 				// ensure consistent view of timestamp_ and record_
 				SchemaRecord *global_record = NULL;
 				rtm_lock_->Lock();
+				// increment reference counter.
+				t_record->content_.IncrementCounter();
 				access->timestamp_ = t_record->content_.GetTimestamp();
 				global_record = t_record->record_;
 				rtm_lock_->Unlock();
@@ -148,13 +152,18 @@ namespace Cavalia{
 				// clean up.
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
-					if (access_ptr->access_type_ == READ_WRITE) {
-						garbage_list_.Add(access_ptr);
-						/*BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
-						access_ptr->local_record_->~SchemaRecord();
-						MemAllocator::Free((char*)access_ptr->local_record_);
-						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);*/
+					if (access_ptr->access_type_ == READ_ONLY) {
+						access_ptr->access_record_->content_.DecrementCounter();
+					}
+					else if (access_ptr->access_type_ == READ_WRITE) {
+						size_t counter = access_ptr->access_record_->content_.DecrementCounter();
+						if (counter == 0){
+							BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+							MemAllocator::Free(access_ptr->local_record_->data_ptr_);
+							access_ptr->local_record_->~SchemaRecord();
+							MemAllocator::Free((char*)access_ptr->local_record_);
+							END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						}
 					}
 					// deletes, wait for recycling to clean up
 				}
@@ -166,7 +175,11 @@ namespace Cavalia{
 				// clean up 
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
+					if (access_ptr->access_type_ == READ_ONLY) {
+						access_ptr->access_record_->content_.DecrementCounter();
+					}
 					if (access_ptr->access_type_ == READ_WRITE) {
+						access_ptr->access_record_->content_.DecrementCounter();
 						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 						access_ptr->local_record_->~SchemaRecord();

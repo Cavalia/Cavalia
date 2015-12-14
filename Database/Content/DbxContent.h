@@ -2,29 +2,40 @@
 #ifndef __CAVALIA_DATABASE_DBX_CONTENT_H__
 #define __CAVALIA_DATABASE_DBX_CONTENT_H__
 
-#include <atomic>
+#include <cstdint>
 
 namespace Cavalia {
 	namespace Database {
 		class DbxContent {
 		public:
-			DbxContent() : timestamp_(0) {}
-
-			void SetTimestamp(const uint64_t &timestamp) {
-				assert(timestamp_ <= timestamp);
-				timestamp_.store(timestamp, std::memory_order_relaxed);
-			}
+			DbxContent() : timestamp_(0), counter_(0) {}
 
 			uint64_t GetTimestamp() const {
-				return timestamp_.load(std::memory_order_relaxed);
+				return timestamp_;
 			}
 
 			uint64_t IncrementTimestamp() {
-				return timestamp_.fetch_add(1, std::memory_order_relaxed);
+				++timestamp_;
+				return timestamp_;
+			}
+
+			size_t GetCounter() const {
+				return counter_;
+			}
+
+			size_t IncrementCounter() {
+				++counter_;
+				return counter_;
+			}
+
+			size_t DecrementCounter() {
+				--counter_;
+				return counter_;
 			}
 
 		private:
-			std::atomic<uint64_t> timestamp_;
+			uint64_t timestamp_;
+			size_t counter_;
 		};
 	}
 }
