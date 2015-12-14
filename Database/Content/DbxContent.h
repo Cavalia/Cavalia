@@ -2,6 +2,7 @@
 #ifndef __CAVALIA_DATABASE_DBX_CONTENT_H__
 #define __CAVALIA_DATABASE_DBX_CONTENT_H__
 
+#include <atomic>
 #include <cstdint>
 
 namespace Cavalia {
@@ -20,17 +21,15 @@ namespace Cavalia {
 			}
 
 			size_t GetCounter() const {
-				return counter_;
+				return counter_.load(std::memory_order_relaxed);
 			}
 
 			size_t IncrementCounter() {
-				++counter_;
-				return counter_;
+				return counter_.fetch_add(1, std::memory_order_relaxed);
 			}
 
 			size_t DecrementCounter() {
-				--counter_;
-				return counter_;
+				return counter_.fetch_sub(1, std::memory_order_relaxed);
 			}
 
 		private:

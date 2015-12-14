@@ -32,10 +32,10 @@ namespace Cavalia{
 				access->access_record_ = t_record;
 				access->local_record_ = NULL;
 				access->table_id_ = table_id;
-				// ensure consistent view of timestamp_ and record_
-				rtm_lock_->Lock();
 				// increment reference counter.
 				t_record->content_.IncrementCounter();
+				// ensure consistent view of timestamp_ and record_
+				rtm_lock_->Lock();
 				access->timestamp_ = t_record->content_.GetTimestamp();
 				s_record = t_record->record_;
 				rtm_lock_->Unlock();
@@ -46,11 +46,11 @@ namespace Cavalia{
 				access->access_type_ = READ_WRITE;
 				access->access_record_ = t_record;
 				access->table_id_ = table_id;
+				// increment reference counter.
+				t_record->content_.IncrementCounter();
 				// ensure consistent view of timestamp_ and record_
 				SchemaRecord *global_record = NULL;
 				rtm_lock_->Lock();
-				// increment reference counter.
-				t_record->content_.IncrementCounter();
 				access->timestamp_ = t_record->content_.GetTimestamp();
 				global_record = t_record->record_;
 				rtm_lock_->Unlock();
@@ -179,7 +179,7 @@ namespace Cavalia{
 									++iter;
 								}
 							}
-							garbage_set_.insert(std::make_pair(access_ptr->access_record_, access_ptr->local_record_));
+							garbage_set_.push_back(std::make_pair(access_ptr->access_record_, access_ptr->local_record_));
 						}
 					}
 					// deletes, wait for recycling to clean up

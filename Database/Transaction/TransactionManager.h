@@ -2,8 +2,8 @@
 #ifndef __CAVALIA_DATABASE_TRANSACTION_MANAGER_H__
 #define __CAVALIA_DATABASE_TRANSACTION_MANAGER_H__
 
+#include <list>
 #include <AllocatorHelper.h>
-#include <unordered_set>
 #include "../Meta/MetaTypes.h"
 #include "../Profiler/Profilers.h"
 #include "../Logger/ValueLogger.h"
@@ -233,7 +233,7 @@ namespace Cavalia{
 #endif
 #if defined(DBX) || defined(PRTM) || defined(HRTM)
 			RtmLock *rtm_lock_;
-			std::unordered_set<std::pair<TableRecord*, SchemaRecord*>> garbage_set_;
+			std::list<std::pair<TableRecord*, SchemaRecord*>> garbage_set_;
 #endif
 		};
 	}
