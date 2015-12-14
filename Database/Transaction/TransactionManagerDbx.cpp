@@ -149,6 +149,7 @@ namespace Cavalia{
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE) {
+						garbage_list_.Add(access_ptr);
 						/*BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
 						access_ptr->local_record_->~SchemaRecord();

@@ -17,7 +17,7 @@
 #include "GlobalTimestamp.h"
 #include "BatchTimestamp.h"
 #include "Epoch.h"
-#if defined(DBX) || defined(PRTM)
+#if defined(DBX) || defined(PRTM) || defined(HRTM)
 #include <RtmLock.h>
 #endif
 
@@ -45,7 +45,7 @@ namespace Cavalia{
 			// destruction.
 			virtual ~TransactionManager(){}
 
-#if defined(DBX) || defined(PRTM)
+#if defined(DBX) || defined(PRTM) || defined(HRTM)
 			void SetRtmLock(RtmLock *rtm_lock){
 				rtm_lock_ = rtm_lock;
 			}
@@ -224,13 +224,15 @@ namespace Cavalia{
 			BatchTimestamp batch_ts_;
 #endif
 #if defined(SILO)
-			WritePtrList<kMaxAccessNum> write_list_;
+			// write set.
+			AccessPtrList<kMaxAccessNum> write_list_;
 #endif
 #if defined(MVTO) || defined(MVLOCK) || defined(MVLOCK_WAIT) || defined(MVOCC)
 			std::vector<SchemaRecord*> read_only_set_;
 #endif
-#if defined(DBX) || defined(PRTM)
+#if defined(DBX) || defined(PRTM) || defined(HRTM)
 			RtmLock *rtm_lock_;
+			AccessPtrList<kMaxAccessNum> garbage_list_;
 #endif
 		};
 	}

@@ -1,14 +1,14 @@
 #pragma once
-#ifndef __CAVALIA_DATABASE_RTM_CONTENT_H__
-#define __CAVALIA_DATABASE_RTM_CONTENT_H__
+#ifndef __CAVALIA_DATABASE_HRTM_CONTENT_H__
+#define __CAVALIA_DATABASE_HRTM_CONTENT_H__
 
 #include <atomic>
 
 namespace Cavalia {
 	namespace Database {
-		class RtmContent {
+		class HrtmContent {
 		public:
-			RtmContent() : timestamp_(0) {}
+			HrtmContent() : timestamp_(0) {}
 
 			void SetTimestamp(const uint64_t &timestamp) {
 				assert(timestamp_ <= timestamp);
