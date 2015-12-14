@@ -2,6 +2,7 @@
 #ifndef __CAVALIA_DATABASE_BASE_TABLE_H__
 #define __CAVALIA_DATABASE_BASE_TABLE_H__
 
+#include <AllocatorHelper.h>
 #include <vector>
 #include <string>
 #include <fstream>

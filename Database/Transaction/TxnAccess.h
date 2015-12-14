@@ -2,6 +2,7 @@
 #ifndef __CAVALIA_DATABASE_TXN_ACCESS_H__
 #define __CAVALIA_DATABASE_TXN_ACCESS_H__
 
+#include <unordered_set>
 #include <string>
 #include <algorithm>
 #include "../Meta/MetaTypes.h"
@@ -87,6 +88,8 @@ namespace Cavalia{
 		private:
 			Access *accesses_[N];
 		};
+
+		typedef std::unordered_set<Access*> AccessPtrSet;
 	}
 }
 

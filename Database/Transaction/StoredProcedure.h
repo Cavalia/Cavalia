@@ -2,6 +2,7 @@
 #ifndef __CAVALIA_DATABASE_STORED_PROCEDURE_H__
 #define __CAVALIA_DATABASE_STORED_PROCEDURE_H__
 
+#include <AllocatorHelper.h>
 #include "../Storage/SchemaRecord.h"
 #include "../Storage/SchemaRecords.h"
 #include "TransactionManager.h"

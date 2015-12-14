@@ -156,13 +156,30 @@ namespace Cavalia{
 						access_ptr->access_record_->content_.DecrementCounter();
 					}
 					else if (access_ptr->access_type_ == READ_WRITE) {
-						size_t counter = access_ptr->access_record_->content_.DecrementCounter();
-						if (counter == 0){
+						if (access_ptr->access_record_->content_.DecrementCounter() == 0){
 							BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-							MemAllocator::Free(access_ptr->local_record_->data_ptr_);
-							access_ptr->local_record_->~SchemaRecord();
-							MemAllocator::Free((char*)access_ptr->local_record_);
+							SchemaRecord *local_record_ptr = access_ptr->local_record_;
+							MemAllocator::Free(local_record_ptr->data_ptr_);
+							local_record_ptr->~SchemaRecord();
+							MemAllocator::Free((char*)local_record_ptr);
 							END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						}
+						else{
+							for (auto iter = garbage_set_.begin(); iter != garbage_set_.end();){
+								if ((*iter)->access_record_->content_.GetCounter() == 0){
+									BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+									SchemaRecord *local_record_ptr = access_ptr->local_record_;
+									MemAllocator::Free(local_record_ptr->data_ptr_);
+									local_record_ptr->~SchemaRecord();
+									MemAllocator::Free((char*)local_record_ptr);
+									END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+									iter = garbage_set_.erase(iter);
+								}
+								else{
+									++iter;
+								}
+							}
+							garbage_set_.insert(access_ptr);
 						}
 					}
 					// deletes, wait for recycling to clean up
@@ -181,9 +198,10 @@ namespace Cavalia{
 					if (access_ptr->access_type_ == READ_WRITE) {
 						access_ptr->access_record_->content_.DecrementCounter();
 						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						MemAllocator::Free(access_ptr->local_record_->data_ptr_);
-						access_ptr->local_record_->~SchemaRecord();
-						MemAllocator::Free((char*)access_ptr->local_record_);
+						SchemaRecord *local_record_ptr = access_ptr->local_record_;
+						MemAllocator::Free(local_record_ptr->data_ptr_);
+						local_record_ptr->~SchemaRecord();
+						MemAllocator::Free((char*)local_record_ptr);
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
 					// inserts and deletes, wait for recycling to clean up
