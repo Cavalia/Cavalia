@@ -35,7 +35,7 @@ namespace Cavalia {
 
 		private:
 			uint64_t timestamp_;
-			size_t counter_;
+			std::atomic<size_t> counter_;
 		};
 	}
 }

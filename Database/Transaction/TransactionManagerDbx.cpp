@@ -166,9 +166,9 @@ namespace Cavalia{
 						}
 						else{
 							for (auto iter = garbage_set_.begin(); iter != garbage_set_.end();){
-								if ((*iter)->access_record_->content_.GetCounter() == 0){
+								if (iter->first->content_.GetCounter() == 0){
 									BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-									SchemaRecord *local_record_ptr = access_ptr->local_record_;
+									SchemaRecord *local_record_ptr = iter->second;
 									MemAllocator::Free(local_record_ptr->data_ptr_);
 									local_record_ptr->~SchemaRecord();
 									MemAllocator::Free((char*)local_record_ptr);
@@ -179,7 +179,7 @@ namespace Cavalia{
 									++iter;
 								}
 							}
-							garbage_set_.insert(access_ptr);
+							garbage_set_.insert(std::make_pair(access_ptr->access_record_, access_ptr->local_record_));
 						}
 					}
 					// deletes, wait for recycling to clean up

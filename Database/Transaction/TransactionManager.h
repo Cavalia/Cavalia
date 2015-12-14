@@ -233,7 +233,7 @@ namespace Cavalia{
 #endif
 #if defined(DBX) || defined(PRTM) || defined(HRTM)
 			RtmLock *rtm_lock_;
-			AccessPtrSet garbage_set_;
+			std::unordered_set<std::pair<TableRecord*, SchemaRecord*>> garbage_set_;
 #endif
 		};
 	}
