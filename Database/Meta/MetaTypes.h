@@ -2,6 +2,7 @@
 #ifndef __CAVALIA_DATABASE_META_TYPES_H__
 #define __CAVALIA_DATABASE_META_TYPES_H__
 
+#include <cstring>
 #include <cstdint>
 
 namespace Cavalia{
