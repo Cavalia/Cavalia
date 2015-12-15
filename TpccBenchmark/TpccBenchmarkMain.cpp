@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 	}
 #if defined(ST)
 	else if (app_type == APP_REPLAY) {
-		if (replay_type == APP_COMMAND_REPLAY) {
+		if (replay_type == APP_SERIAL_COMMAND_REPLAY) {
 			RELOAD_STORAGE(Tpcc, dir_name, false);
 			PRINT_STORAGE_STATUS;
 			SERIAL_COMMAND_REPLAY(Tpcc, dir_name, num_core);

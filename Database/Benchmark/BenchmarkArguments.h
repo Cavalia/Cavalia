@@ -18,7 +18,7 @@ enum AppType {
 };
 
 enum AppReplayType { 
-	APP_PARALLEL_COMMAND_REPLAY, 
+	APP_SERIAL_COMMAND_REPLAY, 
 	APP_VALUE_REPLAY, 
 	kAppReplaySize 
 };
