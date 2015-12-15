@@ -46,16 +46,15 @@ namespace Cavalia{
 				size_t file_pos = 0;
 				int result = 0;
 				while (file_pos < file_size){
-					ValueLogEntry *log_entry = new ValueLogEntry(0);
-					size_t txn_size;
-					result = fread(&txn_size, sizeof(txn_size), 1, infile_ptr);
-					assert(result == 1);
 					uint64_t timestamp;
 					result = fread(&timestamp, sizeof(timestamp), 1, infile_ptr);
 					assert(result == 1);
+					ValueLogEntry *log_entry = new ValueLogEntry(timestamp);
+					size_t txn_size;
+					result = fread(&txn_size, sizeof(txn_size), 1, infile_ptr);
+					assert(result == 1);
 					// set commit timestamp.
-					log_entry->timestamp_ = timestamp;
-					size_t txn_pos = sizeof(txn_size) + sizeof(timestamp);
+					size_t txn_pos = 0;
 					while (txn_pos < txn_size){
 						ValueLogElement *log_element = log_entry->NewValueLogElement();
 						result = fread(&log_element->type_, sizeof(log_element->type_), 1, infile_ptr);
@@ -73,7 +72,7 @@ namespace Cavalia{
 						txn_pos += log_element->data_size_;
 					}
 					assert(txn_pos == txn_size);
-					file_pos += txn_size;
+					file_pos += sizeof(timestamp) + sizeof(txn_size) + txn_size;
 					log_batch.push_back(log_entry);
 				}
 				assert(file_pos == file_size);

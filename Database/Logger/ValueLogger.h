@@ -20,10 +20,11 @@ namespace Cavalia{
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
 				memcpy(curr_buffer_ptr, (char*)(&commit_ts), sizeof(uint64_t));
-				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&(buf_struct_ptr->txn_offset_)), sizeof(size_t));
+				size_t txn_size = buf_struct_ptr->txn_offset_ - txn_header_size_;
+				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&txn_size), sizeof(size_t));
 				buffer_offset_ref += buf_struct_ptr->txn_offset_;
-
 				assert(buffer_offset_ref < kLogBufferSize);
+
 				if (epoch != buf_struct_ptr->last_epoch_){
 					FILE *file_ptr = outfiles_[thread_id];
 					buf_struct_ptr->last_epoch_ = epoch;
@@ -48,6 +49,11 @@ namespace Cavalia{
 #endif
 				}
 				buf_struct_ptr->txn_offset_ = txn_header_size_;
+			}
+
+
+			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param){
+				assert(false);
 			}
 
 		private:
