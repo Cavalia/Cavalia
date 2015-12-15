@@ -18,7 +18,7 @@
 #include "TpccSource.h"
 #include "TpccConcurrentExecutor.h"
 #if defined(ST)
-#include "TpccCommandReplayer.h"
+#include "TpccSerialCommandReplayer.h"
 #include "TpccValueReplayer.h"
 #endif
 #if defined(__linux__)
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 		if (replay_type == APP_COMMAND_REPLAY) {
 			RELOAD_STORAGE(Tpcc, dir_name, false);
 			PRINT_STORAGE_STATUS;
-			COMMAND_REPLAY(Tpcc, dir_name, num_core);
+			SERIAL_COMMAND_REPLAY(Tpcc, dir_name, num_core);
 			PRINT_STORAGE_STATUS;
 		}
 		else if (replay_type == APP_VALUE_REPLAY) {

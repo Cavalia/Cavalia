@@ -5,12 +5,12 @@
 #include <unordered_map>
 
 #include <Transaction/TxnParam.h>
-#include "TpccRecords.h"
-#include "TpccMeta.h"
+#include "TpccInformation.h"
 
 namespace Cavalia{
 	namespace Benchmark{
 		namespace Tpcc{
+			using namespace Cavalia::Database;
 			class DeliveryParam : public TxnParam{
 			public:
 				DeliveryParam(){

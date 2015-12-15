@@ -95,8 +95,8 @@ if (boost::filesystem::exists(full_name) == false){ \
 	BenchmarkName##IslandExecutor executor(&io_redirector, &storage_manager, logger, configure.GetSiteTxnLocation()); \
 	executor.Start();
 ////////////////////////////////////////////////////////////
-#define COMMAND_REPLAY(BenchmarkName, DirName, NumCore) \
-	BenchmarkName##CommandReplayer replayer(DirName+"/"#BenchmarkName"/", &storage_manager, NumCore); \
+#define SERIAL_COMMAND_REPLAY(BenchmarkName, DirName, NumCore) \
+	BenchmarkName##SerialCommandReplayer replayer(DirName+"/"#BenchmarkName"/", &storage_manager, NumCore); \
 	replayer.Start();
 
 #define VALUE_REPLAY(BenchmarkName, DirName, NumCore) \

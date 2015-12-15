@@ -2,7 +2,7 @@
 #ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_SLICE_REPLAYER_H__
 #define __CAVALIA_TPCC_BENCHMARK_TPCC_SLICE_REPLAYER_H__
 
-#include <Replayer/SliceReplayer.h>
+#include <Replayer/ParallelCommandReplayer.h>
 
 #include "SliceProcedures/StockSlice.h"
 #include "SliceProcedures/ItemSlice.h"
@@ -21,10 +21,10 @@ namespace Cavalia{
 			namespace Replayer{
 				using namespace Cavalia::Database;
 				using namespace Cavalia::Benchmark::Tpcc::ReplaySlices;
-				class TpccSliceReplayer : public SliceReplayer{
+				class TpccParallelCommandReplayer : public ParallelCommandReplayer{
 				public:
-					TpccSliceReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : SliceReplayer(filename, storage_manager, thread_count){}
-					virtual ~TpccSliceReplayer(){}
+					TpccParallelCommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : ParallelCommandReplayer(filename, storage_manager, thread_count){}
+					virtual ~TpccParallelCommandReplayer(){}
 
 				private:
 					virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry){
@@ -340,8 +340,8 @@ namespace Cavalia{
 
 
 				private:
-					TpccSliceReplayer(const TpccSliceReplayer &);
-					TpccSliceReplayer& operator=(const TpccSliceReplayer &);
+					TpccParallelCommandReplayer(const TpccParallelCommandReplayer &);
+					TpccParallelCommandReplayer& operator=(const TpccParallelCommandReplayer &);
 
 				protected:
 					ParamBatch *new_order_query_params_;

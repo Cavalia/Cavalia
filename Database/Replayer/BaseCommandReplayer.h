@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __CAVALIA_DATABASE_COMMAND_REPLAYER_H__
-#define __CAVALIA_DATABASE_COMMAND_REPLAYER_H__
+#ifndef __CAVALIA_DATABASE_BASE_COMMAND_REPLAYER_H__
+#define __CAVALIA_DATABASE_BASE_COMMAND_REPLAYER_H__
 
 #include <unordered_map>
 #include "../Transaction/TransactionManager.h"
@@ -9,12 +9,12 @@
 
 namespace Cavalia{
 	namespace Database{
-		class CommandReplayer : public BaseReplayer{
+		class BaseCommandReplayer : public BaseReplayer{
 		public:
-			CommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : BaseReplayer(filename, storage_manager, thread_count, false){
+			BaseCommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : BaseReplayer(filename, storage_manager, thread_count, false){
 				log_entries_ = new BaseLogEntries[thread_count_];
 			}
-			virtual ~CommandReplayer(){
+			virtual ~BaseCommandReplayer(){
 				delete[] log_entries_;
 				log_entries_ = NULL;
 			}
@@ -24,7 +24,7 @@ namespace Cavalia{
 				timer.StartTimer();
 				boost::thread_group reloaders;
 				for (size_t i = 0; i < thread_count_; ++i){
-					reloaders.create_thread(boost::bind(&CommandReplayer::ReloadLog, this, i));
+					reloaders.create_thread(boost::bind(&BaseCommandReplayer::ReloadLog, this, i));
 				}
 				reloaders.join_all();
 				timer.EndTimer();
@@ -40,9 +40,6 @@ namespace Cavalia{
 			}
 
 		private:
-			virtual void PrepareProcedures() = 0;
-			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
-
 			void ReloadLog(const size_t &thread_id){
 				FILE *infile_ptr = infiles_[thread_id];
 				fseek(infile_ptr, 0L, SEEK_END);
@@ -143,59 +140,23 @@ namespace Cavalia{
 				delete[] iterators;
 				iterators = NULL;
 				std::cout << "full log size=" << serial_log_entries_.size() << std::endl;
-			
 			}
 
-			void ProcessLog(){
-				PrepareProcedures();
-				TransactionManager *txn_manager = new TransactionManager(storage_manager_, NULL);
-				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
-				for (auto &entry : registers_){
-					procedures[entry.first] = entry.second();
-					procedures[entry.first]->SetTransactionManager(txn_manager);
-				}
-				CharArray ret;
-				ret.char_ptr_ = new char[1024];
-				ExeContext exe_context;
-				for (auto &log_entry : serial_log_entries_){
-					if (log_entry->is_command_log_ == true){
-						TxnParam *param = (static_cast<CommandLogEntry*>(log_entry))->param_;
-						ret.size_ = 0;
-						procedures[param->type_]->Execute(param, ret, exe_context);
-					}
-					else{
-						for (size_t k = 0; k < (static_cast<ValueLogEntry*>(log_entry))->element_count_; ++k){
-							ValueLogElement *log_element_ptr = &((static_cast<ValueLogEntry*>(log_entry))->elements_[k]);
-							if (log_element_ptr->type_ == kInsert){
-								SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_element_ptr->table_id_), log_element_ptr->data_ptr_);
-								//storage_manager_->tables_[log_element_ptr->table_id_]->InsertRecord(new TableRecord(record_ptr));
-							}
-							else if (log_element_ptr->type_ == kUpdate){
-								SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_element_ptr->table_id_), log_element_ptr->data_ptr_);
-								TableRecord *tb_record_ptr = NULL;
-								storage_manager_->tables_[log_element_ptr->table_id_]->SelectKeyRecord(record_ptr->GetPrimaryKey(), tb_record_ptr);
-								delete tb_record_ptr->record_;
-								tb_record_ptr->record_ = record_ptr;
-							}
-							else if (log_element_ptr->type_ == kDelete){
-								//storage_manager_->tables_[log_element_ptr->table_id_]->DeleteRecord();
-							}
-							
-						}
-					}
-				}
-			}
+			virtual void ProcessLog() = 0;
 
+		protected:
+			virtual void PrepareProcedures() = 0;
+			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
 			virtual RecordSchema *GetRecordSchema(const size_t &table_id) = 0;
 
 		private:
-			CommandReplayer(const CommandReplayer &);
-			CommandReplayer& operator=(const CommandReplayer &);
+			BaseCommandReplayer(const BaseCommandReplayer &);
+			BaseCommandReplayer& operator=(const BaseCommandReplayer &);
 
 		protected:
 			std::unordered_map<size_t, std::function<StoredProcedure*()>> registers_;
 
-		private:
+		protected:
 			BaseLogEntries *log_entries_;
 			BaseLogEntries serial_log_entries_;
 		};

@@ -1,8 +1,8 @@
 #pragma once
-#ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_COMMAND_REPLAYER_H__
-#define __CAVALIA_TPCC_BENCHMARK_TPCC_COMMAND_REPLAYER_H__
+#ifndef __CAVALIA_TPCC_BENCHMARK_TPCC_SERIAL_COMMAND_REPLAYER_H__
+#define __CAVALIA_TPCC_BENCHMARK_TPCC_SERIAL_COMMAND_REPLAYER_H__
 
-#include <Replayer/CommandReplayer.h>
+#include <Replayer/SerialCommandReplayer.h>
 
 #include "AtomicProcedures/DeliveryProcedure.h"
 #include "AtomicProcedures/NewOrderProcedure.h"
@@ -15,10 +15,10 @@ namespace Cavalia{
 		namespace Tpcc{
 			namespace Replayer{
 				using namespace Cavalia::Database;
-				class TpccCommandReplayer : public CommandReplayer{
+				class TpccSerialCommandReplayer : public SerialCommandReplayer{
 				public:
-					TpccCommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : CommandReplayer(filename, storage_manager, thread_count){}
-					virtual ~TpccCommandReplayer(){}
+					TpccSerialCommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : SerialCommandReplayer(filename, storage_manager, thread_count){}
+					virtual ~TpccSerialCommandReplayer(){}
 
 				private:
 					virtual void PrepareProcedures(){
@@ -100,8 +100,8 @@ namespace Cavalia{
 					}
 
 				private:
-					TpccCommandReplayer(const TpccCommandReplayer &);
-					TpccCommandReplayer& operator=(const TpccCommandReplayer &);
+					TpccSerialCommandReplayer(const TpccSerialCommandReplayer &);
+					TpccSerialCommandReplayer& operator=(const TpccSerialCommandReplayer &);
 				};
 			}
 		}
