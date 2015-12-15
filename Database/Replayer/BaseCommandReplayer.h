@@ -46,10 +46,10 @@ namespace Cavalia{
 				size_t file_size = ftell(infile_ptr);
 				rewind(infile_ptr);
 				BaseLogEntries &log_batch = log_entries_[thread_id];
-				size_t file_pos = 0;
 				CharArray entry;
 				entry.Allocate(1024);
 				int result = 0;
+				size_t file_pos = 0;
 				while (file_pos < file_size){
 					size_t param_type;
 					result = fread(&param_type, sizeof(param_type), 1, infile_ptr);
@@ -86,7 +86,6 @@ namespace Cavalia{
 					else{
 						result = fread(&entry.size_, sizeof(entry.size_), 1, infile_ptr);
 						assert(result == 1);
-						file_pos += sizeof(entry.size_);
 						result = fread(entry.char_ptr_, 1, entry.size_, infile_ptr);
 						assert(result == entry.size_);
 						TxnParam* txn_param = DeserializeParam(param_type, entry);

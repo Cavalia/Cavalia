@@ -9,7 +9,7 @@ namespace Cavalia {
 		class CommandLogger : public BaseLogger {
 		public:
 			CommandLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, false) {
-				txn_header_size_ = sizeof(size_t)+sizeof(size_t)+sizeof(uint64_t);
+				txn_header_size_ = sizeof(size_t)+sizeof(uint64_t)+sizeof(size_t);
 			}
 
 			virtual ~CommandLogger() {}
@@ -22,7 +22,7 @@ namespace Cavalia {
 				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
 				memcpy(curr_buffer_ptr, (char*)(&kAdHoc), sizeof(size_t));
 				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
-				size_t txn_size = buf_struct_ptr->txn_offset_;
+				size_t txn_size = buf_struct_ptr->txn_offset_ - txn_header_size_;
 				memcpy(curr_buffer_ptr + sizeof(size_t) + sizeof(uint64_t), (char*)(&txn_size), sizeof(size_t));
 				buffer_offset_ref += buf_struct_ptr->txn_offset_;
 				assert(buffer_offset_ref < kLogBufferSize);
@@ -62,16 +62,13 @@ namespace Cavalia {
 				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
 				// write stored procedure type.
 				memcpy(curr_buffer_ptr, (char*)(&txn_type), sizeof(size_t));
-				//std::cout<<"txn_type = "<<txn_type<<std::endl;
 				// write timestamp.
 				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
-				//std::cout<<"commit_ts = "<<commit_ts<<std::endl;
 				size_t tmp_size = 0;
 				// write parameters. get tmp_size first.
 				param->Serialize(curr_buffer_ptr + sizeof(size_t)+sizeof(uint64_t)+sizeof(size_t), tmp_size);
 				// write parameter size.
 				memcpy(curr_buffer_ptr + sizeof(size_t)+sizeof(uint64_t), (char*)(&tmp_size), sizeof(size_t));
-				//std::cout<<"tmp_size = "<<tmp_size<<std::endl;
 				buffer_offset_ref += sizeof(size_t)+sizeof(uint64_t)+sizeof(size_t)+tmp_size;
 				assert(buffer_offset_ref < kLogBufferSize);
 

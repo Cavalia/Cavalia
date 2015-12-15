@@ -72,8 +72,8 @@ namespace Cavalia{
 						txn_pos += log_element->data_size_;
 					}
 					assert(txn_pos == txn_size);
-					file_pos += sizeof(timestamp) + sizeof(txn_size) + txn_size;
 					log_batch.push_back(log_entry);
+					file_pos += sizeof(timestamp) + sizeof(txn_size) + txn_size;
 				}
 				assert(file_pos == file_size);
 			}

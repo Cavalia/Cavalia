@@ -21,7 +21,7 @@ namespace Cavalia{
 				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
 				memcpy(curr_buffer_ptr, (char*)(&commit_ts), sizeof(uint64_t));
 				size_t txn_size = buf_struct_ptr->txn_offset_ - txn_header_size_;
-				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&txn_size), sizeof(size_t));
+				memcpy(curr_buffer_ptr + sizeof(uint64_t), (char*)(&txn_size), sizeof(size_t));
 				buffer_offset_ref += buf_struct_ptr->txn_offset_;
 				assert(buffer_offset_ref < kLogBufferSize);
 
