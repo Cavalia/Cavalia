@@ -51,6 +51,8 @@ namespace Cavalia{
 				}
 			}
 
+			virtual void PrepareProcedures() = 0;
+
 		private:
 			SerialCommandReplayer(const SerialCommandReplayer &);
 			SerialCommandReplayer& operator=(const SerialCommandReplayer &);

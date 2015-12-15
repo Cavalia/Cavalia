@@ -145,7 +145,6 @@ namespace Cavalia{
 			virtual void ProcessLog() = 0;
 
 		protected:
-			virtual void PrepareProcedures() = 0;
 			virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry) = 0;
 			virtual RecordSchema *GetRecordSchema(const size_t &table_id) = 0;
 
