@@ -12,8 +12,8 @@ namespace Cavalia{
 
 		const size_t kAdHoc = 100;
 
-		const int LZ4_HEADER_SIZE = 19;
-		const int LZ4_FOOTER_SIZE = 4;
+		//const int LZ4_HEADER_SIZE = 19;
+		//const int LZ4_FOOTER_SIZE = 32;
 	}
 }
 

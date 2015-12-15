@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 	else if (app_type == APP_REPLAY) {
 		RELOAD_STORAGE(Smallbank, dir_name, false);
 		PRINT_STORAGE_STATUS;
-		if (replay_type == APP_COMMAND_REPLAY) {
+		if (replay_type == APP_PARALLEL_COMMAND_REPLAY) {
 			COMMAND_REPLAY(Smallbank, dir_name, num_core);
 		}
 		else if (replay_type == APP_VALUE_REPLAY) {

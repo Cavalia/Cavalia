@@ -14,29 +14,31 @@ namespace Cavalia{
 
 			virtual ~ValueLogger(){}
 
+			// | param_size | timestamp | param_content |
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
-				size_t &offset_ref = buf_struct_ptr->buffer_offset_;
-				char *buffer_ptr = buffers_[thread_id] + offset_ref;
-				memcpy(buffer_ptr, (char*)(&(buf_struct_ptr->txn_offset_)), sizeof(size_t));
-				memcpy(buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
-				offset_ref += buf_struct_ptr->txn_offset_;
-				assert(offset_ref < kLogBufferSize);
+				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
+				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
+				memcpy(curr_buffer_ptr, (char*)(&(buf_struct_ptr->txn_offset_)), sizeof(size_t));
+				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
+				buffer_offset_ref += buf_struct_ptr->txn_offset_;
+
+				assert(buffer_offset_ref < kLogBufferSize);
 				if (epoch != buf_struct_ptr->last_epoch_){
 					FILE *file_ptr = outfiles_[thread_id];
 					buf_struct_ptr->last_epoch_ = epoch;
 #if defined(COMPRESSION)
-					size_t& offset = buf_struct_ptr->compressed_buf_offset_;
-					size_t n = LZ4F_compressUpdate(buf_struct_ptr->compression_context_, compressed_buffers_[thread_id] + offset, compressed_buf_size_ - offset, buffers_[thread_id], offset_ref, NULL);
+					char *compressed_buffer_ptr = buf_struct_ptr->compressed_buffer_ptr_;
+					size_t bound = LZ4F_compressFrameBound(buffer_offset_ref, NULL);
+					size_t n = LZ4F_compressFrame(compressed_buffer_ptr, bound, buf_struct_ptr->buffer_ptr_, buffer_offset_ref, NULL);
 					assert(LZ4F_isError(n) == false);
-					offset += n;
 
 					// after compression, write into file
-					fwrite(compressed_buffers_[thread_id], sizeof(char), offset, file_ptr);
-					offset = 0;
+					fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
 #else
-					fwrite(buffers_[thread_id], sizeof(char), offset_ref, file_ptr);
+					fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
 #endif
+					buffer_offset_ref = 0;
 					int ret;
 					ret = fflush(file_ptr);
 					assert(ret == 0);
@@ -44,7 +46,6 @@ namespace Cavalia{
 					ret = fsync(fileno(file_ptr));
 					assert(ret == 0);
 #endif
-					offset_ref = 0;
 				}
 				buf_struct_ptr->txn_offset_ = txn_header_size_;
 			}
