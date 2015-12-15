@@ -37,9 +37,14 @@ namespace Cavalia {
 					assert(LZ4F_isError(n) == false);
 
 					// after compression, write into file
-					fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
+					int result;
+					result = fwrite(&n, sizeof(size_t), 1, file_ptr);
+					assert(result == 1);
+					result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
+					assert(result == n);
 #else
-					fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
+					int result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
+					assert(result == buffer_offset_ref);
 #endif
 					buffer_offset_ref = 0;
 					int ret;
@@ -76,25 +81,20 @@ namespace Cavalia {
 					FILE *file_ptr = outfiles_[thread_id];
 					buf_struct_ptr->last_epoch_ = epoch;
 #if defined(COMPRESSION)
-					//size_t cb_offset = 0;
-					//size_t n = 0;
 					char *compressed_buffer_ptr = buf_struct_ptr->compressed_buffer_ptr_;
-					//auto &context_ref = buf_struct_ptr->compression_context_;
-					//n = LZ4F_compressBegin(context_ref, compressed_buffer_ptr, LZ4_HEADER_SIZE, NULL);
-					//assert(LZ4F_isError(n) == false);
-					//cb_offset += n;
 					size_t bound = LZ4F_compressFrameBound(buffer_offset_ref, NULL);
 					size_t n = LZ4F_compressFrame(compressed_buffer_ptr, bound, buf_struct_ptr->buffer_ptr_, buffer_offset_ref, NULL);
 					assert(LZ4F_isError(n) == false);
-					//cb_offset += n;
-					//n = LZ4F_compressEnd(context_ref, compressed_buffer_ptr + cb_offset, LZ4_FOOTER_SIZE, NULL);
-					//assert(LZ4F_isError(n) == false);
-					//cb_offset += n;
 
 					// after compression, write into file
-					fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
+					int result;
+					result = fwrite(&n, sizeof(size_t), 1, file_ptr);
+					assert(result == 1);
+					result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
+					assert(result == n);
 #else
-					fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
+					int result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
+					assert(result == buffer_offset_ref);
 #endif
 					buffer_offset_ref = 0;
 					int ret;

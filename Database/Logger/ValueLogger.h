@@ -35,9 +35,14 @@ namespace Cavalia{
 					assert(LZ4F_isError(n) == false);
 
 					// after compression, write into file
-					fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
+					int result;
+					result = fwrite(&n, sizeof(size_t), 1, file_ptr);
+					assert(result == 1);
+					result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
+					assert(result == n);
 #else
-					fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
+					int result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
+					assert(result == buffer_offset_ref);
 #endif
 					buffer_offset_ref = 0;
 					int ret;

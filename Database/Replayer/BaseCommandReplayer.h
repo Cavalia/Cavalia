@@ -40,6 +40,101 @@ namespace Cavalia{
 			}
 
 		private:
+#if defined(COMPRESSION)
+			void ReloadLog(const size_t &thread_id){
+				FILE *infile_ptr = infiles_[thread_id];
+				fseek(infile_ptr, 0L, SEEK_END);
+				size_t file_size = ftell(infile_ptr);
+				rewind(infile_ptr);
+				BaseLogEntries &log_batch = log_entries_[thread_id];
+
+				// buffer.
+				char *compressed_buffer = new char[kLogBufferSize];
+				size_t compressed_buffer_size = 0;
+				char *buffer = new char[kLogBufferSize];
+				size_t buffer_size = 0;
+				size_t buffer_offset = 0;
+
+				// context.
+				LZ4F_decompressionContext_t ctx;
+				LZ4F_errorCode_t err = LZ4F_createDecompressionContext(&ctx, LZ4F_VERSION);
+				assert(err == OK_NoError);
+
+				CharArray entry;
+				entry.Allocate(1024);
+				int result = 0;
+				size_t file_pos = 0;
+				while (file_pos < file_size){
+					result = fread(&compressed_buffer_size, sizeof(compressed_buffer_size), 1, infile_ptr);
+					assert(result == 1);
+					result = fread(compressed_buffer, sizeof(char), compressed_buffer_size, infile_ptr);
+					assert(result == compressed_buffer_size);
+					file_pos += sizeof(compressed_buffer_size)+compressed_buffer_size;
+
+					size_t ret = LZ4F_decompress(ctx, buffer, &buffer_size, compressed_buffer, &compressed_buffer_size, NULL);
+					assert(LZ4F_isError(ret) == false);
+					buffer_offset = 0;
+
+					size_t param_type;
+					memcpy(&param_type, buffer, sizeof(param_type));
+					buffer_offset += sizeof(param_type);
+					
+					uint64_t timestamp;
+					memcpy(&timestamp, buffer + buffer_offset, sizeof(timestamp));
+					buffer_offset += sizeof(timestamp);
+
+					if (param_type == kAdHoc){
+						ValueLogEntry *log_entry = new ValueLogEntry(timestamp);
+						size_t txn_size;
+						memcpy(&txn_size, buffer + buffer_offset, sizeof(txn_size));
+						buffer_offset += sizeof(txn_size);
+
+						size_t txn_pos = 0;
+						while (txn_pos < txn_size){
+							ValueLogElement *log_element = log_entry->NewValueLogElement();
+							memcpy(&log_element->type_, buffer + buffer_offset, sizeof(log_element->type_));
+							buffer_offset += sizeof(log_element->type_);
+							txn_pos += sizeof(log_element->type_);
+
+							memcpy(&log_element->table_id_, buffer + buffer_offset, sizeof(log_element->table_id_));
+							buffer_offset += sizeof(log_element->table_id_);
+							txn_pos += sizeof(log_element->table_id_);
+
+							memcpy(&log_element->data_size_, buffer + buffer_offset, sizeof(log_element->data_size_));
+							buffer_offset += sizeof(log_element->data_size_);
+							txn_pos += sizeof(log_element->data_size_);
+
+							log_element->data_ptr_ = new char[log_element->data_size_];
+							memcpy(log_element->data_ptr_, buffer + buffer_offset, log_element->data_size_);
+							buffer_offset += log_element->data_size_;
+							txn_pos += log_element->data_size_;
+						}
+						log_batch.push_back(log_entry);
+						assert(txn_pos == txn_size);
+						assert(buffer_offset == buffer_size);
+					}
+					else{
+						memcpy(&entry.size_, buffer + buffer_offset, sizeof(entry.size_));
+						buffer_offset += sizeof(entry.size_);
+						memcpy(entry.char_ptr_, buffer + buffer_offset, entry.size_);
+						buffer_offset += entry.size_;
+						TxnParam* txn_param = DeserializeParam(param_type, entry);
+						if (txn_param != NULL){
+							log_batch.push_back(new CommandLogEntry(timestamp, txn_param));
+						}
+						assert(buffer_offset == buffer_size);
+					}
+				}
+				assert(file_pos == file_size);
+				entry.Release();
+
+				LZ4F_freeDecompressionContext(ctx);
+				delete[] compressed_buffer;
+				compressed_buffer = NULL;
+				delete[] buffer;
+				buffer = NULL;
+			}
+#else
 			void ReloadLog(const size_t &thread_id){
 				FILE *infile_ptr = infiles_[thread_id];
 				fseek(infile_ptr, 0L, SEEK_END);
@@ -98,6 +193,7 @@ namespace Cavalia{
 				assert(file_pos == file_size);
 				entry.Release();
 			}
+#endif
 
 			void ReorderLog(){
 				for (size_t i = 0; i < thread_count_; ++i){

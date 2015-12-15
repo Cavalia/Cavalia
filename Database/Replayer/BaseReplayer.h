@@ -3,6 +3,9 @@
 #define __CAVALIA_DATABASE_BASE_REPLAYER_H__
 
 #include <boost/thread.hpp>
+#if defined(COMPRESSION)
+#include <lz4frame.h>
+#endif
 #include <TimeMeasurer.h>
 #include <AllocatorHelper.h>
 #include "../Storage/BaseStorageManager.h"
