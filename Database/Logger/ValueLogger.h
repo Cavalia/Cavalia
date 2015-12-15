@@ -52,9 +52,9 @@ namespace Cavalia{
 			}
 
 
-			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param){
+			/*virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param){
 				assert(false);
-			}
+			}*/
 
 		private:
 			ValueLogger(const ValueLogger &);
