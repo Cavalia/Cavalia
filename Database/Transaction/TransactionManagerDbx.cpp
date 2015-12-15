@@ -133,22 +133,22 @@ namespace Cavalia{
 				rtm_lock_->Unlock();
 
 				// logging, outside rtm region
-#if defined(VALUE_LOGGING)
-				for (size_t i = 0; i < access_list_.access_count_; ++i){
-					Access* access_ptr = access_list_.GetAccess(i);
-					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
-					if (access_ptr->access_type_ == READ_WRITE){
-						((AccessLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize(), access_ptr->timestamp_);
-					}
-					else if (access_ptr->access_type_ == INSERT_ONLY){
-						((AccessLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize(), 0);
-					}
-					else if (access_ptr->access_type_ == DELETE_ONLY){
-						((AccessLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->GetPrimaryKey(), access_ptr->timestamp_);
-					}
-				}
-				((AccessLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch);
-#endif
+//#if defined(VALUE_LOGGING)
+//				for (size_t i = 0; i < access_list_.access_count_; ++i){
+//					Access* access_ptr = access_list_.GetAccess(i);
+//					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
+//					if (access_ptr->access_type_ == READ_WRITE){
+//						((AccessLogger*)logger_)->UpdateRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize(), access_ptr->timestamp_);
+//					}
+//					else if (access_ptr->access_type_ == INSERT_ONLY){
+//						((AccessLogger*)logger_)->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize(), 0);
+//					}
+//					else if (access_ptr->access_type_ == DELETE_ONLY){
+//						((AccessLogger*)logger_)->DeleteRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->GetPrimaryKey(), access_ptr->timestamp_);
+//					}
+//				}
+//				((AccessLogger*)logger_)->CommitTransaction(this->thread_id_, curr_epoch);
+//#endif
 				// clean up.
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);

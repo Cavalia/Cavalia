@@ -28,18 +28,32 @@ namespace Cavalia {
 
 		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type) {
 			if (access_type == READ_ONLY) {
-				Access *access = access_list_.NewAccess();
+				auto &content_ref = t_record->content_;
+				Access *access = NULL;
+				if (content_ref.IsHot()){
+					access = hot_access_list_.NewAccess();
+				}
+				else{
+					access = access_list_.NewAccess();
+				}
 				access->access_type_ = READ_ONLY;
 				access->access_record_ = t_record;
 				access->local_record_ = NULL;
 				access->table_id_ = table_id;
-				t_record->content_.IncrementCounter();
-				access->timestamp_ = t_record->content_.GetTimestamp();
+				content_ref.IncrementCounter();
+				access->timestamp_ = content_ref.GetTimestamp();
 				s_record = t_record->record_;
 				return true;
 			}
 			else if (access_type == READ_WRITE) {
-				Access *access = access_list_.NewAccess();
+				auto &content_ref = t_record->content_;
+				Access *access = NULL;
+				if (content_ref.IsHot()){
+					access = hot_access_list_.NewAccess();
+				}
+				else{
+					access = access_list_.NewAccess();
+				}
 				access->access_type_ = READ_WRITE;
 				access->access_record_ = t_record;
 				// copy data
@@ -78,15 +92,17 @@ namespace Cavalia {
 
 		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str){
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
-			// step 1: acquire lock and validate
+			// acquire lock and validate
+			size_t lock_count = 0;
 			bool is_success = true;
-
-			// begin hardware transaction.
-			rtm_lock_->Lock();
+			access_list_.Sort();
 			for (size_t i = 0; i < access_list_.access_count_; ++i) {
+				++lock_count;
 				Access *access_ptr = access_list_.GetAccess(i);
 				auto &content_ref = access_ptr->access_record_->content_;
 				if (access_ptr->access_type_ == READ_ONLY) {
+					// acquire read lock
+					content_ref.AcquireReadLock();
 					// whether someone has changed the tuple after my read
 					if (content_ref.GetTimestamp() != access_ptr->timestamp_) {
 						UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->table_id_);
@@ -95,6 +111,8 @@ namespace Cavalia {
 					}
 				}
 				else if (access_ptr->access_type_ == READ_WRITE) {
+					// acquire write lock
+					content_ref.AcquireWriteLock();
 					// whether someone has changed the tuple after my read
 					if (content_ref.GetTimestamp() != access_ptr->timestamp_) {
 						UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->table_id_);
@@ -104,85 +122,239 @@ namespace Cavalia {
 				}
 				else {
 					// insert_only or delete_only
+					content_ref.AcquireWriteLock();
 				}
 			}
-
-#if defined(SCALABLE_TIMESTAMP)
-			uint64_t max_rw_ts = 0;
-			for (size_t i = 0; i < access_list_.access_count_; ++i){
-				Access *access_ptr = access_list_.GetAccess(i);
-				if (access_ptr->timestamp_ > max_rw_ts){
-					max_rw_ts = access_ptr->timestamp_;
-				}
-			}
-#endif
-
-			// step 2: if success, then overwrite and commit
+			// if successful.
+			/////////////////////////////////////////////////////////
 			if (is_success == true) {
-				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-				uint64_t curr_epoch = Epoch::GetEpoch();
-#if defined(SCALABLE_TIMESTAMP)
-				uint64_t commit_ts = GenerateScalableTimestamp(curr_epoch, max_rw_ts);
-#else
-				uint64_t commit_ts = GenerateMonotoneTimestamp(curr_epoch, GlobalTimestamp::GetMonotoneTimestamp());
-#endif
-				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-
-				for (size_t i = 0; i < access_list_.access_count_; ++i){
-					Access *access_ptr = access_list_.GetAccess(i);
-					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
-					SchemaRecord *local_record_ptr = access_ptr->local_record_;
+				// begin hardware transaction.
+				rtm_lock_->Lock();
+				for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
+					Access *access_ptr = hot_access_list_.GetAccess(i);
 					auto &content_ref = access_ptr->access_record_->content_;
-					if (access_ptr->access_type_ == READ_WRITE){
-						assert(commit_ts > access_ptr->timestamp_);
-						std::swap(global_record_ptr, local_record_ptr);
-						COMPILER_MEMORY_FENCE;
-						content_ref.SetTimestamp(commit_ts);
-					}
-					else if (access_ptr->access_type_ == INSERT_ONLY){
-						assert(commit_ts > access_ptr->timestamp_);
-						global_record_ptr->is_visible_ = true;
-						COMPILER_MEMORY_FENCE;
-						content_ref.SetTimestamp(commit_ts);
-					}
-					else if (access_ptr->access_type_ == DELETE_ONLY){
-						assert(commit_ts > access_ptr->timestamp_);
-						global_record_ptr->is_visible_ = false;
-						COMPILER_MEMORY_FENCE;
-						content_ref.SetTimestamp(commit_ts);
-					}
-				}
-				rtm_lock_->Unlock();
-
-#if defined(VALUE_LOGGING)
-				for (size_t i = 0; i < access_list_.access_count_; ++i){
-					Access *access_ptr = access_list_.GetAccess(i);
-					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
-					SchemaRecord *local_record_ptr = access_ptr->local_record_;
-					if (access_ptr->access_type_ == READ_WRITE) {
-						logger_->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
-					}
-					else if (access_ptr->access_type_ == INSERT_ONLY) {
-						logger_->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
-					}
-					else if (access_ptr->access_type_ == DELETE_ONLY) {
-						logger_->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
-					}
-				}
-				// commit.
-				logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts);
-#elif defined(COMMAND_LOGGING)
-				logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, context->txn_type_, param);
-#endif
-
-				// clean up.
-				for (size_t i = 0; i < access_list_.access_count_; ++i) {
-					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_ONLY) {
-						access_ptr->access_record_->content_.DecrementCounter();
+						// whether someone has changed the tuple after my read
+						if (content_ref.GetTimestamp() != access_ptr->timestamp_) {
+							UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->table_id_);
+							is_success = false;
+							break;
+						}
 					}
 					else if (access_ptr->access_type_ == READ_WRITE) {
-						if (access_ptr->access_record_->content_.DecrementCounter() == 0){
+						// whether someone has changed the tuple after my read
+						if (content_ref.GetTimestamp() != access_ptr->timestamp_) {
+							UPDATE_CC_ABORT_COUNT(thread_id_, context->txn_type_, access_ptr->table_id_);
+							is_success = false;
+							break;
+						}
+					}
+					else {
+						// insert_only or delete_only
+					}
+				}
+
+				// if successful, then overwrite and commit
+				//**********************************************************
+				if (is_success == true) {
+					BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
+					uint64_t curr_epoch = Epoch::GetEpoch();
+#if defined(SCALABLE_TIMESTAMP)
+					uint64_t max_rw_ts = 0;
+					for (size_t i = 0; i < access_list_.access_count_; ++i){
+						Access *access_ptr = access_list_.GetAccess(i);
+						if (access_ptr->timestamp_ > max_rw_ts){
+							max_rw_ts = access_ptr->timestamp_;
+						}
+					}
+					for (size_t i = 0; i < hot_access_list_.access_count_; ++i){
+						Access *access_ptr = hot_access_list_.GetAccess(i);
+						if (access_ptr->timestamp_ > max_rw_ts){
+							max_rw_ts = access_ptr->timestamp_;
+						}
+					}
+					uint64_t commit_ts = GenerateScalableTimestamp(curr_epoch, max_rw_ts);
+#else
+					uint64_t commit_ts = GenerateMonotoneTimestamp(curr_epoch, GlobalTimestamp::GetMonotoneTimestamp());
+#endif
+					END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
+
+					for (size_t i = 0; i < hot_access_list_.access_count_; ++i){
+						Access *access_ptr = hot_access_list_.GetAccess(i);
+						SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
+						SchemaRecord *local_record_ptr = access_ptr->local_record_;
+						auto &content_ref = access_ptr->access_record_->content_;
+						if (access_ptr->access_type_ == READ_WRITE){
+							assert(commit_ts > access_ptr->timestamp_);
+							std::swap(global_record_ptr, local_record_ptr);
+							COMPILER_MEMORY_FENCE;
+							content_ref.SetTimestamp(commit_ts);
+						}
+						else if (access_ptr->access_type_ == INSERT_ONLY){
+							assert(commit_ts > access_ptr->timestamp_);
+							global_record_ptr->is_visible_ = true;
+							COMPILER_MEMORY_FENCE;
+							content_ref.SetTimestamp(commit_ts);
+						}
+						else if (access_ptr->access_type_ == DELETE_ONLY){
+							assert(commit_ts > access_ptr->timestamp_);
+							global_record_ptr->is_visible_ = false;
+							COMPILER_MEMORY_FENCE;
+							content_ref.SetTimestamp(commit_ts);
+						}
+					}
+					rtm_lock_->Unlock();
+
+					for (size_t i = 0; i < access_list_.access_count_; ++i) {
+						Access *access_ptr = access_list_.GetAccess(i);
+						SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
+						SchemaRecord *local_record_ptr = access_ptr->local_record_;
+						auto &content_ref = access_ptr->access_record_->content_;
+						if (access_ptr->access_type_ == READ_WRITE) {
+							assert(commit_ts > access_ptr->timestamp_);
+							std::swap(global_record_ptr, local_record_ptr);
+							COMPILER_MEMORY_FENCE;
+							content_ref.SetTimestamp(commit_ts);
+						}
+						else if (access_ptr->access_type_ == INSERT_ONLY) {
+							assert(commit_ts > access_ptr->timestamp_);
+							global_record_ptr->is_visible_ = true;
+							COMPILER_MEMORY_FENCE;
+							content_ref.SetTimestamp(commit_ts);
+						}
+						else if (access_ptr->access_type_ == DELETE_ONLY) {
+							assert(commit_ts > access_ptr->timestamp_);
+							global_record_ptr->is_visible_ = false;
+							COMPILER_MEMORY_FENCE;
+							content_ref.SetTimestamp(commit_ts);
+						}
+					}
+
+					// release locks and clean up.
+					for (size_t i = 0; i < access_list_.access_count_; ++i) {
+						Access *access_ptr = access_list_.GetAccess(i);
+						if (access_ptr->access_type_ == READ_ONLY) {
+							access_ptr->access_record_->content_.ReleaseReadLock();
+						}
+						else if (access_ptr->access_type_ == READ_WRITE) {
+							access_ptr->access_record_->content_.ReleaseWriteLock();
+						}
+						else{
+							// insert_only or delete_only
+							access_ptr->access_record_->content_.ReleaseWriteLock();
+						}
+					}
+
+
+#if defined(VALUE_LOGGING)
+					for (size_t i = 0; i < access_list_.access_count_; ++i){
+						Access *access_ptr = access_list_.GetAccess(i);
+						SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
+						SchemaRecord *local_record_ptr = access_ptr->local_record_;
+						if (access_ptr->access_type_ == READ_WRITE) {
+							logger_->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
+						}
+						else if (access_ptr->access_type_ == INSERT_ONLY) {
+							logger_->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
+						}
+						else if (access_ptr->access_type_ == DELETE_ONLY) {
+							logger_->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
+						}
+					}
+					// commit.
+					logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts);
+#elif defined(COMMAND_LOGGING)
+					logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, context->txn_type_, param);
+#endif
+
+					// clean up accesses in hot access list.
+					for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
+						Access *access_ptr = hot_access_list_.GetAccess(i);
+						if (access_ptr->access_type_ == READ_ONLY) {
+							access_ptr->access_record_->content_.DecrementCounter();
+						}
+						else if (access_ptr->access_type_ == READ_WRITE) {
+							if (access_ptr->access_record_->content_.DecrementCounter() == 0){
+								BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+								SchemaRecord *local_record_ptr = access_ptr->local_record_;
+								MemAllocator::Free(local_record_ptr->data_ptr_);
+								local_record_ptr->~SchemaRecord();
+								MemAllocator::Free((char*)local_record_ptr);
+								END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+							}
+							else{
+								for (auto iter = garbage_set_.begin(); iter != garbage_set_.end();){
+									if (iter->first->content_.GetCounter() == 0){
+										BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+										SchemaRecord *local_record_ptr = iter->second;
+										MemAllocator::Free(local_record_ptr->data_ptr_);
+										local_record_ptr->~SchemaRecord();
+										MemAllocator::Free((char*)local_record_ptr);
+										END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+										iter = garbage_set_.erase(iter);
+									}
+									else{
+										++iter;
+									}
+								}
+								garbage_set_.push_back(std::make_pair(access_ptr->access_record_, access_ptr->local_record_));
+							}
+						}
+						// deletes, wait for recycling to clean up
+					}
+
+					// clean up accesses in cold access list.
+					for (size_t i = 0; i < access_list_.access_count_; ++i) {
+						Access *access_ptr = access_list_.GetAccess(i);
+						if (access_ptr->access_type_ == READ_ONLY) {
+							access_ptr->access_record_->content_.ReleaseReadLock();
+						}
+						else if (access_ptr->access_type_ == READ_WRITE) {
+							if (access_ptr->access_record_->content_.DecrementCounter() == 0){
+								BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+								SchemaRecord *local_record_ptr = access_ptr->local_record_;
+								MemAllocator::Free(local_record_ptr->data_ptr_);
+								local_record_ptr->~SchemaRecord();
+								MemAllocator::Free((char*)local_record_ptr);
+								END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+							}
+							else{
+								for (auto iter = garbage_set_.begin(); iter != garbage_set_.end();){
+									if (iter->first->content_.GetCounter() == 0){
+										BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+										SchemaRecord *local_record_ptr = iter->second;
+										MemAllocator::Free(local_record_ptr->data_ptr_);
+										local_record_ptr->~SchemaRecord();
+										MemAllocator::Free((char*)local_record_ptr);
+										END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+										iter = garbage_set_.erase(iter);
+									}
+									else{
+										++iter;
+									}
+								}
+								garbage_set_.push_back(std::make_pair(access_ptr->access_record_, access_ptr->local_record_));
+							}
+						}
+						else{
+							// insert_only or delete_only
+							access_ptr->access_record_->content_.ReleaseWriteLock();
+						}
+					}
+				}
+				//**********************************************************
+				// if failed.
+				else {
+					// end hardware transaction.
+					rtm_lock_->Unlock();
+					// clean up accesses in hot access list.
+					for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
+						Access *access_ptr = hot_access_list_.GetAccess(i);
+						if (access_ptr->access_type_ == READ_ONLY) {
+							access_ptr->access_record_->content_.DecrementCounter();
+						}
+						if (access_ptr->access_type_ == READ_WRITE) {
+							access_ptr->access_record_->content_.DecrementCounter();
 							BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 							SchemaRecord *local_record_ptr = access_ptr->local_record_;
 							MemAllocator::Free(local_record_ptr->data_ptr_);
@@ -190,49 +362,59 @@ namespace Cavalia {
 							MemAllocator::Free((char*)local_record_ptr);
 							END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 						}
+						// inserts and deletes, wait for recycling to clean up
+					}
+					// clean up accesses in cold access list.
+					for (size_t i = 0; i < access_list_.access_count_; ++i) {
+						Access *access_ptr = access_list_.GetAccess(i);
+						if (access_ptr->access_type_ == READ_ONLY) {
+							access_ptr->access_record_->content_.ReleaseReadLock();
+						}
+						else if (access_ptr->access_type_ == READ_WRITE) {
+							SchemaRecord *local_record_ptr = access_ptr->local_record_;
+							access_ptr->access_record_->content_.ReleaseWriteLock();
+							BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+							MemAllocator::Free(local_record_ptr->data_ptr_);
+							local_record_ptr->~SchemaRecord();
+							MemAllocator::Free((char*)local_record_ptr);
+							END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						}
 						else{
-							for (auto iter = garbage_set_.begin(); iter != garbage_set_.end();){
-								if (iter->first->content_.GetCounter() == 0){
-									BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-									SchemaRecord *local_record_ptr = iter->second;
-									MemAllocator::Free(local_record_ptr->data_ptr_);
-									local_record_ptr->~SchemaRecord();
-									MemAllocator::Free((char*)local_record_ptr);
-									END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-									iter = garbage_set_.erase(iter);
-								}
-								else{
-									++iter;
-								}
-							}
-							garbage_set_.push_back(std::make_pair(access_ptr->access_record_, access_ptr->local_record_));
+							// insert_only or delete_only
+							access_ptr->access_record_->content_.ReleaseWriteLock();
 						}
 					}
-					// deletes, wait for recycling to clean up
 				}
+				//**********************************************************
 			}
+			///////////////////////////////////////////////////////////
 			// if failed.
-			else {
-				// end hardware transaction.
-				rtm_lock_->Unlock();
-				// clean up.
+			else{
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_ONLY) {
-						access_ptr->access_record_->content_.DecrementCounter();
+						access_ptr->access_record_->content_.ReleaseReadLock();
 					}
-					if (access_ptr->access_type_ == READ_WRITE) {
-						access_ptr->access_record_->content_.DecrementCounter();
-						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+					else if (access_ptr->access_type_ == READ_WRITE) {
 						SchemaRecord *local_record_ptr = access_ptr->local_record_;
+						access_ptr->access_record_->content_.ReleaseWriteLock();
+						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 						MemAllocator::Free(local_record_ptr->data_ptr_);
 						local_record_ptr->~SchemaRecord();
 						MemAllocator::Free((char*)local_record_ptr);
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
-					// inserts and deletes, wait for recycling to clean up
+					else{
+						// insert_only or delete_only
+						access_ptr->access_record_->content_.ReleaseWriteLock();
+					}
+					--lock_count;
+					if (lock_count == 0) {
+						break;
+					}
 				}
 			}
+			///////////////////////////////////////////////////////////
 			assert(access_list_.access_count_ <= kMaxAccessNum);
 			access_list_.Clear();
 			END_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
