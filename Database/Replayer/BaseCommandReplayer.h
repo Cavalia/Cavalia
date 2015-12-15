@@ -54,18 +54,15 @@ namespace Cavalia{
 					size_t param_type;
 					result = fread(&param_type, sizeof(param_type), 1, infile_ptr);
 					assert(result == 1);
-					file_pos += sizeof(param_type);
+					uint64_t timestamp;
+					result = fread(&timestamp, sizeof(timestamp), 1, infile_ptr);
+					assert(result == 1);
 					if (param_type == kAdHoc){
-						ValueLogEntry *log_entry = new ValueLogEntry();
+						ValueLogEntry *log_entry = new ValueLogEntry(timestamp);
 						size_t txn_size;
 						result = fread(&txn_size, sizeof(txn_size), 1, infile_ptr);
 						assert(result == 1);
-						uint64_t timestamp;
-						result = fread(&timestamp, sizeof(timestamp), 1, infile_ptr);
-						assert(result == 1);
-						// set commit timestamp.
-						log_entry->timestamp_ = timestamp;
-						size_t txn_pos = sizeof(txn_size)+sizeof(timestamp);
+						size_t txn_pos = 0;
 						while (txn_pos < txn_size){
 							ValueLogElement *log_element = log_entry->NewValueLogElement();
 							result = fread(&log_element->type_, sizeof(log_element->type_), 1, infile_ptr);
@@ -84,13 +81,9 @@ namespace Cavalia{
 						}
 						assert(txn_pos == txn_size);
 						log_batch.push_back(log_entry);
-						file_pos += txn_size;
+						file_pos += sizeof(param_type)+sizeof(timestamp)+sizeof(txn_size) + txn_size;
 					}
 					else{
-						uint64_t timestamp;
-						result = fread(&timestamp, sizeof(timestamp), 1, infile_ptr);
-						assert(result == 1);
-						file_pos += sizeof(timestamp);
 						result = fread(&entry.size_, sizeof(entry.size_), 1, infile_ptr);
 						assert(result == 1);
 						file_pos += sizeof(entry.size_);
@@ -100,7 +93,7 @@ namespace Cavalia{
 						if (txn_param != NULL){
 							log_batch.push_back(new CommandLogEntry(timestamp, txn_param));
 						}
-						file_pos += entry.size_;
+						file_pos += sizeof(param_type)+sizeof(timestamp)+sizeof(entry.size_) + entry.size_;
 					}
 				}
 				assert(file_pos == file_size);

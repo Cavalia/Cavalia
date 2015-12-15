@@ -14,13 +14,13 @@ namespace Cavalia{
 
 			virtual ~ValueLogger(){}
 
-			// | param_size | timestamp | param_content |
+			// | timestamp | param_size | param_content |
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
-				memcpy(curr_buffer_ptr, (char*)(&(buf_struct_ptr->txn_offset_)), sizeof(size_t));
-				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
+				memcpy(curr_buffer_ptr, (char*)(&commit_ts), sizeof(uint64_t));
+				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&(buf_struct_ptr->txn_offset_)), sizeof(size_t));
 				buffer_offset_ref += buf_struct_ptr->txn_offset_;
 
 				assert(buffer_offset_ref < kLogBufferSize);

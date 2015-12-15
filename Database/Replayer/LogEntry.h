@@ -9,7 +9,6 @@ namespace Cavalia{
 	namespace Database{
 
 		struct BaseLogEntry{
-			BaseLogEntry(const bool is_command_log) : timestamp_(0), is_command_log_(is_command_log){}
 			BaseLogEntry(const uint64_t &timestamp, const bool is_command_log) : timestamp_(timestamp), is_command_log_(is_command_log){}
 			uint64_t timestamp_;
 			bool is_command_log_;
@@ -18,7 +17,6 @@ namespace Cavalia{
 		typedef std::vector<BaseLogEntry*> BaseLogEntries;
 
 		struct CommandLogEntry : public BaseLogEntry{
-			CommandLogEntry() : BaseLogEntry(true){}
 			CommandLogEntry(const uint64_t &timestamp, TxnParam *param) : BaseLogEntry(timestamp, true), param_(param){}
 
 			TxnParam *param_;
@@ -34,7 +32,7 @@ namespace Cavalia{
 		};
 
 		struct ValueLogEntry : public BaseLogEntry{
-			ValueLogEntry() : BaseLogEntry(false), element_count_(0){}
+			ValueLogEntry(const uint64_t &timestamp) : BaseLogEntry(timestamp, false), element_count_(0){}
 
 			ValueLogElement* NewValueLogElement(){
 				assert(element_count_ < kMaxAccessNum);
