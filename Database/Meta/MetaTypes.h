@@ -2,12 +2,8 @@
 #ifndef __CAVALIA_DATABASE_META_TYPES_H__
 #define __CAVALIA_DATABASE_META_TYPES_H__
 
-#include <vector>
 #include <cstring>
-#include <string>
 #include <cstdint>
-#include <cassert>
-#include <AllocatorHelper.h>
 
 namespace Cavalia{
 	namespace Database{

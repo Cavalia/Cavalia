@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __CAVALIA_DATABASE_ACCESS_H__
-#define __CAVALIA_DATABASE_ACCESS_H__
+#ifndef __CAVALIA_DATABASE_TXN_ACCESS_H__
+#define __CAVALIA_DATABASE_TXN_ACCESS_H__
 
 #include <string>
 #include <algorithm>
@@ -20,7 +20,8 @@ namespace Cavalia{
 		};
 
 		template<int N>
-		struct AccessList{
+		class AccessList{
+		public:
 			AccessList() : access_count_(0){}
 
 			Access *NewAccess(){
@@ -42,23 +43,30 @@ namespace Cavalia{
 				std::sort(accesses_, accesses_ + access_count_, CompFunction);
 			}
 
-			Access accesses_[N];
-			size_t access_count_;
-
 		private:
 			static bool CompFunction(Access lhs, Access rhs){
 				return (uint64_t)(lhs.access_record_) < (uint64_t)(rhs.access_record_);
 			}
+
+		public:
+			size_t access_count_;
+		private:
+			Access accesses_[N];
 		};
 
 		template<int N>
-		struct WritePtrList{
-			WritePtrList() : access_count_(0) {}
+		class AccessPtrList{
+		public:
+			AccessPtrList() : access_count_(0) {}
 
 			void Add(Access *access) {
 				assert(access_count_ < N);
 				accesses_[access_count_] = access;
 				++access_count_;
+			}
+
+			Access *GetAccess(const size_t &index){
+				return accesses_[index];
 			}
 
 			void Clear() {
@@ -69,51 +77,15 @@ namespace Cavalia{
 				std::sort(accesses_, accesses_ + access_count_, CompFunction);
 			}
 
-			Access *accesses_[N];
-			size_t access_count_;
-
 		private:
 			static bool CompFunction(Access *lhs, Access *rhs){
 				return (uint64_t)(lhs->access_record_) < (uint64_t)(rhs->access_record_);
 			}
-		};
 
-		template<int N>
-		struct AccessPtrList{
-			AccessPtrList() {}
-
-			void Add(const size_t &access_id, Access *access) {
-				assert(access_id < N);
-				accesses_[access_id] = access;
-			}
-
-			void Clear(){
-				memset(accesses_, 0, sizeof(Access*)*N);
-			}
-
+		public:
+			size_t access_count_;
+		private:
 			Access *accesses_[N];
-		};
-
-		template<int N, int M>
-		struct AccessPtrsList{
-			AccessPtrsList(){
-				memset(access_counts_, 0, sizeof(size_t)*N);
-			}
-
-			void Add(const size_t &access_id, Access *access) {
-				assert(access_id < N);
-				assert(access_counts_[access_id] < M);
-				accesses_[access_id][access_counts_[access_id]] = access;
-				++access_counts_[access_id];
-			}
-
-			void Clear() {
-				memset(accesses_, 0, sizeof(Access*)*(N*M));
-				memset(access_counts_, 0, sizeof(size_t)*N);
-			}
-
-			Access* accesses_[N][M];
-			size_t access_counts_[N]; // how many items touched by each access.
 		};
 	}
 }

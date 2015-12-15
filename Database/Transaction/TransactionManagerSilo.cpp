@@ -80,7 +80,7 @@ namespace Cavalia{
 			// step 1: acquire write lock.
 			write_list_.Sort();
 			for (size_t i = 0; i < write_list_.access_count_; ++i){
-				Access *access_ptr = write_list_.accesses_[i];
+				Access *access_ptr = write_list_.GetAccess(i);
 				access_ptr->access_record_->content_.AcquireWriteLock();
 			}
 			// should also update readers' timestamps.
@@ -130,7 +130,7 @@ namespace Cavalia{
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 
 				for (size_t i = 0; i < write_list_.access_count_; ++i){
-					Access *access_ptr = write_list_.accesses_[i];
+					Access *access_ptr = write_list_.GetAccess(i);
 					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
 					SchemaRecord *local_record_ptr = access_ptr->local_record_;
 					auto &content_ref = access_ptr->access_record_->content_;
@@ -168,7 +168,7 @@ namespace Cavalia{
 
 				// step 4: release locks and clean up.
 				for (size_t i = 0; i < write_list_.access_count_; ++i){
-					Access *access_ptr = write_list_.accesses_[i];
+					Access *access_ptr = write_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE){
 						access_ptr->access_record_->content_.ReleaseWriteLock();
 						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
@@ -188,7 +188,7 @@ namespace Cavalia{
 			else{
 				// step 4: release locks and clean up.
 				for (size_t i = 0; i < write_list_.access_count_; ++i){
-					Access *access_ptr = write_list_.accesses_[i];
+					Access *access_ptr = write_list_.GetAccess(i);
 					if (access_ptr->access_type_ == READ_WRITE){
 						access_ptr->access_record_->content_.ReleaseWriteLock();
 						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
