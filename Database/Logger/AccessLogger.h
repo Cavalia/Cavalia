@@ -1,3 +1,4 @@
+/*
 #pragma once
 #ifndef __CAVALIA_DATABASE_ACCESS_LOGGER_H__
 #define __CAVALIA_DATABASE_ACCESS_LOGGER_H__
@@ -103,5 +104,5 @@ namespace Cavalia{
 		};
 	}
 }
-
 #endif
+*/

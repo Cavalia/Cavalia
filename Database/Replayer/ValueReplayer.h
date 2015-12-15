@@ -46,7 +46,7 @@ namespace Cavalia{
 				size_t file_pos = 0;
 				int result = 0;
 				while (file_pos < file_size){
-					ValueLogEntry *log_entry = new ValueLogEntry();
+					ValueLogEntry *log_entry = new ValueLogEntry(0);
 					size_t txn_size;
 					result = fread(&txn_size, sizeof(txn_size), 1, infile_ptr);
 					assert(result == 1);
