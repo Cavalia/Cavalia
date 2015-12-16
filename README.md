@@ -40,8 +40,8 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 * CUCKOO_INDEX: enable cuckoo index (See https://github.com/efficient/libcuckoo).
 
 ###Logging
-* VALUE_LOGGING: enable value logging [MWMS14, ZTKL14].
-* COMMAND_LOGGING: enable command logging.
+* VALUE_LOGGING: enable value logging [ZTKL14].
+* COMMAND_LOGGING: enable command logging [MWMS14].
 * COMPRESSION: enable log compression.
 
 ###Timestamp allocation

@@ -234,6 +234,9 @@ namespace Cavalia{
 #if defined(DBX) || defined(PRTM) || defined(HRTM)
 			RtmLock *rtm_lock_;
 			std::list<std::pair<TableRecord*, SchemaRecord*>> garbage_set_;
+#if defined(HRTM)
+			AccessList<kMaxAccessNum> hot_access_list_;
+#endif
 #endif
 		};
 	}

@@ -110,21 +110,18 @@ namespace Cavalia {
 				}
 			}
 
-#if defined(SCALABLE_TIMESTAMP)
-			uint64_t max_rw_ts = 0;
-			for (size_t i = 0; i < access_list_.access_count_; ++i){
-				Access *access_ptr = access_list_.GetAccess(i);
-				if (access_ptr->timestamp_ > max_rw_ts){
-					max_rw_ts = access_ptr->timestamp_;
-				}
-			}
-#endif
-
 			// step 2: if success, then overwrite and commit
 			if (is_success == true) {
 				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
 				uint64_t curr_epoch = Epoch::GetEpoch();
 #if defined(SCALABLE_TIMESTAMP)
+				uint64_t max_rw_ts = 0;
+				for (size_t i = 0; i < access_list_.access_count_; ++i){
+					Access *access_ptr = access_list_.GetAccess(i);
+					if (access_ptr->timestamp_ > max_rw_ts){
+						max_rw_ts = access_ptr->timestamp_;
+					}
+				}
 				uint64_t commit_ts = GenerateScalableTimestamp(curr_epoch, max_rw_ts);
 #else
 				uint64_t commit_ts = GenerateMonotoneTimestamp(curr_epoch, GlobalTimestamp::GetMonotoneTimestamp());
