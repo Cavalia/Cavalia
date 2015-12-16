@@ -37,14 +37,54 @@ namespace Cavalia{
 				std::cout << "Process log elapsed time=" << timer.GetElapsedMilliSeconds() << "ms." << std::endl;
 			}
 
+		private:
+#if defined(COMPRESSION)
 			void ReloadLog(const size_t &thread_id){
 				FILE *infile_ptr = infiles_[thread_id];
 				fseek(infile_ptr, 0L, SEEK_END);
 				size_t file_size = ftell(infile_ptr);
 				rewind(infile_ptr);
 				ValueLogEntries &log_batch = log_entries_[thread_id];
-				size_t file_pos = 0;
+
+				// buffer.
+				char *compressed_buffer = new char[kLogBufferSize];
+				size_t compressed_buffer_size = 0;
+				char *buffer = new char[kLogBufferSize];
+				size_t buffer_size = 0;
+				size_t buffer_offset = 0;
+
+				// context.
+				LZ4F_decompressionContext_t ctx;
+				LZ4F_errorCode_t err = LZ4F_createDecompressionContext(&ctx, LZ4F_VERSION);
+				assert(err == OK_NoError);
+
 				int result = 0;
+				size_t file_pos = 0;
+				while (file_pos < file_size){
+					result = fread(&compressed_buffer_size, sizeof(compressed_buffer_size), 1, infile_ptr);
+					assert(result == 1);
+					result = fread(compressed_buffer, sizeof(char), compressed_buffer_size, infile_ptr);
+					assert(result == compressed_buffer_size);
+					file_pos += sizeof(compressed_buffer_size)+compressed_buffer_size;
+
+				}
+				assert(file_pos == file_size);
+
+				LZ4F_freeDecompressionContext(ctx);
+				delete[] compressed_buffer;
+				compressed_buffer = NULL;
+				delete[] buffer;
+				buffer = NULL;
+			}
+#else
+			void ReloadLog(const size_t &thread_id){
+				FILE *infile_ptr = infiles_[thread_id];
+				fseek(infile_ptr, 0L, SEEK_END);
+				size_t file_size = ftell(infile_ptr);
+				rewind(infile_ptr);
+				ValueLogEntries &log_batch = log_entries_[thread_id];
+				int result = 0;
+				size_t file_pos = 0;
 				while (file_pos < file_size){
 					uint64_t timestamp;
 					result = fread(&timestamp, sizeof(timestamp), 1, infile_ptr);
@@ -77,6 +117,7 @@ namespace Cavalia{
 				}
 				assert(file_pos == file_size);
 			}
+#endif
 
 			void ProcessLog(const size_t &thread_id){
 				for (size_t i = 0; i < log_entries_[thread_id].size(); ++i){
