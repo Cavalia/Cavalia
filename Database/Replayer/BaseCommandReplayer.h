@@ -70,10 +70,10 @@ namespace Cavalia{
 					LZ4F_decompressionContext_t ctx;
 					LZ4F_errorCode_t err = LZ4F_createDecompressionContext(&ctx, LZ4F_VERSION);
 					size_t ret = LZ4F_decompress(ctx, buffer, &dst_buffer_size, compressed_buffer, &src_buffer_size, NULL);
-					LZ4F_freeDecompressionContext(ctx);
 					assert(LZ4F_isError(ret) == false);
-					size_t buffer_offset = 0;
+					LZ4F_freeDecompressionContext(ctx);
 
+					size_t buffer_offset = 0;
 					while (buffer_offset < dst_buffer_size) {
 						size_t param_type;
 						memcpy(&param_type, buffer, sizeof(param_type));
