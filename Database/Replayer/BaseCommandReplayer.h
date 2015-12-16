@@ -76,7 +76,7 @@ namespace Cavalia{
 					size_t buffer_offset = 0;
 					while (buffer_offset < dst_buffer_size) {
 						size_t param_type;
-						memcpy(&param_type, buffer, sizeof(param_type));
+						memcpy(&param_type, buffer + buffer_offset, sizeof(param_type));
 						buffer_offset += sizeof(param_type);
 					
 						uint64_t timestamp;
