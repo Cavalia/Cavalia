@@ -64,7 +64,7 @@ namespace Cavalia{
 					assert(result == 1);
 					result = fread(compressed_buffer, sizeof(char), compressed_buffer_size, infile_ptr);
 					assert(result == compressed_buffer_size);
-					file_pos += sizeof(compressed_buffer_size)+compressed_buffer_size;
+					file_pos += sizeof(epoch)+sizeof(compressed_buffer_size)+compressed_buffer_size;
 
 					size_t dst_buffer_size = kLogBufferSize;
 					size_t src_buffer_size = kLogBufferSize;
@@ -181,7 +181,7 @@ namespace Cavalia{
 						}
 						assert(txn_pos == txn_size);
 						log_batch.push_back(log_entry);
-						file_pos += sizeof(param_type)+sizeof(timestamp)+sizeof(txn_size) + txn_size;
+						file_pos += sizeof(epoch)+sizeof(param_type)+sizeof(timestamp)+sizeof(txn_size) + txn_size;
 					}
 					else{
 						result = fread(&entry.size_, sizeof(entry.size_), 1, infile_ptr);
