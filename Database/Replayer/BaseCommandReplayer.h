@@ -79,15 +79,16 @@ namespace Cavalia{
 					size_t ret = LZ4F_decompress(ctx, buffer, &buffer_size, compressed_buffer, &compressed_buffer_size, NULL);
 					assert(LZ4F_isError(ret) == false);
 					LZ4F_freeDecompressionContext(ctx);
-					assert(buffer_size == log_chunk_size);
+					assert(compressed_buffer_size == log_chunk_size);
 #else
+					size_t buffer_size = log_chunk_size;
 					result = fread(buffer, sizeof(char), log_chunk_size, infile_ptr);
 					assert(result == log_chunk_size);
 					file_pos += sizeof(epoch)+sizeof(log_chunk_size)+log_chunk_size;
 #endif
 
 					size_t buffer_offset = 0;
-					while (buffer_offset < log_chunk_size) {
+					while (buffer_offset < buffer_size) {
 						size_t param_type;
 						memcpy(&param_type, buffer + buffer_offset, sizeof(param_type));
 						buffer_offset += sizeof(param_type);
@@ -137,7 +138,7 @@ namespace Cavalia{
 							}
 						}
 					}
-					assert(buffer_offset == log_chunk_size);
+					assert(buffer_offset == buffer_size);
 				}
 				assert(file_pos == file_size);
 				entry.Release();
