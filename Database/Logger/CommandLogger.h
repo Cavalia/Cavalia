@@ -38,6 +38,8 @@ namespace Cavalia {
 					result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
 					assert(result == n);
 #else
+					result = fwrite(&buffer_offset_ref, sizeof(size_t), 1, file_ptr);
+					assert(result == 1);
 					result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
 					assert(result == buffer_offset_ref);
 #endif
@@ -84,6 +86,8 @@ namespace Cavalia {
 					result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
 					assert(result == n);
 #else
+					result = fwrite(&buffer_offset_ref, sizeof(size_t), 1, file_ptr);
+					assert(result == 1);
 					result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
 					assert(result == buffer_offset_ref);
 #endif

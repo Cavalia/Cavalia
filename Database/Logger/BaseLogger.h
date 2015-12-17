@@ -141,6 +141,7 @@ namespace Cavalia{
 
 			void CleanUp(const size_t &thread_id){
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				FILE *file_ptr = outfiles_[thread_id];
 				int result;
 				// record epoch.
@@ -148,7 +149,6 @@ namespace Cavalia{
 				result = fwrite(&punctuation, sizeof(uint64_t), 1, file_ptr);
 				assert(result == 1);
 #if defined(COMPRESSION)
-				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				char *compressed_buffer_ptr = buf_struct_ptr->compressed_buffer_ptr_;
 				size_t bound = LZ4F_compressFrameBound(buffer_offset_ref, NULL);
 				size_t n = LZ4F_compressFrame(compressed_buffer_ptr, bound, buf_struct_ptr->buffer_ptr_, buffer_offset_ref, NULL);
@@ -160,8 +160,10 @@ namespace Cavalia{
 				result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
 				assert(result == n);
 #else
-				result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buf_struct_ptr->buffer_offset_, file_ptr);
-				assert(result == buf_struct_ptr->buffer_offset_);
+				result = fwrite(&buffer_offset_ref, sizeof(size_t), 1, file_ptr);
+				assert(result == 1);
+				result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
+				assert(result == buffer_offset_ref);
 #endif
 				result = fflush(file_ptr);
 				assert(result == 0);
