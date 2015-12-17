@@ -24,7 +24,7 @@ namespace Cavalia{
 				buffer_ptr_ = curr_buffer_ptr;
 				buffer_offset_ = 0;
 				txn_offset_ = txn_header_size;
-				last_epoch_ = 0;
+				last_epoch_ = -1;
 			}
 #else
 			ThreadBufferStruct(char *curr_buffer_ptr, const size_t &txn_header_size, char *compressed_buffer_ptr){
