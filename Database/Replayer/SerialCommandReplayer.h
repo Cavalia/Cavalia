@@ -2,6 +2,7 @@
 #ifndef __CAVALIA_DATABASE_SERIAL_COMMAND_REPLAYER_H__
 #define __CAVALIA_DATABASE_SERIAL_COMMAND_REPLAYER_H__
 
+#include <unordered_map>
 #include "BaseCommandReplayer.h"
 
 namespace Cavalia{
@@ -52,6 +53,9 @@ namespace Cavalia{
 			}
 
 			virtual void PrepareProcedures() = 0;
+
+		protected:
+			std::unordered_map<size_t, std::function<StoredProcedure*()>> registers_;
 
 		private:
 			SerialCommandReplayer(const SerialCommandReplayer &);

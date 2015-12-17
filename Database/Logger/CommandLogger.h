@@ -19,14 +19,6 @@ namespace Cavalia {
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
-				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
-				memcpy(curr_buffer_ptr, (char*)(&kAdHoc), sizeof(size_t));
-				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
-				size_t txn_size = buf_struct_ptr->txn_offset_ - txn_header_size_;
-				memcpy(curr_buffer_ptr + sizeof(size_t) + sizeof(uint64_t), (char*)(&txn_size), sizeof(size_t));
-				buffer_offset_ref += buf_struct_ptr->txn_offset_;
-				assert(buffer_offset_ref < kLogBufferSize);
-
 				if (epoch != buf_struct_ptr->last_epoch_){
 					FILE *file_ptr = outfiles_[thread_id];
 					buf_struct_ptr->last_epoch_ = epoch;
@@ -47,14 +39,20 @@ namespace Cavalia {
 					assert(result == buffer_offset_ref);
 #endif
 					buffer_offset_ref = 0;
-					int ret;
-					ret = fflush(file_ptr);
-					assert(ret == 0);
+					result = fflush(file_ptr);
+					assert(result == 0);
 #if defined(__linux__)
-					ret = fsync(fileno(file_ptr));
-					assert(ret == 0);
+					result = fsync(fileno(file_ptr));
+					assert(result == 0);
 #endif
 				}
+				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
+				memcpy(curr_buffer_ptr, (char*)(&kAdHoc), sizeof(size_t));
+				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
+				size_t txn_size = buf_struct_ptr->txn_offset_ - txn_header_size_;
+				memcpy(curr_buffer_ptr + sizeof(size_t) + sizeof(uint64_t), (char*)(&txn_size), sizeof(size_t));
+				buffer_offset_ref += buf_struct_ptr->txn_offset_;
+				assert(buffer_offset_ref < kLogBufferSize);
 				buf_struct_ptr->txn_offset_ = txn_header_size_;
 			}
 
@@ -64,6 +62,33 @@ namespace Cavalia {
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param){
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
+				if (epoch != buf_struct_ptr->last_epoch_){
+					FILE *file_ptr = outfiles_[thread_id];
+					buf_struct_ptr->last_epoch_ = epoch;
+#if defined(COMPRESSION)
+					char *compressed_buffer_ptr = buf_struct_ptr->compressed_buffer_ptr_;
+					size_t bound = LZ4F_compressFrameBound(buffer_offset_ref, NULL);
+					size_t n = LZ4F_compressFrame(compressed_buffer_ptr, bound, buf_struct_ptr->buffer_ptr_, buffer_offset_ref, NULL);
+					assert(LZ4F_isError(n) == false);
+
+					// after compression, write into file
+					int result;
+					result = fwrite(&n, sizeof(size_t), 1, file_ptr);
+					assert(result == 1);
+					result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
+					assert(result == n);
+#else
+					int result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
+					assert(result == buffer_offset_ref);
+#endif
+					buffer_offset_ref = 0;
+					result = fflush(file_ptr);
+					assert(result == 0);
+#if defined(__linux__)
+					result = fsync(fileno(file_ptr));
+					assert(result == 0);
+#endif
+				}
 				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
 				// write stored procedure type.
 				memcpy(curr_buffer_ptr, (char*)(&txn_type), sizeof(size_t));
@@ -76,35 +101,6 @@ namespace Cavalia {
 				memcpy(curr_buffer_ptr + sizeof(size_t)+sizeof(uint64_t), (char*)(&tmp_size), sizeof(size_t));
 				buffer_offset_ref += sizeof(size_t)+sizeof(uint64_t)+sizeof(size_t)+tmp_size;
 				assert(buffer_offset_ref < kLogBufferSize);
-
-				if (epoch != buf_struct_ptr->last_epoch_){
-					FILE *file_ptr = outfiles_[thread_id];
-					buf_struct_ptr->last_epoch_ = epoch;
-#if defined(COMPRESSION)
-					char *compressed_buffer_ptr = buf_struct_ptr->compressed_buffer_ptr_;
-					size_t bound = LZ4F_compressFrameBound(buffer_offset_ref, NULL);
-					size_t n = LZ4F_compressFrame(compressed_buffer_ptr, bound, buf_struct_ptr->buffer_ptr_, buffer_offset_ref, NULL);
-					assert(LZ4F_isError(n) == false);
-
-					// after compression, write into file
-					int result;
-					result = fwrite(&n, sizeof(size_t), 1, file_ptr);
-					assert(result == 1);
-					result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
-					assert(result == n);
-#else
-					int result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
-					assert(result == buffer_offset_ref);
-#endif
-					buffer_offset_ref = 0;
-					int ret;
-					ret = fflush(file_ptr);
-					assert(ret == 0);
-#if defined(__linux__)
-					ret = fsync(fileno(file_ptr));
-					assert(ret == 0);
-#endif
-				}
 			}
 
 		private:

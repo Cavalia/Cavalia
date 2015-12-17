@@ -2,7 +2,6 @@
 #ifndef __CAVALIA_DATABASE_BASE_COMMAND_REPLAYER_H__
 #define __CAVALIA_DATABASE_BASE_COMMAND_REPLAYER_H__
 
-#include <unordered_map>
 #include "../Transaction/TransactionManager.h"
 #include "../Transaction/StoredProcedure.h"
 #include "BaseReplayer.h"
@@ -239,9 +238,6 @@ namespace Cavalia{
 		private:
 			BaseCommandReplayer(const BaseCommandReplayer &);
 			BaseCommandReplayer& operator=(const BaseCommandReplayer &);
-
-		protected:
-			std::unordered_map<size_t, std::function<StoredProcedure*()>> registers_;
 
 		protected:
 			BaseLogEntries *log_entries_;
