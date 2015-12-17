@@ -20,18 +20,20 @@ namespace Cavalia{
 	namespace Database{
 		struct ThreadBufferStruct{
 #if !defined(COMPRESSION)
-			ThreadBufferStruct(char *curr_buffer_ptr, const size_t &txn_header_size){
-				buffer_ptr_ = curr_buffer_ptr;
+			ThreadBufferStruct(char *buffer_ptr, char *txn_buffer_ptr){
+				buffer_ptr_ = buffer_ptr;
 				buffer_offset_ = 0;
-				txn_offset_ = txn_header_size;
+				txn_buffer_ptr_ = txn_buffer_ptr;
+				txn_buffer_offset_ = 0;
 				last_epoch_ = -1;
 			}
 #else
-			ThreadBufferStruct(char *curr_buffer_ptr, const size_t &txn_header_size, char *compressed_buffer_ptr){
-				buffer_ptr_ = curr_buffer_ptr;
+			ThreadBufferStruct(char *buffer_ptr, char *txn_buffer_ptr, char *compressed_buffer_ptr){
+				buffer_ptr_ = buffer_ptr;
 				buffer_offset_ = 0;
-				txn_offset_ = txn_header_size;
-				last_epoch_ = 0;
+				txn_buffer_ptr_ = txn_buffer_ptr;
+				txn_buffer_offset_ = 0;
+				last_epoch_ = -1;
 
 				compressed_buffer_ptr_ = compressed_buffer_ptr;
 			}
@@ -39,7 +41,9 @@ namespace Cavalia{
 			char *buffer_ptr_;
 			size_t buffer_offset_;
 			// for value logging.
-			size_t txn_offset_;
+			char *txn_buffer_ptr_;
+			size_t txn_buffer_offset_;
+			/////////////////////
 			uint64_t last_epoch_;
 #if defined(COMPRESSION)
 			char *compressed_buffer_ptr_;
@@ -86,46 +90,47 @@ namespace Cavalia{
 
 			void RegisterThread(const size_t &thread_id, const size_t &core_id){
 				size_t numa_node_id = GetNumaNodeId(core_id);
-				char *curr_buffer_ptr = MemAllocator::AllocNode(kLogBufferSize, numa_node_id);
+				char *buffer_ptr = MemAllocator::AllocNode(kLogBufferSize, numa_node_id);
+				char *txn_buffer_ptr = MemAllocator::AllocNode(kTxnBufferSize, numa_node_id);
 #if defined(COMPRESSION)
 				char *compressed_buffer_ptr = MemAllocator::AllocNode(kLogBufferSize, numa_node_id);
 				thread_buf_structs_[thread_id] = (ThreadBufferStruct*)MemAllocator::AllocNode(sizeof(ThreadBufferStruct), numa_node_id);
-				new(thread_buf_structs_[thread_id])ThreadBufferStruct(curr_buffer_ptr, txn_header_size_, compressed_buffer_ptr);
+				new(thread_buf_structs_[thread_id])ThreadBufferStruct(buffer_ptr, txn_buffer_ptr, compressed_buffer_ptr);
 #else
 				thread_buf_structs_[thread_id] = (ThreadBufferStruct*)MemAllocator::AllocNode(sizeof(ThreadBufferStruct), numa_node_id);
-				new(thread_buf_structs_[thread_id])ThreadBufferStruct(curr_buffer_ptr, txn_header_size_);
+				new(thread_buf_structs_[thread_id])ThreadBufferStruct(buffer_ptr, txn_buffer_ptr);
 #endif
 			}
 
 			void InsertRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size) {
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
-				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buf_struct_ptr->buffer_offset_ + buf_struct_ptr->txn_offset_;
+				char *curr_buffer_ptr = buf_struct_ptr->txn_buffer_ptr_ + buf_struct_ptr->txn_buffer_offset_;
 				memcpy(curr_buffer_ptr, (char*)(&kInsert), sizeof(uint8_t));
 				memcpy(curr_buffer_ptr + sizeof(uint8_t), (char*)(&table_id), sizeof(uint8_t));
 				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t), (char*)(&data_size), sizeof(uint8_t));
 				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t) + sizeof(uint8_t), data, data_size);
-				buf_struct_ptr->txn_offset_ += sizeof(uint8_t) * 3 + data_size;
+				buf_struct_ptr->txn_buffer_offset_ += sizeof(uint8_t) * 3 + data_size;
 			}
 
 			void UpdateRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size) {
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
-				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buf_struct_ptr->buffer_offset_ + buf_struct_ptr->txn_offset_;
+				char *curr_buffer_ptr = buf_struct_ptr->txn_buffer_ptr_ + buf_struct_ptr->txn_buffer_offset_;
 				memcpy(curr_buffer_ptr, (char*)(&kUpdate), sizeof(uint8_t));
 				memcpy(curr_buffer_ptr + sizeof(uint8_t), (char*)(&table_id), sizeof(uint8_t));
 				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t), (char*)(&data_size), sizeof(uint8_t));
 				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t) + sizeof(uint8_t), data, data_size);
-				buf_struct_ptr->txn_offset_ += sizeof(uint8_t) * 3 + data_size;
+				buf_struct_ptr->txn_buffer_offset_ += sizeof(uint8_t) * 3 + data_size;
 			}
 
 			void DeleteRecord(const size_t &thread_id, const uint8_t &table_id, const std::string &primary_key) {
 				size_t key_size = primary_key.size();
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
-				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buf_struct_ptr->buffer_offset_ + buf_struct_ptr->txn_offset_;
+				char *curr_buffer_ptr = buf_struct_ptr->txn_buffer_ptr_ + buf_struct_ptr->txn_buffer_offset_;
 				memcpy(curr_buffer_ptr, (char*)(&kDelete), sizeof(uint8_t));
 				memcpy(curr_buffer_ptr + sizeof(uint8_t), (char*)(&table_id), sizeof(uint8_t));
 				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t), (char*)(&key_size), sizeof(uint8_t));
 				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t) + sizeof(uint8_t), primary_key.c_str(), key_size);
-				buf_struct_ptr->txn_offset_ += sizeof(uint8_t) * 3 + key_size;
+				buf_struct_ptr->txn_buffer_offset_ += sizeof(uint8_t) * 3 + key_size;
 			}
 
 			// commit value logging.
@@ -133,7 +138,7 @@ namespace Cavalia{
 
 			// abort value logging.
 			void AbortTransaction(const size_t &thread_id){
-				thread_buf_structs_[thread_id]->txn_offset_ = txn_header_size_;
+				thread_buf_structs_[thread_id]->txn_buffer_offset_ = 0;
 			}
 
 			// commit command logging.
@@ -184,8 +189,6 @@ namespace Cavalia{
 
 		protected:
 			ThreadBufferStruct **thread_buf_structs_;
-			size_t txn_header_size_; 
-
 		};
 	}
 }

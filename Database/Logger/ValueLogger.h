@@ -8,20 +8,17 @@ namespace Cavalia{
 	namespace Database{
 		class ValueLogger : public BaseLogger{
 		public:
-			ValueLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, true){
-				txn_header_size_ = sizeof(size_t)+sizeof(uint64_t);
-			}
-
+			ValueLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, true){}
 			virtual ~ValueLogger(){}
 
 			// | timestamp | param_size | param_content |
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
-				if (buf_struct_ptr->last_epoch_ != -1){
+				if (buf_struct_ptr->last_epoch_ == -1){
 					buf_struct_ptr->last_epoch_ = epoch;
 				}
-				if (buf_struct_ptr->last_epoch_ != epoch){
+				else if (buf_struct_ptr->last_epoch_ != epoch){
 					FILE *file_ptr = outfiles_[thread_id];
 					int result;
 					// record epoch.
@@ -55,13 +52,12 @@ namespace Cavalia{
 				}
 				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
 				memcpy(curr_buffer_ptr, (char*)(&commit_ts), sizeof(uint64_t));
-				size_t txn_size = buf_struct_ptr->txn_offset_ - txn_header_size_;
-				memcpy(curr_buffer_ptr + sizeof(uint64_t), (char*)(&txn_size), sizeof(size_t));
-				buffer_offset_ref += buf_struct_ptr->txn_offset_;
+				memcpy(curr_buffer_ptr + sizeof(uint64_t), (char*)(&buf_struct_ptr->txn_buffer_offset_), sizeof(size_t));
+				memcpy(curr_buffer_ptr + sizeof(uint64_t)+sizeof(size_t), buf_struct_ptr->txn_buffer_ptr_, buf_struct_ptr->txn_buffer_offset_);
+				buffer_offset_ref += sizeof(uint64_t)+sizeof(size_t)+buf_struct_ptr->txn_buffer_offset_;
 				assert(buffer_offset_ref < kLogBufferSize);
-				buf_struct_ptr->txn_offset_ = txn_header_size_;
+				buf_struct_ptr->txn_buffer_offset_ = 0;
 			}
-
 
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param){
 				assert(false);

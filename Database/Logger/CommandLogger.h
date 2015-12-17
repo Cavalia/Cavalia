@@ -8,10 +8,7 @@ namespace Cavalia {
 	namespace Database {
 		class CommandLogger : public BaseLogger {
 		public:
-			CommandLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, false) {
-				txn_header_size_ = sizeof(size_t)+sizeof(uint64_t)+sizeof(size_t);
-			}
-
+			CommandLogger(const std::string &dir_name, const size_t &thread_count) : BaseLogger(dir_name, thread_count, false){}
 			virtual ~CommandLogger() {}
 
 			// commit value logging.
@@ -20,7 +17,7 @@ namespace Cavalia {
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				if (buf_struct_ptr->last_epoch_ == -1){
-					buf_struct_ptr->last_epoch_ == epoch;
+					buf_struct_ptr->last_epoch_ = epoch;
 				}
 				else if (buf_struct_ptr->last_epoch_ != epoch){
 					FILE *file_ptr = outfiles_[thread_id];
@@ -57,11 +54,11 @@ namespace Cavalia {
 				char *curr_buffer_ptr = buf_struct_ptr->buffer_ptr_ + buffer_offset_ref;
 				memcpy(curr_buffer_ptr, (char*)(&kAdHoc), sizeof(size_t));
 				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
-				size_t txn_size = buf_struct_ptr->txn_offset_ - txn_header_size_;
-				memcpy(curr_buffer_ptr + sizeof(size_t) + sizeof(uint64_t), (char*)(&txn_size), sizeof(size_t));
-				buffer_offset_ref += buf_struct_ptr->txn_offset_;
+				memcpy(curr_buffer_ptr + sizeof(size_t) + sizeof(uint64_t), (char*)(&buf_struct_ptr->txn_buffer_offset_), sizeof(size_t));
+				memcpy(curr_buffer_ptr + sizeof(size_t)+sizeof(uint64_t)+sizeof(size_t), buf_struct_ptr->txn_buffer_ptr_, buf_struct_ptr->txn_buffer_offset_);
+				buffer_offset_ref += sizeof(size_t)+sizeof(uint64_t)+sizeof(size_t)+buf_struct_ptr->txn_buffer_offset_;
 				assert(buffer_offset_ref < kLogBufferSize);
-				buf_struct_ptr->txn_offset_ = txn_header_size_;
+				buf_struct_ptr->txn_buffer_offset_ = 0;
 			}
 
 			// commit command logging.
@@ -70,7 +67,7 @@ namespace Cavalia {
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				if (buf_struct_ptr->last_epoch_ == -1){
-					buf_struct_ptr->last_epoch_ == epoch;
+					buf_struct_ptr->last_epoch_ = epoch;
 				}
 				else if (buf_struct_ptr->last_epoch_ != epoch){
 					FILE *file_ptr = outfiles_[thread_id];
