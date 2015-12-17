@@ -11,9 +11,7 @@ namespace Cavalia{
 		const uint8_t kDelete = 2;
 
 		const size_t kAdHoc = 100;
-
-		//const int LZ4_HEADER_SIZE = 19;
-		//const int LZ4_FOOTER_SIZE = 32;
+		const size_t kLogChunkSize = 10;
 	}
 }
 

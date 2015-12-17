@@ -21,6 +21,10 @@ namespace Cavalia {
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				if (epoch != buf_struct_ptr->last_epoch_){
 					FILE *file_ptr = outfiles_[thread_id];
+					int result;
+					// record epoch.
+					result = fwrite(&buf_struct_ptr->last_epoch_, sizeof(uint64_t), 1, file_ptr);
+					assert(result == 1);
 					buf_struct_ptr->last_epoch_ = epoch;
 #if defined(COMPRESSION)
 					char *compressed_buffer_ptr = buf_struct_ptr->compressed_buffer_ptr_;
@@ -29,13 +33,12 @@ namespace Cavalia {
 					assert(LZ4F_isError(n) == false);
 
 					// after compression, write into file
-					int result;
 					result = fwrite(&n, sizeof(size_t), 1, file_ptr);
 					assert(result == 1);
 					result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
 					assert(result == n);
 #else
-					int result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
+					result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
 					assert(result == buffer_offset_ref);
 #endif
 					buffer_offset_ref = 0;
@@ -64,6 +67,10 @@ namespace Cavalia {
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				if (epoch != buf_struct_ptr->last_epoch_){
 					FILE *file_ptr = outfiles_[thread_id];
+					int result;
+					// record epoch.
+					result = fwrite(&buf_struct_ptr->last_epoch_, sizeof(uint64_t), 1, file_ptr);
+					assert(result == 1);
 					buf_struct_ptr->last_epoch_ = epoch;
 #if defined(COMPRESSION)
 					char *compressed_buffer_ptr = buf_struct_ptr->compressed_buffer_ptr_;
@@ -72,13 +79,12 @@ namespace Cavalia {
 					assert(LZ4F_isError(n) == false);
 
 					// after compression, write into file
-					int result;
 					result = fwrite(&n, sizeof(size_t), 1, file_ptr);
 					assert(result == 1);
 					result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
 					assert(result == n);
 #else
-					int result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
+					result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buffer_offset_ref, file_ptr);
 					assert(result == buffer_offset_ref);
 #endif
 					buffer_offset_ref = 0;

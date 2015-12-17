@@ -34,8 +34,6 @@ namespace Cavalia{
 				last_epoch_ = 0;
 
 				compressed_buffer_ptr_ = compressed_buffer_ptr;
-				//LZ4F_errorCode_t err = LZ4F_createCompressionContext(&compression_context_, LZ4F_VERSION);
-				//assert(LZ4F_isError(err) == false);
 			}
 #endif
 			char *buffer_ptr_;
@@ -45,7 +43,6 @@ namespace Cavalia{
 			uint64_t last_epoch_;
 #if defined(COMPRESSION)
 			char *compressed_buffer_ptr_;
-			//LZ4F_compressionContext_t compression_context_;
 #endif
 		};
 
@@ -143,8 +140,13 @@ namespace Cavalia{
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param) = 0;
 
 			void CleanUp(const size_t &thread_id){
-				FILE *file_ptr = outfiles_[thread_id];
 				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				FILE *file_ptr = outfiles_[thread_id];
+				int result;
+				// record epoch.
+				uint64_t punctuation = -1;
+				result = fwrite(&punctuation, sizeof(uint64_t), 1, file_ptr);
+				assert(result == 1);
 #if defined(COMPRESSION)
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				char *compressed_buffer_ptr = buf_struct_ptr->compressed_buffer_ptr_;
@@ -153,21 +155,19 @@ namespace Cavalia{
 				assert(LZ4F_isError(n) == false);
 
 				// after compression, write into file
-				int result;
 				result = fwrite(&n, sizeof(size_t), 1, file_ptr);
 				assert(result == 1);
 				result = fwrite(compressed_buffer_ptr, sizeof(char), n, file_ptr);
 				assert(result == n);
 #else
-				int result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buf_struct_ptr->buffer_offset_, file_ptr);
+				result = fwrite(buf_struct_ptr->buffer_ptr_, sizeof(char), buf_struct_ptr->buffer_offset_, file_ptr);
 				assert(result == buf_struct_ptr->buffer_offset_);
 #endif
-				int ret;
-				ret = fflush(file_ptr);
-				assert(ret == 0);
+				result = fflush(file_ptr);
+				assert(result == 0);
 #if defined(__linux__)
-				ret = fsync(fileno(file_ptr));
-				assert(ret == 0);
+				result = fsync(fileno(file_ptr));
+				assert(result == 0);
 #endif
 			}
 

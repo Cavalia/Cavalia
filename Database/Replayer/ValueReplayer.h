@@ -53,6 +53,9 @@ namespace Cavalia{
 				int result = 0;
 				size_t file_pos = 0;
 				while (file_pos < file_size){
+					uint64_t epoch;
+					result = fread(&epoch, sizeof(epoch), 1, infile_ptr);
+					assert(result == 1);
 					size_t compressed_buffer_size = 0;
 					result = fread(&compressed_buffer_size, sizeof(compressed_buffer_size), 1, infile_ptr);
 					assert(result == 1);
@@ -123,6 +126,9 @@ namespace Cavalia{
 				int result = 0;
 				size_t file_pos = 0;
 				while (file_pos < file_size){
+					uint64_t epoch;
+					result = fread(&epoch, sizeof(epoch), 1, infile_ptr);
+					assert(result == 1);
 					uint64_t timestamp;
 					result = fread(&timestamp, sizeof(timestamp), 1, infile_ptr);
 					assert(result == 1);
