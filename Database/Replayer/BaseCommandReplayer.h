@@ -59,12 +59,14 @@ namespace Cavalia{
 					uint64_t epoch;
 					result = fread(&epoch, sizeof(epoch), 1, infile_ptr);
 					assert(result == 1);
+					if (epoch != -1){
+						log_sequence.push_back(std::make_pair(epoch, new BaseLogEntries()));
+					}
+					BaseLogEntries *log_entries = log_sequence.at(log_sequence.size() - 1).second;
+
 					size_t log_chunk_size = 0;
 					result = fread(&log_chunk_size, sizeof(log_chunk_size), 1, infile_ptr);
 					assert(result == 1);
-					log_sequence.push_back(std::make_pair(epoch, new BaseLogEntries()));
-					BaseLogEntries *log_entries = log_sequence.at(log_sequence.size() - 1).second;
-
 #if defined(COMPRESSION)
 					result = fread(compressed_buffer, sizeof(char), log_chunk_size, infile_ptr);
 					assert(result == log_chunk_size);
@@ -150,38 +152,59 @@ namespace Cavalia{
 			}
 
 			void ReorderLog(){
+				int batch_count = log_sequences_[0].size();
+				
+				
 				for (size_t i = 0; i < thread_count_; ++i){
 					std::cout << "thread id=" << i << ", size=" << log_sequences_[i].size() << std::endl;
 				}
-				//BaseLogEntries::iterator *iterators = new BaseLogEntries::iterator[thread_count_];
-				//for (size_t i = 0; i < thread_count_; ++i){
-				//	iterators[i] = log_sequences_[i].begin();
-				//}
-				//while (true){
-				//	uint64_t min_ts = -1;
-				//	size_t thread_id = SIZE_MAX;
-				//	BaseLogEntries::iterator min_entry;
-				//	for (size_t i = 0; i < thread_count_; ++i){
-				//		if (iterators[i] != log_sequences_[i].end()){
-				//			if (min_ts == -1 || (*iterators[i])->timestamp_ < min_ts){
-				//				min_ts = (*iterators[i])->timestamp_;
-				//				min_entry = iterators[i];
-				//				thread_id = i;
-				//			}
-				//		}
-				//	}
-				//	// all finished
-				//	if (min_ts == -1){
-				//		break;
-				//	}
-				//	else{
-				//		serial_log_sequences_.push_back(*min_entry);
-				//		++iterators[thread_id];
-				//	}
-				//}
-				//delete[] iterators;
-				//iterators = NULL;
-				//std::cout << "full log size=" << serial_log_sequences_.size() << std::endl;
+				BaseLogEntries::iterator *iterators = new BaseLogEntries::iterator[thread_count_];
+				
+				for (size_t k = 0; k < batch_count; ++k){
+					// check epoch.
+					uint64_t curr_epoch = log_sequences_[0].at(k).first;
+					for (size_t i = 1; i < thread_count_; ++i){
+						assert(log_sequences_[i].at(k).first == curr_epoch);
+					}
+					std::cout << "current epoch=" << curr_epoch << std::endl;
+					BaseLogEntries *serial_log_entries = new BaseLogEntries();
+					serial_log_sequences_.push_back(std::make_pair(curr_epoch, serial_log_entries));
+
+					for (size_t i = 0; i < thread_count_; ++i){
+						iterators[i] = log_sequences_[i].at(k).second->begin();
+					}
+					while (true){
+						uint64_t min_ts = -1;
+						size_t thread_id = SIZE_MAX;
+						BaseLogEntries::iterator min_entry;
+						for (size_t i = 0; i < thread_count_; ++i){
+							if (iterators[i] != log_sequences_[i].at(k).second->end()){
+								if (min_ts == -1 || (*iterators[i])->timestamp_ < min_ts){
+									min_ts = (*iterators[i])->timestamp_;
+									min_entry = iterators[i];
+									thread_id = i;
+								}
+							}
+						}
+						// all finished
+						if (min_ts == -1){
+							break;
+						}
+						else{
+							serial_log_entries->push_back(*min_entry);
+							++iterators[thread_id];
+						}
+					}
+				}
+				delete[] iterators;
+				iterators = NULL;
+				
+				size_t total_size = 0;
+				for (size_t k = 0; k < batch_count; ++k){
+					std::cout << "log size=" << serial_log_sequences_.at(k).second->size() << std::endl;
+					total_size += serial_log_sequences_.at(k).second->size();
+				}
+				std::cout << "full log size=" << total_size << std::endl;
 			}
 
 			virtual void ProcessLog() = 0;
