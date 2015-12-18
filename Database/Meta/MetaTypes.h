@@ -16,7 +16,7 @@ namespace Cavalia{
 		const size_t kMaxThreadNum = 48;
 		const size_t kMaxAccessNum = 256;
 		const size_t kBatchTsNum = 16;
-		const size_t kLogBufferSize = 8192000;
+		const size_t kLogBufferSize = 8388608 * 2;
 		const size_t kTxnBufferSize = 8192;
 
 		const size_t kLogChunkSize = 10;
