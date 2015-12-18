@@ -54,7 +54,7 @@ namespace Cavalia {
 				char *curr_buffer_ptr = tlb_ptr->buffer_ptr_ + buffer_offset_ref;
 				memcpy(curr_buffer_ptr, (char*)(&kAdhocTxn), sizeof(size_t));
 				memcpy(curr_buffer_ptr + sizeof(size_t), (char*)(&commit_ts), sizeof(uint64_t));
-				size_t txn_offset = sizeof(uint64_t)+sizeof(size_t);
+				size_t txn_offset = sizeof(size_t)+sizeof(uint64_t)+sizeof(size_t);
 				for (size_t i = 0; i < access_list.access_count_; ++i){
 					Access *access_ptr = access_list.GetAccess(i);
 					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
@@ -84,8 +84,9 @@ namespace Cavalia {
 						txn_offset += sizeof(uint8_t)+sizeof(size_t)+sizeof(size_t)+key_size;
 					}
 				}
-				memcpy(curr_buffer_ptr + sizeof(uint64_t), (char*)(&txn_offset), sizeof(size_t));
-				buffer_offset_ref += sizeof(uint64_t)+sizeof(size_t)+txn_offset;
+				size_t txn_size = txn_offset - sizeof(size_t)-sizeof(uint64_t)-sizeof(size_t);
+				memcpy(curr_buffer_ptr + sizeof(size_t)+sizeof(uint64_t), (char*)(&txn_offset), sizeof(size_t));
+				buffer_offset_ref += sizeof(size_t)+sizeof(uint64_t)+sizeof(size_t)+txn_offset;
 				assert(buffer_offset_ref < kLogBufferSize);
 			}
 
