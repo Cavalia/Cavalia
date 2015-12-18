@@ -16,7 +16,7 @@ namespace Cavalia{
 			virtual ~AccessLogger(){}
 
 			void InsertRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size, const uint64_t &commit_ts) {
-				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				ThreadLogBuffer *buf_struct_ptr = thread_log_buffer_[thread_id];
 				char *buffer_ptr = buffers_[thread_id] + buf_struct_ptr->buffer_offset_;
 				size_t &offset_ref = buf_struct_ptr->txn_offset_;
 				memcpy(buffer_ptr + offset_ref, (char*)(&kInsert), sizeof(uint8_t));
@@ -32,7 +32,7 @@ namespace Cavalia{
 			}
 
 			void UpdateRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size, const uint64_t &commit_ts) {
-				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				ThreadLogBuffer *buf_struct_ptr = thread_log_buffer_[thread_id];
 				char *buffer_ptr = buffers_[thread_id] + buf_struct_ptr->buffer_offset_;
 				size_t &offset_ref = buf_struct_ptr->txn_offset_;
 				memcpy(buffer_ptr + offset_ref, (char*)(&kUpdate), sizeof(uint8_t));
@@ -48,7 +48,7 @@ namespace Cavalia{
 			}
 
 			void DeleteRecord(const size_t &thread_id, const uint8_t &table_id, const std::string &primary_key, const uint64_t &commit_ts) {
-				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				ThreadLogBuffer *buf_struct_ptr = thread_log_buffer_[thread_id];
 				char *buffer_ptr = buffers_[thread_id] + buf_struct_ptr->buffer_offset_;
 				size_t &offset_ref = buf_struct_ptr->txn_offset_;
 				memcpy(buffer_ptr + offset_ref, (char*)(&kDelete), sizeof(uint8_t));
@@ -65,7 +65,7 @@ namespace Cavalia{
 			}
 
 			void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){
-				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				ThreadLogBuffer *buf_struct_ptr = thread_log_buffer_[thread_id];
 				size_t &offset_ref = buf_struct_ptr->buffer_offset_;
 				char *buffer_ptr = buffers_[thread_id] + offset_ref;
 				memcpy(buffer_ptr, (char*)(&(buf_struct_ptr->txn_offset_)), sizeof(size_t));

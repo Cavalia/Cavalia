@@ -14,7 +14,7 @@ namespace Cavalia {
 			// commit value logging.
 			// | param_type | timestamp | param_size | param_content |
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts){
-				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				ThreadLogBuffer *buf_struct_ptr = thread_log_buffer_[thread_id];
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				if (buf_struct_ptr->last_epoch_ == -1){
 					buf_struct_ptr->last_epoch_ = epoch;
@@ -64,7 +64,7 @@ namespace Cavalia {
 			// commit command logging.
 			// | param_type | timestamp | param_size | param_content |
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param){
-				ThreadBufferStruct *buf_struct_ptr = thread_buf_structs_[thread_id];
+				ThreadLogBuffer *buf_struct_ptr = thread_log_buffer_[thread_id];
 				size_t &buffer_offset_ref = buf_struct_ptr->buffer_offset_;
 				if (buf_struct_ptr->last_epoch_ == -1){
 					buf_struct_ptr->last_epoch_ = epoch;
