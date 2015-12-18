@@ -43,7 +43,7 @@ namespace Cavalia{
 				fseek(infile_ptr, 0L, SEEK_END);
 				size_t file_size = ftell(infile_ptr);
 				rewind(infile_ptr);
-				ValueLogEntries &log_entries = log_entries_[thread_id];
+				ValueLogEntries &log_batch = log_entries_[thread_id];
 
 #if defined(COMPRESSION)
 				char *compressed_buffer = new char[kLogBufferSize];
@@ -53,6 +53,9 @@ namespace Cavalia{
 				int result = 0;
 				size_t file_pos = 0;
 				while (file_pos < file_size){
+					uint64_t epoch;
+					result = fread(&epoch, sizeof(epoch), 1, infile_ptr);
+					assert(result == 1);
 					size_t log_chunk_size = 0;
 					result = fread(&log_chunk_size, sizeof(log_chunk_size), 1, infile_ptr);
 					assert(result == 1);
@@ -60,7 +63,7 @@ namespace Cavalia{
 #if defined(COMPRESSION)
 					result = fread(compressed_buffer, sizeof(char), log_chunk_size, infile_ptr);
 					assert(result == log_chunk_size);
-					file_pos += sizeof(log_chunk_size)+log_chunk_size;
+					file_pos += sizeof(epoch)+sizeof(log_chunk_size)+log_chunk_size;
 
 					size_t buffer_size = kLogBufferSize;
 					size_t compressed_buffer_size = kLogBufferSize;
@@ -75,7 +78,7 @@ namespace Cavalia{
 					size_t buffer_size = log_chunk_size;
 					result = fread(buffer, sizeof(char), log_chunk_size, infile_ptr);
 					assert(result == log_chunk_size);
-					file_pos += sizeof(log_chunk_size)+log_chunk_size;
+					file_pos += sizeof(epoch)+sizeof(log_chunk_size)+log_chunk_size;
 #endif
 
 					size_t buffer_offset = 0;
@@ -109,7 +112,7 @@ namespace Cavalia{
 							buffer_offset += log_element->data_size_;
 							txn_pos += log_element->data_size_;
 						}
-						log_entries.push_back(log_entry);
+						log_batch.push_back(log_entry);
 						assert(txn_pos == txn_size);
 					}
 					assert(buffer_offset == buffer_size);
