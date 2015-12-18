@@ -366,10 +366,12 @@ namespace Cavalia {
 						Access *access_ptr = hot_access_list_.GetAccess(i);
 						if (access_ptr->access_type_ == READ_ONLY) {
 							access_ptr->access_record_->content_.ReleaseReadLock();
+							access_ptr->access_record_->content_.DecrementCounter();
 						}
 						else if (access_ptr->access_type_ == READ_WRITE) {
 							SchemaRecord *local_record_ptr = access_ptr->local_record_;
 							access_ptr->access_record_->content_.ReleaseWriteLock();
+							access_ptr->access_record_->content_.DecrementCounter();
 							BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 							MemAllocator::Free(local_record_ptr->data_ptr_);
 							local_record_ptr->~SchemaRecord();
@@ -393,13 +395,7 @@ namespace Cavalia {
 						access_ptr->access_record_->content_.ReleaseReadLock();
 					}
 					else if (access_ptr->access_type_ == READ_WRITE) {
-						SchemaRecord *local_record_ptr = access_ptr->local_record_;
 						access_ptr->access_record_->content_.ReleaseWriteLock();
-						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						MemAllocator::Free(local_record_ptr->data_ptr_);
-						local_record_ptr->~SchemaRecord();
-						MemAllocator::Free((char*)local_record_ptr);
-						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
 					else{
 						// insert_only or delete_only
@@ -408,6 +404,22 @@ namespace Cavalia {
 					--lock_count;
 					if (lock_count == 0) {
 						break;
+					}
+				}
+				assert(lock_count == 0);
+				for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
+					Access *access_ptr = hot_access_list_.GetAccess(i);
+					if (access_ptr->access_type_ == READ_ONLY) {
+						access_ptr->access_record_->content_.DecrementCounter();
+					}
+					else if (access_ptr->access_type_ == READ_WRITE) {
+						access_ptr->access_record_->content_.DecrementCounter();
+						SchemaRecord *local_record_ptr = access_ptr->local_record_;
+						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						MemAllocator::Free(local_record_ptr->data_ptr_);
+						local_record_ptr->~SchemaRecord();
+						MemAllocator::Free((char*)local_record_ptr);
+						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
 				}
 			}
