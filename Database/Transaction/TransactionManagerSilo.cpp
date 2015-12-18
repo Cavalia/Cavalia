@@ -138,31 +138,25 @@ namespace Cavalia{
 						global_record_ptr->CopyFrom(local_record_ptr);
 						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
-#if defined(VALUE_LOGGING)
-						logger_->UpdateRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->data_ptr_, local_record_ptr->schema_ptr_->GetSchemaSize());
-#endif
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY){
 						global_record_ptr->is_visible_ = true;
 						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
-#if defined(VALUE_LOGGING)
-						logger_->InsertRecord(this->thread_id_, access_ptr->table_id_, global_record_ptr->data_ptr_, global_record_ptr->schema_ptr_->GetSchemaSize());
-#endif
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY){
 						global_record_ptr->is_visible_ = false;
 						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
-#if defined(VALUE_LOGGING)
-						logger_->DeleteRecord(this->thread_id_, access_ptr->table_id_, local_record_ptr->GetPrimaryKey());
-#endif
 					}
 				}
-				// commit. 
+				// commit.
 #if defined(VALUE_LOGGING)
-				logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts);
+				logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, access_list_);
 #elif defined(COMMAND_LOGGING)
+				if (context->is_adhoc_ == true){
+					logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, access_list_);
+				}
 				logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, context->txn_type_, param);
 #endif
 
