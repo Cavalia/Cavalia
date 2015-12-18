@@ -26,8 +26,8 @@ namespace Cavalia{
 
 		struct ValueLogElement{
 			uint8_t type_;
-			uint8_t table_id_;
-			uint8_t data_size_;
+			size_t table_id_;
+			size_t data_size_;
 			char *data_ptr_;
 		};
 

@@ -9,7 +9,7 @@
 #include <TimeMeasurer.h>
 #include <AllocatorHelper.h>
 #include "../Storage/BaseStorageManager.h"
-#include "../Meta/MetaConstants.h"
+#include "../Meta/MetaTypes.h"
 #include "LogEntry.h"
 
 namespace Cavalia{

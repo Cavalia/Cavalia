@@ -15,42 +15,11 @@
 #include <NumaHelper.h>
 #include "../Transaction/TxnParam.h"
 #include "../Transaction/TxnAccess.h"
-#include "../Meta/MetaConstants.h"
+#include "../Meta/MetaTypes.h"
+#include "ThreadLogBuffer.h"
 
 namespace Cavalia{
 	namespace Database{
-		struct ThreadLogBuffer{
-#if !defined(COMPRESSION)
-			ThreadLogBuffer(char *buffer_ptr, char *txn_buffer_ptr){
-				buffer_ptr_ = buffer_ptr;
-				buffer_offset_ = 0;
-				txn_buffer_ptr_ = txn_buffer_ptr;
-				txn_buffer_offset_ = 0;
-				last_epoch_ = -1;
-			}
-#else
-			ThreadLogBuffer(char *buffer_ptr, char *txn_buffer_ptr, char *compressed_buffer_ptr){
-				buffer_ptr_ = buffer_ptr;
-				buffer_offset_ = 0;
-				txn_buffer_ptr_ = txn_buffer_ptr;
-				txn_buffer_offset_ = 0;
-				last_epoch_ = -1;
-
-				compressed_buffer_ptr_ = compressed_buffer_ptr;
-			}
-#endif
-			char *buffer_ptr_;
-			size_t buffer_offset_;
-			// for value logging.
-			char *txn_buffer_ptr_;
-			size_t txn_buffer_offset_;
-			/////////////////////
-			uint64_t last_epoch_;
-#if defined(COMPRESSION)
-			char *compressed_buffer_ptr_;
-#endif
-		};
-
 		class BaseLogger{
 		public:
 			BaseLogger(const std::string &dir_name, const size_t &thread_count, bool is_vl) : dir_name_(dir_name), thread_count_(thread_count){
@@ -100,55 +69,18 @@ namespace Cavalia{
 			void RegisterThread(const size_t &thread_id, const size_t &core_id){
 				size_t numa_node_id = GetNumaNodeId(core_id);
 				char *buffer_ptr = MemAllocator::AllocNode(kLogBufferSize, numa_node_id);
-				char *txn_buffer_ptr = MemAllocator::AllocNode(kTxnBufferSize, numa_node_id);
 #if defined(COMPRESSION)
 				char *compressed_buffer_ptr = MemAllocator::AllocNode(kLogBufferSize, numa_node_id);
 				thread_log_buffer_[thread_id] = (ThreadLogBuffer*)MemAllocator::AllocNode(sizeof(ThreadLogBuffer), numa_node_id);
-				new(thread_log_buffer_[thread_id])ThreadLogBuffer(buffer_ptr, txn_buffer_ptr, compressed_buffer_ptr);
+				new(thread_log_buffer_[thread_id])ThreadLogBuffer(buffer_ptr, compressed_buffer_ptr);
 #else
 				thread_log_buffer_[thread_id] = (ThreadLogBuffer*)MemAllocator::AllocNode(sizeof(ThreadLogBuffer), numa_node_id);
-				new(thread_log_buffer_[thread_id])ThreadLogBuffer(buffer_ptr, txn_buffer_ptr);
+				new(thread_log_buffer_[thread_id])ThreadLogBuffer(buffer_ptr);
 #endif
 			}
 
-			void InsertRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size) {
-				ThreadLogBuffer *buf_struct_ptr = thread_log_buffer_[thread_id];
-				char *curr_buffer_ptr = buf_struct_ptr->txn_buffer_ptr_ + buf_struct_ptr->txn_buffer_offset_;
-				memcpy(curr_buffer_ptr, (char*)(&kInsert), sizeof(uint8_t));
-				memcpy(curr_buffer_ptr + sizeof(uint8_t), (char*)(&table_id), sizeof(uint8_t));
-				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t), (char*)(&data_size), sizeof(uint8_t));
-				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t) + sizeof(uint8_t), data, data_size);
-				buf_struct_ptr->txn_buffer_offset_ += sizeof(uint8_t) * 3 + data_size;
-			}
-
-			void UpdateRecord(const size_t &thread_id, const uint8_t &table_id, char *data, const uint8_t &data_size) {
-				ThreadLogBuffer *buf_struct_ptr = thread_log_buffer_[thread_id];
-				char *curr_buffer_ptr = buf_struct_ptr->txn_buffer_ptr_ + buf_struct_ptr->txn_buffer_offset_;
-				memcpy(curr_buffer_ptr, (char*)(&kUpdate), sizeof(uint8_t));
-				memcpy(curr_buffer_ptr + sizeof(uint8_t), (char*)(&table_id), sizeof(uint8_t));
-				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t), (char*)(&data_size), sizeof(uint8_t));
-				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t) + sizeof(uint8_t), data, data_size);
-				buf_struct_ptr->txn_buffer_offset_ += sizeof(uint8_t) * 3 + data_size;
-			}
-
-			void DeleteRecord(const size_t &thread_id, const uint8_t &table_id, const std::string &primary_key) {
-				size_t key_size = primary_key.size();
-				ThreadLogBuffer *buf_struct_ptr = thread_log_buffer_[thread_id];
-				char *curr_buffer_ptr = buf_struct_ptr->txn_buffer_ptr_ + buf_struct_ptr->txn_buffer_offset_;
-				memcpy(curr_buffer_ptr, (char*)(&kDelete), sizeof(uint8_t));
-				memcpy(curr_buffer_ptr + sizeof(uint8_t), (char*)(&table_id), sizeof(uint8_t));
-				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t), (char*)(&key_size), sizeof(uint8_t));
-				memcpy(curr_buffer_ptr + sizeof(uint8_t) + sizeof(uint8_t) + sizeof(uint8_t), primary_key.c_str(), key_size);
-				buf_struct_ptr->txn_buffer_offset_ += sizeof(uint8_t) * 3 + key_size;
-			}
-
 			// commit value logging.
-			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts) = 0;
-
-			// abort value logging.
-			void AbortTransaction(const size_t &thread_id){
-				thread_log_buffer_[thread_id]->txn_buffer_offset_ = 0;
-			}
+			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const AccessList<kMaxAccessNum> &access_list) = 0;
 
 			// commit command logging.
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param) = 0;

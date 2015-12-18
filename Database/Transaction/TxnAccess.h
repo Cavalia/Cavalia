@@ -31,7 +31,7 @@ namespace Cavalia{
 				return ret;
 			}
 
-			Access *GetAccess(const size_t &index){
+			Access *GetAccess(const size_t &index) const{
 				return &(accesses_[index]);
 			}
 

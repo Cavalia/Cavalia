@@ -94,7 +94,7 @@ namespace Cavalia{
 						memcpy(&timestamp, buffer + buffer_offset, sizeof(timestamp));
 						buffer_offset += sizeof(timestamp);
 
-						if (param_type == kAdHoc){
+						if (param_type == kAdhocTxn){
 							ValueLogEntry *log_entry = new ValueLogEntry(timestamp);
 							size_t txn_size;
 							memcpy(&txn_size, buffer + buffer_offset, sizeof(txn_size));
