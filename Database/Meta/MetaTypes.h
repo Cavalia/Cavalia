@@ -25,7 +25,6 @@ namespace Cavalia{
 		const size_t kInsert = 0;
 		const size_t kUpdate = 1;
 		const size_t kDelete = 2;
-	};
 		const size_t kAdhocTxn = 100;
 
 

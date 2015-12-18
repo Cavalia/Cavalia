@@ -80,7 +80,7 @@ namespace Cavalia{
 			}
 
 			// commit value logging.
-			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const AccessList<kMaxAccessNum> &access_list) = 0;
+			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, AccessList<kMaxAccessNum> &access_list) = 0;
 
 			// commit command logging.
 			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const size_t &txn_type, TxnParam *param) = 0;

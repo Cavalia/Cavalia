@@ -13,7 +13,7 @@ namespace Cavalia {
 
 			// commit value logging.
 			// | param_type | timestamp | param_size | param_content |
-			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, const AccessList<kMaxAccessNum> &access_list){
+			virtual void CommitTransaction(const size_t &thread_id, const uint64_t &epoch, const uint64_t &commit_ts, AccessList<kMaxAccessNum> &access_list){
 				ThreadLogBuffer *tlb_ptr = thread_log_buffer_[thread_id];
 				size_t &buffer_offset_ref = tlb_ptr->buffer_offset_;
 				if (tlb_ptr->last_epoch_ == -1){
