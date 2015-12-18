@@ -11,11 +11,11 @@ namespace Cavalia{
 		class BaseCommandReplayer : public BaseReplayer{
 		public:
 			BaseCommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : BaseReplayer(filename, storage_manager, thread_count, false){
-				log_entries_ = new BaseLogEntries[thread_count_];
+				log_sequences_ = new std::vector<std::pair<uint64_t, BaseLogEntries*>>[thread_count_];
 			}
 			virtual ~BaseCommandReplayer(){
-				delete[] log_entries_;
-				log_entries_ = NULL;
+				delete[] log_sequences_;
+				log_sequences_ = NULL;
 			}
 
 			virtual void Start(){
@@ -44,7 +44,7 @@ namespace Cavalia{
 				fseek(infile_ptr, 0L, SEEK_END);
 				size_t file_size = ftell(infile_ptr);
 				rewind(infile_ptr);
-				BaseLogEntries &log_batch = log_entries_[thread_id];
+				std::vector<std::pair<uint64_t, BaseLogEntries*>> &log_sequence = log_sequences_[thread_id];
 
 #if defined(COMPRESSION)
 				char *compressed_buffer = new char[kLogBufferSize];
@@ -62,6 +62,8 @@ namespace Cavalia{
 					size_t log_chunk_size = 0;
 					result = fread(&log_chunk_size, sizeof(log_chunk_size), 1, infile_ptr);
 					assert(result == 1);
+					log_sequence.push_back(std::make_pair(epoch, new BaseLogEntries()));
+					BaseLogEntries *log_entries = log_sequence.at(log_sequence.size() - 1).second;
 
 #if defined(COMPRESSION)
 					result = fread(compressed_buffer, sizeof(char), log_chunk_size, infile_ptr);
@@ -120,7 +122,7 @@ namespace Cavalia{
 								buffer_offset += log_element->data_size_;
 								txn_pos += log_element->data_size_;
 							}
-							log_batch.push_back(log_entry);
+							log_entries->push_back(log_entry);
 							assert(txn_pos == txn_size);
 						}
 						else{
@@ -130,7 +132,7 @@ namespace Cavalia{
 							buffer_offset += entry.size_;
 							TxnParam* txn_param = DeserializeParam(param_type, entry);
 							if (txn_param != NULL){
-								log_batch.push_back(new CommandLogEntry(timestamp, txn_param));
+								log_entries->push_back(new CommandLogEntry(timestamp, txn_param));
 							}
 						}
 					}
@@ -149,37 +151,37 @@ namespace Cavalia{
 
 			void ReorderLog(){
 				for (size_t i = 0; i < thread_count_; ++i){
-					std::cout << "thread id=" << i << ", size=" << log_entries_[i].size() << std::endl;
+					std::cout << "thread id=" << i << ", size=" << log_sequences_[i].size() << std::endl;
 				}
-				BaseLogEntries::iterator *iterators = new BaseLogEntries::iterator[thread_count_];
-				for (size_t i = 0; i < thread_count_; ++i){
-					iterators[i] = log_entries_[i].begin();
-				}
-				while (true){
-					uint64_t min_ts = -1;
-					size_t thread_id = SIZE_MAX;
-					BaseLogEntries::iterator min_entry;
-					for (size_t i = 0; i < thread_count_; ++i){
-						if (iterators[i] != log_entries_[i].end()){
-							if (min_ts == -1 || (*iterators[i])->timestamp_ < min_ts){
-								min_ts = (*iterators[i])->timestamp_;
-								min_entry = iterators[i];
-								thread_id = i;
-							}
-						}
-					}
-					// all finished
-					if (min_ts == -1){
-						break;
-					}
-					else{
-						serial_log_entries_.push_back(*min_entry);
-						++iterators[thread_id];
-					}
-				}
-				delete[] iterators;
-				iterators = NULL;
-				std::cout << "full log size=" << serial_log_entries_.size() << std::endl;
+				//BaseLogEntries::iterator *iterators = new BaseLogEntries::iterator[thread_count_];
+				//for (size_t i = 0; i < thread_count_; ++i){
+				//	iterators[i] = log_sequences_[i].begin();
+				//}
+				//while (true){
+				//	uint64_t min_ts = -1;
+				//	size_t thread_id = SIZE_MAX;
+				//	BaseLogEntries::iterator min_entry;
+				//	for (size_t i = 0; i < thread_count_; ++i){
+				//		if (iterators[i] != log_sequences_[i].end()){
+				//			if (min_ts == -1 || (*iterators[i])->timestamp_ < min_ts){
+				//				min_ts = (*iterators[i])->timestamp_;
+				//				min_entry = iterators[i];
+				//				thread_id = i;
+				//			}
+				//		}
+				//	}
+				//	// all finished
+				//	if (min_ts == -1){
+				//		break;
+				//	}
+				//	else{
+				//		serial_log_sequences_.push_back(*min_entry);
+				//		++iterators[thread_id];
+				//	}
+				//}
+				//delete[] iterators;
+				//iterators = NULL;
+				//std::cout << "full log size=" << serial_log_sequences_.size() << std::endl;
 			}
 
 			virtual void ProcessLog() = 0;
@@ -193,8 +195,8 @@ namespace Cavalia{
 			BaseCommandReplayer& operator=(const BaseCommandReplayer &);
 
 		protected:
-			BaseLogEntries *log_entries_;
-			BaseLogEntries serial_log_entries_;
+			std::vector<std::pair<uint64_t, BaseLogEntries*>> *log_sequences_;
+			std::vector<std::pair<uint64_t, BaseLogEntries*>> serial_log_sequences_;
 		};
 	}
 }

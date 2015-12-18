@@ -10,11 +10,11 @@ namespace Cavalia{
 		class ValueReplayer : public BaseReplayer{
 		public:
 			ValueReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : BaseReplayer(filename, storage_manager, thread_count, true){
-				log_entries_ = new ValueLogEntries[thread_count_];
+				log_sequences_ = new std::vector<std::pair<uint64_t, ValueLogEntries*>>[thread_count_];
 			}
 			virtual ~ValueReplayer(){
-				delete[] log_entries_;
-				log_entries_ = NULL;
+				delete[] log_sequences_;
+				log_sequences_ = NULL;
 			}
 
 			virtual void Start(){
@@ -43,7 +43,7 @@ namespace Cavalia{
 				fseek(infile_ptr, 0L, SEEK_END);
 				size_t file_size = ftell(infile_ptr);
 				rewind(infile_ptr);
-				ValueLogEntries &log_batch = log_entries_[thread_id];
+				std::vector<std::pair<uint64_t, ValueLogEntries*>> &log_sequence = log_sequences_[thread_id];
 
 #if defined(COMPRESSION)
 				char *compressed_buffer = new char[kLogBufferSize];
@@ -59,6 +59,8 @@ namespace Cavalia{
 					size_t log_chunk_size = 0;
 					result = fread(&log_chunk_size, sizeof(log_chunk_size), 1, infile_ptr);
 					assert(result == 1);
+					log_sequence.push_back(std::make_pair(epoch, new ValueLogEntries()));
+					ValueLogEntries *log_entries = log_sequence.at(log_sequence.size() - 1).second;
 
 #if defined(COMPRESSION)
 					result = fread(compressed_buffer, sizeof(char), log_chunk_size, infile_ptr);
@@ -112,7 +114,7 @@ namespace Cavalia{
 							buffer_offset += log_element->data_size_;
 							txn_pos += log_element->data_size_;
 						}
-						log_batch.push_back(log_entry);
+						log_entries->push_back(log_entry);
 						assert(txn_pos == txn_size);
 					}
 					assert(buffer_offset == buffer_size);
@@ -128,39 +130,42 @@ namespace Cavalia{
 			}
 
 			void ProcessLog(const size_t &thread_id){
-				for (size_t i = 0; i < log_entries_[thread_id].size(); ++i){
-					auto *log_entry_ptr = log_entries_[thread_id].at(i);
-					uint64_t txn_ts = log_entry_ptr->timestamp_;
-					for (size_t k = 0; k < log_entry_ptr->element_count_; ++k){
-						ValueLogElement *log_element_ptr = &(log_entry_ptr->elements_[k]);
-						if (log_element_ptr->type_ == kInsert){
-							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_element_ptr->table_id_), log_element_ptr->data_ptr_);
-							//storage_manager_->tables_[log_element_ptr->table_id_]->InsertRecord(new TableRecord(record_ptr));
-						}
-						else if (log_element_ptr->type_ == kUpdate){
-							SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_element_ptr->table_id_), log_element_ptr->data_ptr_);
-							TableRecord *tb_record_ptr = NULL;
-							storage_manager_->tables_[log_element_ptr->table_id_]->SelectKeyRecord(record_ptr->GetPrimaryKey(), tb_record_ptr);
-							tb_record_ptr->content_.AcquireWriteLock();
-							if (txn_ts > tb_record_ptr->content_.GetTimestamp()){
-								SchemaRecord *tmp_ptr = tb_record_ptr->record_;
-								tb_record_ptr->record_ = record_ptr;
-								tb_record_ptr->content_.SetTimestamp(txn_ts);
-								tb_record_ptr->content_.ReleaseWriteLock();
-								delete tmp_ptr;
-								tmp_ptr = NULL;
-							}
-							else{
-								tb_record_ptr->content_.ReleaseWriteLock();
-								delete record_ptr;
-								record_ptr = NULL;
-							}
-						}
-						else if (log_element_ptr->type_ == kDelete){
-							//storage_manager_->tables_[log_element_ptr->table_id_]->DeleteRecord();
-						}
-					}
+				for (size_t i = 0; i < thread_count_; ++i){
+					std::cout << "thread id=" << i << ", size=" << log_sequences_[i].size() << std::endl;
 				}
+				//for (size_t i = 0; i < log_sequences_[thread_id].size(); ++i){
+				//	auto *log_entry_ptr = log_sequences_[thread_id].at(i);
+				//	uint64_t txn_ts = log_entry_ptr->timestamp_;
+				//	for (size_t k = 0; k < log_entry_ptr->element_count_; ++k){
+				//		ValueLogElement *log_element_ptr = &(log_entry_ptr->elements_[k]);
+				//		if (log_element_ptr->type_ == kInsert){
+				//			SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_element_ptr->table_id_), log_element_ptr->data_ptr_);
+				//			//storage_manager_->tables_[log_element_ptr->table_id_]->InsertRecord(new TableRecord(record_ptr));
+				//		}
+				//		else if (log_element_ptr->type_ == kUpdate){
+				//			SchemaRecord *record_ptr = new SchemaRecord(GetRecordSchema(log_element_ptr->table_id_), log_element_ptr->data_ptr_);
+				//			TableRecord *tb_record_ptr = NULL;
+				//			storage_manager_->tables_[log_element_ptr->table_id_]->SelectKeyRecord(record_ptr->GetPrimaryKey(), tb_record_ptr);
+				//			tb_record_ptr->content_.AcquireWriteLock();
+				//			if (txn_ts > tb_record_ptr->content_.GetTimestamp()){
+				//				SchemaRecord *tmp_ptr = tb_record_ptr->record_;
+				//				tb_record_ptr->record_ = record_ptr;
+				//				tb_record_ptr->content_.SetTimestamp(txn_ts);
+				//				tb_record_ptr->content_.ReleaseWriteLock();
+				//				delete tmp_ptr;
+				//				tmp_ptr = NULL;
+				//			}
+				//			else{
+				//				tb_record_ptr->content_.ReleaseWriteLock();
+				//				delete record_ptr;
+				//				record_ptr = NULL;
+				//			}
+				//		}
+				//		else if (log_element_ptr->type_ == kDelete){
+				//			//storage_manager_->tables_[log_element_ptr->table_id_]->DeleteRecord();
+				//		}
+				//	}
+				//}
 			}
 
 			virtual RecordSchema *GetRecordSchema(const size_t &table_id) = 0;
@@ -170,7 +175,7 @@ namespace Cavalia{
 			ValueReplayer& operator=(const ValueReplayer &);
 
 		private:
-			ValueLogEntries *log_entries_;
+			std::vector<std::pair<uint64_t, ValueLogEntries*>> *log_sequences_;
 		};
 	}
 }
