@@ -22,14 +22,22 @@ namespace Cavalia{
 				// for value logging
 				if (is_vl == true){
 					for (size_t i = 0; i < thread_count_; ++i){
-						infiles_[i] = fopen((dir_name_ + "/valuelog" + std::to_string(i)).c_str(), "rb");
+#if defined(COMPRESSION)
+						infiles_[i] = fopen((dir_name_ + "/valuelog-compress-" + std::to_string(i)).c_str(), "rb");
+#else
+						infiles_[i] = fopen((dir_name_ + "/valuelog-" + std::to_string(i)).c_str(), "rb");
+#endif
 						assert(infiles_[i] != NULL);
 					}
 				}
 				// for command logging
 				else{
 					for (size_t i = 0; i < thread_count_; ++i){
-						infiles_[i] = fopen((dir_name_ + "/commandlog" + std::to_string(i)).c_str(), "rb");
+#if defined(COMPRESSION)
+						infiles_[i] = fopen((dir_name_ + "/commandlog-compress-" + std::to_string(i)).c_str(), "rb");
+#else
+						infiles_[i] = fopen((dir_name_ + "/commandlog-" + std::to_string(i)).c_str(), "rb");
+#endif
 						assert(infiles_[i] != NULL);
 					}
 				}
