@@ -242,8 +242,8 @@ namespace Cavalia {
 					}
 
 					// release locks and clean up.
-					for (size_t i = 0; i < access_list_.access_count_; ++i) {
-						Access *access_ptr = access_list_.GetAccess(i);
+					for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
+						Access *access_ptr = hot_access_list_.GetAccess(i);
 						if (access_ptr->access_type_ == READ_ONLY) {
 							access_ptr->access_record_->content_.ReleaseReadLock();
 						}
@@ -306,7 +306,7 @@ namespace Cavalia {
 					for (size_t i = 0; i < access_list_.access_count_; ++i) {
 						Access *access_ptr = access_list_.GetAccess(i);
 						if (access_ptr->access_type_ == READ_ONLY) {
-							access_ptr->access_record_->content_.ReleaseReadLock();
+							access_ptr->access_record_->content_.DecrementCounter();
 						}
 						else if (access_ptr->access_type_ == READ_WRITE) {
 							if (access_ptr->access_record_->content_.DecrementCounter() == 0){
@@ -334,10 +334,6 @@ namespace Cavalia {
 								}
 								garbage_set_.push_back(std::make_pair(access_ptr->access_record_, access_ptr->local_record_));
 							}
-						}
-						else{
-							// insert_only or delete_only
-							access_ptr->access_record_->content_.ReleaseWriteLock();
 						}
 					}
 				}
