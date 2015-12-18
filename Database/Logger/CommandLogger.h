@@ -20,12 +20,12 @@ namespace Cavalia {
 					tlb_ptr->last_epoch_ = epoch;
 				}
 				else if (tlb_ptr->last_epoch_ != epoch){
+					assert(tlb_ptr->last_epoch_ + 1 == epoch);
 					FILE *file_ptr = outfiles_[thread_id];
 					int result;
 					// record epoch.
 					result = fwrite(&tlb_ptr->last_epoch_, sizeof(uint64_t), 1, file_ptr);
 					assert(result == 1);
-					assert(tlb_ptr->last_epoch_ + 1 == epoch);
 					tlb_ptr->last_epoch_ = epoch;
 #if defined(COMPRESSION)
 					char *compressed_buffer_ptr = tlb_ptr->compressed_buffer_ptr_;
@@ -100,12 +100,12 @@ namespace Cavalia {
 					tlb_ptr->last_epoch_ = epoch;
 				}
 				else if (tlb_ptr->last_epoch_ != epoch){
+					assert(tlb_ptr->last_epoch_ + 1 == epoch);
 					FILE *file_ptr = outfiles_[thread_id];
 					int result;
 					// record epoch.
 					result = fwrite(&tlb_ptr->last_epoch_, sizeof(uint64_t), 1, file_ptr);
 					assert(result == 1);
-					assert(tlb_ptr->last_epoch_ + 1 == epoch);
 					tlb_ptr->last_epoch_ = epoch;
 #if defined(COMPRESSION)
 					char *compressed_buffer_ptr = tlb_ptr->compressed_buffer_ptr_;
