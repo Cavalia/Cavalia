@@ -15,6 +15,7 @@ namespace Cavalia {
 				waiters_head_ = NULL;
 				owners_head_ = NULL;
 				owners_count_ = 0;
+				timestamp_ = 0;
 			}
 			virtual ~LockWaitContent(){
 				LockEntry* cur = waiters_head_;

@@ -21,7 +21,7 @@ namespace Cavalia{
 			record->is_visible_ = false;
 			TableRecord *tb_record = new TableRecord(record);
 			// upsert.
-			if (storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record) == true){
+			//if (storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record) == true){
 				tb_record->record_->is_visible_ = true;
 				Access *access = access_list_.NewAccess();
 				access->access_type_ = INSERT_ONLY;
@@ -31,11 +31,11 @@ namespace Cavalia{
 				access->timestamp_ = 0;
 				END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 				return true;
-			}
+			/*}
 			else{
 				END_PHASE_MEASURE(thread_id_, INSERT_PHASE);
 				return true;
-			}
+			}*/
 		}
 
 		bool TransactionManager::SelectRecordCC(TxnContext *context, const size_t &table_id, TableRecord *t_record, SchemaRecord *&s_record, const AccessType access_type) {
