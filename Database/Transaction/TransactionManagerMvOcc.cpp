@@ -139,9 +139,9 @@ namespace Cavalia{
 			// step 2: if success, then overwrite and commit
 			if (is_success == true){
 				BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-				uint64_t global_ts = ScalableTimestamp::GetTimestamp();
+				uint64_t curr_epoch = Epoch::GetEpoch();
 				END_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-				commit_ts = GenerateTimestamp(global_ts, max_rw_ts);
+				commit_ts = GenerateTimestamp(curr_epoch, max_rw_ts);
 
 				//install writes
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {

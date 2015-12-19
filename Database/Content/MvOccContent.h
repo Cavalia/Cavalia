@@ -5,7 +5,7 @@
 #include <atomic>
 #include <RWLock.h>
 #include "ContentCommon.h"
-#include "../Transaction/ScalableTimestamp.h"
+#include "../Transaction/Epoch.h"
 #include "../Transaction/GlobalTimestamp.h"
 
 namespace Cavalia{
