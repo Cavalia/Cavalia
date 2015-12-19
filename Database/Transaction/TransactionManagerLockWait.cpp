@@ -98,6 +98,7 @@ namespace Cavalia{
 				}
 			}
 			else if(access_type == DELETE_ONLY) {
+				assert(false);
 				if (t_record->content_.AcquireLock(start_timestamp_, LockType::WRITE_LOCK, &lock_ready) == false) {
 					this->AbortTransaction();
 					return false;
@@ -107,6 +108,7 @@ namespace Cavalia{
 					Access *access = access_list_.NewAccess();
 					access->access_type_ = DELETE_ONLY;
 					access->access_record_ = t_record;
+					access->local_record_ = NULL;
 					access->table_id_ = table_id;
 					access->timestamp_ = t_record->content_.GetTimestamp();
 					return true;
@@ -116,6 +118,9 @@ namespace Cavalia{
 
 		bool TransactionManager::CommitTransaction(TxnContext *context, TxnParam *param, CharArray &ret_str){
 			BEGIN_PHASE_MEASURE(thread_id_, COMMIT_PHASE);
+
+			BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
+			uint64_t curr_epoch = Epoch::GetEpoch();
 #if defined(SCALABLE_TIMESTAMP)
 			uint64_t max_rw_ts = 0;
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
@@ -124,11 +129,6 @@ namespace Cavalia{
 					max_rw_ts = access_ptr->timestamp_;
 				}
 			}
-#endif
-
-			BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-			uint64_t curr_epoch = Epoch::GetEpoch();
-#if defined(SCALABLE_TIMESTAMP)
 			uint64_t commit_ts = GenerateScalableTimestamp(curr_epoch, max_rw_ts);
 #else
 			uint64_t commit_ts = GenerateMonotoneTimestamp(curr_epoch, GlobalTimestamp::GetMonotoneTimestamp());
@@ -137,8 +137,6 @@ namespace Cavalia{
 
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
-				SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
-				SchemaRecord *local_record_ptr = access_ptr->local_record_;
 				auto &content_ref = access_ptr->access_record_->content_;
 				if (access_ptr->access_type_ == READ_WRITE){
 					assert(commit_ts >= access_ptr->timestamp_);
@@ -177,7 +175,7 @@ namespace Cavalia{
 				}
 				else{
 					// insert_only or delete_only
-					access_ptr->access_record_->content_.ReleaseLock(start_timestamp_);
+					//access_ptr->access_record_->content_.ReleaseLock(start_timestamp_);
 				}
 			}
 			assert(access_list_.access_count_ <= kMaxAccessNum);
@@ -203,9 +201,10 @@ namespace Cavalia{
 				}
 				else if (access_ptr->access_type_ == INSERT_ONLY){
 					access_ptr->access_record_->record_->is_visible_ = false;
-					access_ptr->access_record_->content_.ReleaseLock(start_timestamp_);
+					//access_ptr->access_record_->content_.ReleaseLock(start_timestamp_);
 				}
 				else if (access_ptr->access_type_ == DELETE_ONLY){
+					assert(false);
 					access_ptr->access_record_->record_->is_visible_ = true;
 					access_ptr->access_record_->content_.ReleaseLock(start_timestamp_);
 				}

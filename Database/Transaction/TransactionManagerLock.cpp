@@ -112,8 +112,6 @@ namespace Cavalia{
 
 			for (size_t i = 0; i < access_list_.access_count_; ++i){
 				Access *access_ptr = access_list_.GetAccess(i);
-				SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
-				SchemaRecord *local_record_ptr = access_ptr->local_record_;
 				auto &content_ref = access_ptr->access_record_->content_;
 				if (access_ptr->access_type_ == READ_WRITE){
 					assert(commit_ts >= access_ptr->timestamp_);
