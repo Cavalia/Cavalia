@@ -102,7 +102,7 @@ namespace Cavalia{
 #endif
 
 			BEGIN_CC_TS_ALLOC_TIME_MEASURE(thread_id_);
-			uint64_t curr_epoch = ScalableTimestamp::GetTimestamp();
+			uint64_t curr_epoch = Epoch::GetEpoch();
 #if defined(SCALABLE_TIMESTAMP)
 			uint64_t commit_ts = GenerateScalableTimestamp(curr_epoch, max_rw_ts);
 #else
