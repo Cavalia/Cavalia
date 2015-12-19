@@ -24,10 +24,10 @@
 #include "../Content/MvOccContent.h"
 #elif defined(DBX)
 #include "../Content/DbxContent.h"
-#elif defined(PRTM)
-#include "../Content/PrtmContent.h"
-#elif defined(HRTM)
-#include "../Content/HrtmContent.h"
+#elif defined(RTM)
+#include "../Content/RtmContent.h"
+#elif defined(OCC_RTM) || defined(LOCK_RTM)
+#include "../Content/LockRtmContent.h"
 #endif
 
 namespace Cavalia{
@@ -68,10 +68,10 @@ namespace Cavalia{
 			MvOccContent content_;
 #elif defined(DBX)
 			DbxContent content_;
-#elif defined(PRTM)
-			PrtmContent content_;
-#elif defined(HRTM)
-			HrtmContent content_;
+#elif defined(RTM)
+			RtmContent content_;
+#elif defined(OCC_RTM) || defined(LOCK_RTM)
+			LockRtmContent content_;
 #endif
 		};
 	}

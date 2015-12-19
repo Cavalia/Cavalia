@@ -1,4 +1,4 @@
-#if defined(HRTM)
+#if defined(OCC_RTM)
 #include "TransactionManager.h"
 
 namespace Cavalia {

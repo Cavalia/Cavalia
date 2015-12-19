@@ -13,7 +13,7 @@
 #include "../Transaction/StoredProcedure.h"
 #include "../Transaction/Epoch.h"
 #include "BaseExecutor.h"
-#if defined(DBX) || defined(PRTM) || defined(HRTM)
+#if defined(DBX) || defined(RTM) || defined(OCC_RTM) || defined(LOCK_RTM)
 #include <RtmLock.h>
 #endif
 
@@ -111,7 +111,7 @@ namespace Cavalia{
 				// prepare local managers.
 				size_t node_id = GetNumaNodeId(core_id);
 				TransactionManager *txn_manager = new TransactionManager(storage_manager_, logger_, thread_id, this->thread_count_);
-#if defined(DBX) || defined(PRTM) || defined(HRTM)
+#if defined(DBX) || defined(RTM) || defined(OCC_RTM) || defined(LOCK_RTM)
 				txn_manager->SetRtmLock(&rtm_lock_);
 #endif
 				StoredProcedure **procedures = new StoredProcedure*[registers_.size()];
@@ -219,7 +219,7 @@ namespace Cavalia{
 			volatile bool is_finish_;
 			std::atomic<size_t> total_count_;
 			std::atomic<size_t> total_abort_count_;
-#if defined(DBX) || defined(PRTM) || defined(HRTM)
+#if defined(DBX) || defined(RTM) || defined(OCC_RTM) || defined(LOCK_RTM)
 			RtmLock rtm_lock_;
 #endif
 		};

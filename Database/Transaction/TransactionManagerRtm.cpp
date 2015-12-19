@@ -1,4 +1,4 @@
-#if defined(PRTM)
+#if defined(RTM)
 #include "TransactionManager.h"
 
 namespace Cavalia {
