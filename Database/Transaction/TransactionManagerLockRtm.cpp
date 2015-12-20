@@ -366,6 +366,25 @@ namespace Cavalia {
 		}
 
 		void TransactionManager::AbortTransaction() {
+			// clean up accesses in cold access list.
+			for (size_t i = 0; i < access_list_.access_count_; ++i) {
+				Access *access_ptr = access_list_.GetAccess(i);
+				auto &content_ref = access_ptr->access_record_->content_;
+				if (access_ptr->access_type_ == READ_ONLY) {
+					content_ref.DecrementCounter();
+				}
+				if (access_ptr->access_type_ == READ_WRITE) {
+					content_ref.DecrementCounter();
+					BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+					SchemaRecord *local_record_ptr = access_ptr->local_record_;
+					MemAllocator::Free(local_record_ptr->data_ptr_);
+					local_record_ptr->~SchemaRecord();
+					MemAllocator::Free((char*)local_record_ptr);
+					END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+				}
+				// inserts and deletes, wait for recycling to clean up
+			}
+
 			for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
 				Access *access_ptr = hot_access_list_.GetAccess(i);
 				SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
@@ -394,6 +413,8 @@ namespace Cavalia {
 					//content_ref.ReleaseWriteLock();
 				}
 			}
+			assert(access_list_.access_count_ <= kMaxAccessNum);
+			access_list_.Clear();
 			assert(hot_access_list_.access_count_ <= kMaxAccessNum);
 			hot_access_list_.Clear();
 		}
