@@ -10,10 +10,10 @@ namespace Cavalia {
 			TableRecord *tb_record = new TableRecord(record);
 			// the to-be-inserted record may have already existed.
 			//if (storage_manager_->tables_[table_id]->InsertRecord(primary_key, tb_record) == true){
-			if (tb_record->content_.TryWriteLock() == false){
-				this->AbortTransaction();
-				return false;
-			}
+			//if (tb_record->content_.TryWriteLock() == false){
+			//	this->AbortTransaction();
+			//	return false;
+			//}
 			tb_record->record_->is_visible_ = true;
 			Access *access = access_list_.NewAccess();
 			access->access_type_ = INSERT_ONLY;
@@ -44,6 +44,7 @@ namespace Cavalia {
 				}
 				else{
 					access = access_list_.NewAccess();
+					s_record = t_record->record_;
 				}
 				access->access_type_ = READ_ONLY;
 				access->access_record_ = t_record;
@@ -51,7 +52,6 @@ namespace Cavalia {
 				access->table_id_ = table_id;
 				content_ref.IncrementCounter();
 				access->timestamp_ = content_ref.GetTimestamp();
-				s_record = t_record->record_;
 				return true;
 			}
 			else if (access_type == READ_WRITE) {
@@ -63,28 +63,44 @@ namespace Cavalia {
 						return false;
 					}
 					access = hot_access_list_.NewAccess();
+					// copy data
+					BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+					const RecordSchema *schema_ptr = t_record->record_->schema_ptr_;
+					char *local_data = MemAllocator::Alloc(schema_ptr->GetSchemaSize());
+					SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
+					new(local_record)SchemaRecord(schema_ptr, local_data);
+					END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+					content_ref.IncrementCounter();
+					access->timestamp_ = content_ref.GetTimestamp();
+					COMPILER_MEMORY_FENCE;
+					local_record->CopyFrom(t_record->record_);
+					access->access_type_ = READ_WRITE;
+					access->access_record_ = t_record;
+					access->local_record_ = local_record;
+					access->table_id_ = table_id;
+					return true;
 				}
 				else{
 					access = access_list_.NewAccess();
+					// copy data
+					BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+					const RecordSchema *schema_ptr = t_record->record_->schema_ptr_;
+					char *local_data = MemAllocator::Alloc(schema_ptr->GetSchemaSize());
+					SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
+					new(local_record)SchemaRecord(schema_ptr, local_data);
+					END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+					content_ref.IncrementCounter();
+					access->timestamp_ = content_ref.GetTimestamp();
+					COMPILER_MEMORY_FENCE;
+					local_record->CopyFrom(t_record->record_);
+					// reset returned record.
+					s_record = local_record;
+					access->access_type_ = READ_WRITE;
+					access->access_record_ = t_record;
+					access->local_record_ = local_record;
+					access->table_id_ = table_id;
+					return true;
 				}
-				access->access_type_ = READ_WRITE;
-				access->access_record_ = t_record;
-				// copy data
-				BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-				const RecordSchema *schema_ptr = t_record->record_->schema_ptr_;
-				char *local_data = MemAllocator::Alloc(schema_ptr->GetSchemaSize());
-				SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
-				new(local_record)SchemaRecord(schema_ptr, local_data);
-				END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-				content_ref.IncrementCounter();
-				access->timestamp_ = content_ref.GetTimestamp();
-				COMPILER_MEMORY_FENCE;
-				local_record->CopyFrom(t_record->record_);
-				access->local_record_ = local_record;
-				access->table_id_ = table_id;
-				// reset returned record.
-				s_record = local_record;
-				return true;
 			}
 			// we just need to set the visibility bit on the record. so no need to create local copy.
 			else if (access_type == DELETE_ONLY){
@@ -99,6 +115,7 @@ namespace Cavalia {
 				}
 				else{
 					access = access_list_.NewAccess();
+					s_record = t_record->record_;
 				}
 				access->access_type_ = DELETE_ONLY;
 				access->access_record_ = t_record;
@@ -106,7 +123,6 @@ namespace Cavalia {
 				access->table_id_ = table_id;
 				content_ref.IncrementCounter();
 				access->timestamp_ = content_ref.GetTimestamp();
-				s_record = t_record->record_;
 				return true;
 			}
 			else{
@@ -201,41 +217,18 @@ namespace Cavalia {
 
 				for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
 					Access *access_ptr = hot_access_list_.GetAccess(i);
-					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
-					SchemaRecord *local_record_ptr = access_ptr->local_record_;
 					auto &content_ref = access_ptr->access_record_->content_;
 					if (access_ptr->access_type_ == READ_WRITE) {
 						assert(commit_ts > access_ptr->timestamp_);
-						std::swap(global_record_ptr, local_record_ptr);
-						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY) {
 						assert(commit_ts > access_ptr->timestamp_);
-						global_record_ptr->is_visible_ = true;
-						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
 						assert(commit_ts > access_ptr->timestamp_);
-						global_record_ptr->is_visible_ = false;
-						COMPILER_MEMORY_FENCE;
 						content_ref.SetTimestamp(commit_ts);
-					}
-				}
-
-				// release locks and clean up.
-				for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
-					Access *access_ptr = hot_access_list_.GetAccess(i);
-					if (access_ptr->access_type_ == READ_ONLY) {
-						access_ptr->access_record_->content_.ReleaseReadLock();
-					}
-					else if (access_ptr->access_type_ == READ_WRITE) {
-						access_ptr->access_record_->content_.ReleaseWriteLock();
-					}
-					else{
-						// insert_only or delete_only
-						access_ptr->access_record_->content_.ReleaseWriteLock();
 					}
 				}
 
@@ -249,50 +242,39 @@ namespace Cavalia {
 				logger_->CommitTransaction(this->thread_id_, curr_epoch, commit_ts, context->txn_type_, param);
 #endif
 
-				// clean up accesses in hot access list.
+				// release locks and clean up.
 				for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
 					Access *access_ptr = hot_access_list_.GetAccess(i);
+					auto &content_ref = access_ptr->access_record_->content_;
 					if (access_ptr->access_type_ == READ_ONLY) {
-						access_ptr->access_record_->content_.DecrementCounter();
+						content_ref.DecrementCounter();
+						content_ref.ReleaseReadLock();
 					}
 					else if (access_ptr->access_type_ == READ_WRITE) {
-						if (access_ptr->access_record_->content_.DecrementCounter() == 0){
-							BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-							SchemaRecord *local_record_ptr = access_ptr->local_record_;
-							MemAllocator::Free(local_record_ptr->data_ptr_);
-							local_record_ptr->~SchemaRecord();
-							MemAllocator::Free((char*)local_record_ptr);
-							END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-						}
-						else{
-							for (auto iter = garbage_set_.begin(); iter != garbage_set_.end();){
-								if (iter->first->content_.GetCounter() == 0){
-									BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-									SchemaRecord *local_record_ptr = iter->second;
-									MemAllocator::Free(local_record_ptr->data_ptr_);
-									local_record_ptr->~SchemaRecord();
-									MemAllocator::Free((char*)local_record_ptr);
-									END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
-									iter = garbage_set_.erase(iter);
-								}
-								else{
-									++iter;
-								}
-							}
-							garbage_set_.push_back(std::make_pair(access_ptr->access_record_, access_ptr->local_record_));
-						}
+						content_ref.DecrementCounter();
+						content_ref.ReleaseWriteLock();
+						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+						SchemaRecord *local_record_ptr = access_ptr->local_record_;
+						MemAllocator::Free(local_record_ptr->data_ptr_);
+						local_record_ptr->~SchemaRecord();
+						MemAllocator::Free((char*)local_record_ptr);
+						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
-					// deletes, wait for recycling to clean up
+					else{
+						// insert_only or delete_only
+						//content_ref.ReleaseWriteLock();
+					}
 				}
 
 				// clean up accesses in cold access list.
 				for (size_t i = 0; i < access_list_.access_count_; ++i) {
 					Access *access_ptr = access_list_.GetAccess(i);
+					auto &content_ref = access_ptr->access_record_->content_;
 					if (access_ptr->access_type_ == READ_ONLY) {
-						access_ptr->access_record_->content_.DecrementCounter();
+						content_ref.DecrementCounter();
 					}
 					else if (access_ptr->access_type_ == READ_WRITE) {
-						if (access_ptr->access_record_->content_.DecrementCounter() == 0){
+						if (content_ref.DecrementCounter() == 0){
 							BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 							SchemaRecord *local_record_ptr = access_ptr->local_record_;
 							MemAllocator::Free(local_record_ptr->data_ptr_);
@@ -329,11 +311,12 @@ namespace Cavalia {
 					// clean up accesses in cold access list.
 					for (size_t i = 0; i < access_list_.access_count_; ++i) {
 						Access *access_ptr = access_list_.GetAccess(i);
+						auto &content_ref = access_ptr->access_record_->content_;
 						if (access_ptr->access_type_ == READ_ONLY) {
-							access_ptr->access_record_->content_.DecrementCounter();
+							content_ref.DecrementCounter();
 						}
 						if (access_ptr->access_type_ == READ_WRITE) {
-							access_ptr->access_record_->content_.DecrementCounter();
+							content_ref.DecrementCounter();
 							BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 							SchemaRecord *local_record_ptr = access_ptr->local_record_;
 							MemAllocator::Free(local_record_ptr->data_ptr_);
@@ -347,23 +330,30 @@ namespace Cavalia {
 				// clean up accesses in hot access list.
 				for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
 					Access *access_ptr = hot_access_list_.GetAccess(i);
+					SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
+					SchemaRecord *local_record_ptr = access_ptr->local_record_;
+					auto &content_ref = access_ptr->access_record_->content_;
 					if (access_ptr->access_type_ == READ_ONLY) {
-						access_ptr->access_record_->content_.ReleaseReadLock();
-						access_ptr->access_record_->content_.DecrementCounter();
+						content_ref.DecrementCounter();
+						content_ref.ReleaseReadLock();
 					}
 					else if (access_ptr->access_type_ == READ_WRITE) {
-						SchemaRecord *local_record_ptr = access_ptr->local_record_;
-						access_ptr->access_record_->content_.ReleaseWriteLock();
-						access_ptr->access_record_->content_.DecrementCounter();
+						global_record_ptr->CopyFrom(local_record_ptr);
+						content_ref.DecrementCounter();
+						content_ref.ReleaseWriteLock();
 						BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 						MemAllocator::Free(local_record_ptr->data_ptr_);
 						local_record_ptr->~SchemaRecord();
 						MemAllocator::Free((char*)local_record_ptr);
 						END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					}
-					else{
-						// insert_only or delete_only
-						access_ptr->access_record_->content_.ReleaseWriteLock();
+					else if (access_ptr->access_type_ == INSERT_ONLY){
+						global_record_ptr->is_visible_ = false;
+						//content_ref.ReleaseWriteLock();
+					}
+					else if (access_ptr->access_type_ == DELETE_ONLY){
+						global_record_ptr->is_visible_ = true;
+						//content_ref.ReleaseWriteLock();
 					}
 				}
 			}
@@ -379,30 +369,30 @@ namespace Cavalia {
 		void TransactionManager::AbortTransaction() {
 			for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
 				Access *access_ptr = hot_access_list_.GetAccess(i);
+				SchemaRecord *global_record_ptr = access_ptr->access_record_->record_;
+				SchemaRecord *local_record_ptr = access_ptr->local_record_;
+				auto &content_ref = access_ptr->access_record_->content_;
 				if (access_ptr->access_type_ == READ_ONLY) {
-					access_ptr->access_record_->content_.ReleaseReadLock();
+					content_ref.DecrementCounter();
+					content_ref.ReleaseReadLock();
 				}
 				else if (access_ptr->access_type_ == READ_WRITE) {
-					access_ptr->access_record_->content_.ReleaseWriteLock();
-				}
-				else{
-					// insert_only or delete_only
-					access_ptr->access_record_->content_.ReleaseWriteLock();
-				}
-			}
-			for (size_t i = 0; i < hot_access_list_.access_count_; ++i) {
-				Access *access_ptr = hot_access_list_.GetAccess(i);
-				if (access_ptr->access_type_ == READ_ONLY) {
-					access_ptr->access_record_->content_.DecrementCounter();
-				}
-				else if (access_ptr->access_type_ == READ_WRITE) {
-					access_ptr->access_record_->content_.DecrementCounter();
-					SchemaRecord *local_record_ptr = access_ptr->local_record_;
+					global_record_ptr->CopyFrom(local_record_ptr);
+					content_ref.DecrementCounter();
+					content_ref.ReleaseWriteLock();
 					BEGIN_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
 					MemAllocator::Free(local_record_ptr->data_ptr_);
 					local_record_ptr->~SchemaRecord();
 					MemAllocator::Free((char*)local_record_ptr);
 					END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+				}
+				else if (access_ptr->access_type_ == INSERT_ONLY){
+					global_record_ptr->is_visible_ = false;
+					//content_ref.ReleaseWriteLock();
+				}
+				else if (access_ptr->access_type_ == DELETE_ONLY){
+					global_record_ptr->is_visible_ = true;
+					//content_ref.ReleaseWriteLock();
 				}
 			}
 		}
