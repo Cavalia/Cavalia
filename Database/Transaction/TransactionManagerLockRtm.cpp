@@ -394,6 +394,8 @@ namespace Cavalia {
 					//content_ref.ReleaseWriteLock();
 				}
 			}
+			assert(hot_access_list_.access_count_ <= kMaxAccessNum);
+			hot_access_list_.Clear();
 		}
 	}
 }
