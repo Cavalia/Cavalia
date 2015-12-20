@@ -44,8 +44,8 @@ namespace Cavalia {
 				}
 				else{
 					access = access_list_.NewAccess();
-					s_record = t_record->record_;
 				}
+				s_record = t_record->record_;
 				access->access_type_ = READ_ONLY;
 				access->access_record_ = t_record;
 				access->local_record_ = NULL;
@@ -78,6 +78,7 @@ namespace Cavalia {
 					access->access_record_ = t_record;
 					access->local_record_ = local_record;
 					access->table_id_ = table_id;
+					s_record = t_record->record_;
 					return true;
 				}
 				else{
@@ -93,12 +94,11 @@ namespace Cavalia {
 					access->timestamp_ = content_ref.GetTimestamp();
 					COMPILER_MEMORY_FENCE;
 					local_record->CopyFrom(t_record->record_);
-					// reset returned record.
-					s_record = local_record;
 					access->access_type_ = READ_WRITE;
 					access->access_record_ = t_record;
 					access->local_record_ = local_record;
 					access->table_id_ = table_id;
+					s_record = local_record;
 					return true;
 				}
 			}
@@ -115,8 +115,8 @@ namespace Cavalia {
 				}
 				else{
 					access = access_list_.NewAccess();
-					s_record = t_record->record_;
 				}
+				s_record = t_record->record_;
 				access->access_type_ = DELETE_ONLY;
 				access->access_record_ = t_record;
 				access->local_record_ = NULL;
