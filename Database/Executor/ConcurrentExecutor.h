@@ -80,6 +80,11 @@ namespace Cavalia{
 				double per_core_throughput = throughput / thread_count_;
 				std::cout << "execute_count=" << total_count_ <<", abort_count=" << total_abort_count_ <<", abort_rate=" <<  total_abort_count_*1.0 / (total_count_ + 1) << std::endl;
 				std::cout << "elapsed time=" << elapsed_time << "ms.\nthroughput=" << throughput << "K tps.\nper-core throughput=" << per_core_throughput << "K tps." << std::endl;
+#if defined(DBX) || defined(RTM) || defined(OCC_RTM) || defined(LOCK_RTM)
+#if defined(PROFILE_RTM)
+				rtm_lock_.Print();
+#endif
+#endif
 			}
 
 			void ProcessQueryThread(const size_t &thread_id, const size_t &core_id){
