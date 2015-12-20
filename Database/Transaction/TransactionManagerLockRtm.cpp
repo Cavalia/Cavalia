@@ -15,7 +15,7 @@ namespace Cavalia {
 			//	return false;
 			//}
 			tb_record->record_->is_visible_ = true;
-			Access *access = access_list_.NewAccess();
+			Access *access = hot_access_list_.NewAccess();
 			access->access_type_ = INSERT_ONLY;
 			access->access_record_ = tb_record;
 			access->local_record_ = NULL;
@@ -70,10 +70,9 @@ namespace Cavalia {
 					SchemaRecord *local_record = (SchemaRecord*)MemAllocator::Alloc(sizeof(SchemaRecord));
 					new(local_record)SchemaRecord(schema_ptr, local_data);
 					END_CC_MEM_ALLOC_TIME_MEASURE(thread_id_);
+					local_record->CopyFrom(t_record->record_);
 					content_ref.IncrementCounter();
 					access->timestamp_ = content_ref.GetTimestamp();
-					COMPILER_MEMORY_FENCE;
-					local_record->CopyFrom(t_record->record_);
 					access->access_type_ = READ_WRITE;
 					access->access_record_ = t_record;
 					access->local_record_ = local_record;
@@ -219,15 +218,15 @@ namespace Cavalia {
 					Access *access_ptr = hot_access_list_.GetAccess(i);
 					auto &content_ref = access_ptr->access_record_->content_;
 					if (access_ptr->access_type_ == READ_WRITE) {
-						assert(commit_ts > access_ptr->timestamp_);
+						assert(commit_ts >= access_ptr->timestamp_);
 						content_ref.SetTimestamp(commit_ts);
 					}
 					else if (access_ptr->access_type_ == INSERT_ONLY) {
-						assert(commit_ts > access_ptr->timestamp_);
+						assert(commit_ts >= access_ptr->timestamp_);
 						content_ref.SetTimestamp(commit_ts);
 					}
 					else if (access_ptr->access_type_ == DELETE_ONLY) {
-						assert(commit_ts > access_ptr->timestamp_);
+						assert(commit_ts >= access_ptr->timestamp_);
 						content_ref.SetTimestamp(commit_ts);
 					}
 				}
