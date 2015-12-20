@@ -11,7 +11,6 @@ namespace Cavalia {
 		class LockRtmContent {
 		public:
 			LockRtmContent() : timestamp_(0), counter_(0), is_hot_(false) {}
-			LockRtmContent(bool is_hot) : timestamp_(0), counter_(0), is_hot_(is_hot) {}
 
 			bool TryReadLock() {
 				return lock_.TryReadLock();
@@ -62,11 +61,15 @@ namespace Cavalia {
 				return is_hot_;
 			}
 
+			void SetHot(bool is_hot) {
+				is_hot_ = is_hot;
+			}
+
 		private:
 			std::atomic<uint64_t> timestamp_;
 			std::atomic<size_t> counter_;
 			RWLock lock_;
-			const bool is_hot_;
+			bool is_hot_;
 		};
 	}
 }
