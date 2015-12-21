@@ -1,8 +1,8 @@
 #pragma once
-#ifndef __CAVALIA_SMALLBANK_BENCHMARK_SMALLBANK_COMMAND_REPLAYER_H__
-#define __CAVALIA_SMALLBANK_BENCHMARK_SMALLBANK_COMMAND_REPLAYER_H__
+#ifndef __CAVALIA_SMALLBANK_BENCHMARK_SMALLBANK_SERIAL_COMMAND_REPLAYER_H__
+#define __CAVALIA_SMALLBANK_BENCHMARK_SMALLBANK_SERIAL_COMMAND_REPLAYER_H__
 
-#include <Replayer/CommandReplayer.h>
+#include <Replayer/SerialCommandReplayer.h>
 
 #include "AtomicProcedures/AmalgamateProcedure.h"
 #include "AtomicProcedures/BalanceProcedure.h"
@@ -16,10 +16,10 @@ namespace Cavalia{
 		namespace Smallbank{
 			namespace Replayer{
 				using namespace Cavalia::Database;
-				class SmallbankCommandReplayer : public CommandReplayer{
+				class SmallbankSerialCommandReplayer : public SerialCommandReplayer{
 				public:
-					SmallbankCommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : CommandReplayer(filename, storage_manager, thread_count){}
-					virtual ~SmallbankCommandReplayer(){}
+					SmallbankSerialCommandReplayer(const std::string &filename, BaseStorageManager *const storage_manager, const size_t &thread_count) : SerialCommandReplayer(filename, storage_manager, thread_count){}
+					virtual ~SmallbankSerialCommandReplayer(){}
 
 				private:
 					virtual void PrepareProcedures(){
@@ -72,9 +72,29 @@ namespace Cavalia{
 						return tuple;
 					}
 
+					virtual RecordSchema *GetRecordSchema(const size_t &table_id){
+						RecordSchema *schema_ptr = NULL;
+						switch (table_id)
+						{
+						case ACCOUNTS_TABLE_ID:
+							schema_ptr = SmallbankSchema::GenerateAccountsSchema();
+							break;
+						case SAVINGS_TABLE_ID:
+							schema_ptr = SmallbankSchema::GenerateSavingsSchema();
+							break;
+						case CHECKING_TABLE_ID:
+							schema_ptr = SmallbankSchema::GenerateCheckingSchema();
+							break;
+						default:
+							assert(false);
+							break;
+						}
+						return schema_ptr;
+					}
+
 				private:
-					SmallbankCommandReplayer(const SmallbankCommandReplayer &);
-					SmallbankCommandReplayer& operator=(const SmallbankCommandReplayer &);
+					SmallbankSerialCommandReplayer(const SmallbankSerialCommandReplayer &);
+					SmallbankSerialCommandReplayer& operator=(const SmallbankSerialCommandReplayer &);
 				};
 			}
 		}
