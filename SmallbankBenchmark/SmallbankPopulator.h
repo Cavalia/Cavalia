@@ -18,7 +18,7 @@ namespace Cavalia{
 				virtual ~SmallbankPopulator(){}
 
 				virtual void StartPopulate();
-				virtual void StartPopulate(const size_t &min_w_id, const size_t &max_w_id);
+				virtual void StartPopulate(const size_t &min_w_id, const size_t &max_w_id){}
 
 			private:
 				AccountsRecord* GenerateAccountsRecord(const int&) const;

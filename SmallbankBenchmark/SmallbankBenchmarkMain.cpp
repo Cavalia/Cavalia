@@ -27,9 +27,9 @@
 #include "SmallbankHStoreExecutor.h"
 #include "SmallbankSiteConfiguration.h"
 #include "SmallbankSiteExecutor.h"
-#include "SmallbankIslandStorageManager.h"
-#include "SmallbankIslandConfiguration.h"
-#include "SmallbankIslandExecutor.h"
+//#include "SmallbankIslandStorageManager.h"
+//#include "SmallbankIslandConfiguration.h"
+//#include "SmallbankIslandExecutor.h"
 #endif
 using namespace Cavalia;
 using namespace Cavalia::Benchmark::Smallbank;
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 	if (app_type == APP_POPULATE) {
 		assert(factor_count == 1);
 		SmallbankScaleParams params(scale_factors[0], -1);
-		POPULATE_STORAGE(Smallbank);
+		POPULATE_STORAGE(Smallbank, dir_name);
 		PRINT_STORAGE_STATUS;
 		CHECKPOINT_STORAGE;
 	}
