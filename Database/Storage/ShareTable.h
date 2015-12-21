@@ -167,10 +167,6 @@ namespace Cavalia{
 					char *entry = new char[record_size];
 					in_stream.read(entry, record_size);
 					TableRecord *record_ptr = new TableRecord(new SchemaRecord(schema_ptr_, entry));
-					// by default, set warehouse records as hot data.
-					if (schema_ptr_->GetTableId() == 2){
-						record_ptr->content_.SetHot(true);
-					}
 					InsertRecord(record_ptr);
 					file_pos += record_size;
 				}
