@@ -2,6 +2,7 @@
 #ifndef __CAVALIA_MICRO_BENCHMARK_MICRO_SOURCE_H__
 #define __CAVALIA_MICRO_BENCHMARK_MICRO_SOURCE_H__
 
+#include <unordered_set>
 #include <Benchmark/BenchmarkSource.h>
 #include "MicroInformation.h"
 #include "MicroRandomGenerator.h"

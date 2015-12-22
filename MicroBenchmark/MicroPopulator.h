@@ -13,7 +13,7 @@ namespace Cavalia{
 		namespace Micro{
 			class MicroPopulator : public BenchmarkPopulator{
 			public:
-				MicroPopulator(const MicroScaleParams *params, BaseStorageManager *storage_manager) : BenchmarkPopulator(storage_manager), num_accounts_(static_cast<int>(params->scalefactor_*NUM_ITEMS)){}
+				MicroPopulator(const MicroScaleParams *params, BaseStorageManager *storage_manager) : BenchmarkPopulator(storage_manager), num_items_(static_cast<int>(params->scalefactor_*NUM_ITEMS)){}
 
 				virtual ~MicroPopulator(){}
 
@@ -28,7 +28,7 @@ namespace Cavalia{
 				MicroPopulator(const MicroPopulator&);
 				MicroPopulator& operator=(const MicroPopulator&);
 			private:
-				const int num_accounts_;
+				const int num_items_;
 			};
 		}
 	}

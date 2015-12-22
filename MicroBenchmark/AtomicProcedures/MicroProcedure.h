@@ -16,12 +16,16 @@ namespace Cavalia{
 
 					virtual bool Execute(TxnParam *param, CharArray &ret, const ExeContext &exe_context){
 						const MicroParam* micro_param = static_cast<const MicroParam*>(param);
-						SchemaRecord *record_0 = NULL;
-						DB_QUERY(SelectKeyRecord(&context_, MICRO_TABLE_ID, std::string((char*)(&micro_param->key_0_), sizeof(int64_t)), record_0, READ_WRITE));
-						SchemaRecord *record_1 = NULL;
-						DB_QUERY(SelectKeyRecord(&context_, MICRO_TABLE_ID, std::string((char*)(&micro_param->key_1_), sizeof(int64_t)), record_1, READ_WRITE));
-						assert(record_0 != NULL);
-						assert(record_1 != NULL);
+						for (size_t i = 0; i < NUM_ACCESSES / 2; ++i){
+							SchemaRecord *record = NULL;
+							DB_QUERY(SelectKeyRecord(&context_, MICRO_TABLE_ID, std::string((char*)(&micro_param->keys_[i]), sizeof(int64_t)), record, READ_ONLY));
+							assert(record != NULL);
+						}
+						for (size_t i = NUM_ACCESSES / 2; i < NUM_ACCESSES; ++i){
+							SchemaRecord *record = NULL;
+							DB_QUERY(SelectKeyRecord(&context_, MICRO_TABLE_ID, std::string((char*)(&micro_param->keys_[i]), sizeof(int64_t)), record, READ_WRITE));
+							assert(record != NULL);
+						}
 						return transaction_manager_->CommitTransaction(&context_, param, ret);
 					}
 

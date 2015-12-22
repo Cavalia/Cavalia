@@ -4,7 +4,6 @@
 
 #include <Benchmark/BenchmarkDriver.h>
 #include <Benchmark/BenchmarkArguments.h>
-#include <Benchmark/BenchmarkConfigParser.h>
 
 #include <Profiler/Profilers.h>
 #include <Redirector/IORedirector.h>

@@ -12,6 +12,7 @@ namespace Cavalia{
 
 			const int NUM_ITEMS = 1000000;
 			const int VALUE_LEN = 64;
+			const int NUM_ACCESSES = 10;
 		}
 	}
 }

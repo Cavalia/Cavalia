@@ -13,7 +13,7 @@ namespace Cavalia{
 		namespace Micro{
 			class MicroRandomGenerator{
 			public:
-				MicroRandomGenerator(const uint64_t& num_accounts, const double &theta) : zipf_dist_(num_accounts, theta){}
+				MicroRandomGenerator(const uint64_t& num_items, const double &theta) : zipf_dist_(num_items, theta){}
 				~MicroRandomGenerator(){}
 				//taken from tpcc benchmark.
 				//generate integer that falls inside [min, max].
@@ -26,17 +26,8 @@ namespace Cavalia{
 						return rand() % (max - min + 1) + min;
 					}
 				}
-				//static int GenerateGaussianInteger(int min, int max){
-				//	int value = -1;
-				//	while (value < 0 || value >= (max - min + 1)) {
-				//		double gaussian = (distribution(generator) + 2.0) / 4.0;
-				//		value = static_cast<int>(round(gaussian * (max - min + 1)));
-				//	}
-				//	value += min;
-				//	return value;
-				//}
 			
-				static std::string GenerateAccountName(const long &n){
+				static std::string GenerateValue(const long &n){
 					char tmp[65]; // 64 + 1
 #ifdef _WIN32
 					sprintf_s(tmp, "%064ld", n);
@@ -49,12 +40,11 @@ namespace Cavalia{
 				int GenerateZipfNumber(){
 					return (int)zipf_dist_.GetNextNumber();
 				}
+
 			private:
 				MicroRandomGenerator(const MicroRandomGenerator&);
 				MicroRandomGenerator& operator=(const MicroRandomGenerator&);
-			//private:
-			//	static std::default_random_engine generator;
-			//	static std::normal_distribution<double> distribution;
+
 			private:
 				ZipfDistribution zipf_dist_;
 			};
