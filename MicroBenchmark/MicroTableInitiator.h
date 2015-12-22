@@ -15,9 +15,7 @@ namespace Cavalia{
 
 				virtual void Initialize(BaseStorageManager *storage_manager){
 					std::unordered_map<size_t, RecordSchema*> schema;
-					schema[ACCOUNTS_TABLE_ID] = MicroSchema::GenerateAccountsSchema();
-					schema[SAVINGS_TABLE_ID] = MicroSchema::GenerateSavingsSchema();
-					schema[CHECKING_TABLE_ID] = MicroSchema::GenerateCheckingSchema();
+					schema[MICRO_TABLE_ID] = MicroSchema::GenerateMicroSchema();
 					storage_manager->RegisterTables(schema);
 				}
 

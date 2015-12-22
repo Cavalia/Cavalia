@@ -4,7 +4,7 @@
 
 #include <Executor/ConcurrentExecutor.h>
 
-#include "AtomicProcedures/AmalgamateProcedure.h"
+#include "AtomicProcedures/MicroProcedure.h"
 
 namespace Cavalia{
 	namespace Benchmark{
@@ -18,20 +18,20 @@ namespace Cavalia{
 				private:
 					virtual void PrepareProcedures(){
 						using namespace AtomicProcedures;
-						registers_[TupleType::AMALGAMATE] = [](size_t node_id){
-							AmalgamateProcedure *procedure = (AmalgamateProcedure*)MemAllocator::AllocNode(sizeof(AmalgamateProcedure), node_id);
-							new(procedure)AmalgamateProcedure(TupleType::AMALGAMATE);
+						registers_[TupleType::MICRO] = [](size_t node_id){
+							MicroProcedure *procedure = (MicroProcedure*)MemAllocator::AllocNode(sizeof(MicroProcedure), node_id);
+							new(procedure)MicroProcedure(TupleType::MICRO);
 							return procedure;
 						};
-						deregisters_[TupleType::AMALGAMATE] = [](char *ptr){
-							MemAllocator::FreeNode(ptr, sizeof(AmalgamateProcedure));
+						deregisters_[TupleType::MICRO] = [](char *ptr){
+							MemAllocator::FreeNode(ptr, sizeof(MicroProcedure));
 						};
 					}
 
 					virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry){
 						TxnParam *tuple;
-						if (param_type == TupleType::AMALGAMATE){
-							tuple = new AmalgamateParam();
+						if (param_type == TupleType::MICRO){
+							tuple = new MicroParam();
 						}
 						else{
 							assert(false);

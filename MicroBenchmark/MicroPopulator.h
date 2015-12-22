@@ -13,7 +13,7 @@ namespace Cavalia{
 		namespace Micro{
 			class MicroPopulator : public BenchmarkPopulator{
 			public:
-				MicroPopulator(const MicroScaleParams *params, BaseStorageManager *storage_manager) : BenchmarkPopulator(storage_manager), num_accounts_(static_cast<int>(params->scalefactor_*NUM_ACCOUNTS)){}
+				MicroPopulator(const MicroScaleParams *params, BaseStorageManager *storage_manager) : BenchmarkPopulator(storage_manager), num_accounts_(static_cast<int>(params->scalefactor_*NUM_ITEMS)){}
 
 				virtual ~MicroPopulator(){}
 
@@ -21,13 +21,8 @@ namespace Cavalia{
 				virtual void StartPopulate(const size_t &min_w_id, const size_t &max_w_id){}
 
 			private:
-				AccountsRecord* GenerateAccountsRecord(const int&) const;
-				SavingsRecord* GenerateSavingsRecord(const int&) const;
-				CheckingRecord* GenerateCheckingRecord(const int&) const;
-
-				void InsertAccountsRecord(const AccountsRecord*);
-				void InsertSavingsRecord(const SavingsRecord*);
-				void InsertCheckingRecord(const CheckingRecord*);
+				MicroRecord* GenerateMicroRecord(const int&) const;
+				void InsertMicroRecord(const MicroRecord*);
 
 			private:
 				MicroPopulator(const MicroPopulator&);

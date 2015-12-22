@@ -12,11 +12,7 @@ namespace Cavalia{
 		namespace Micro{
 			class MicroSource : public BenchmarkSource{
 			public:
-				MicroSource(const std::string &filename_prefix, IORedirector *const redirector, MicroScaleParams *const params, const size_t &num_transactions, const size_t &dist_ratio) : BenchmarkSource(filename_prefix, redirector, params, num_transactions, dist_ratio), num_accounts_(static_cast<size_t>(params->scalefactor_ * NUM_ACCOUNTS)), random_generator_(num_accounts_, params->theta_){}
-
-				 MicroSource(const std::string &filename_prefix, IORedirector *const redirector, MicroScaleParams *const params, const size_t &num_transactions, const size_t &dist_ratio, const size_t &partition_count) : BenchmarkSource(filename_prefix, redirector, params, num_transactions, dist_ratio, partition_count), num_accounts_(static_cast<size_t>(params->scalefactor_ * NUM_ACCOUNTS)), random_generator_(num_accounts_, params->theta_){}
-
-				 MicroSource(const std::string &filename_prefix, IORedirector *const redirector, MicroScaleParams *const params, const size_t &num_transactions, const size_t &dist_ratio, const size_t &partition_count, const size_t &partition_id) : BenchmarkSource(filename_prefix, redirector, params, num_transactions, dist_ratio, partition_count, partition_id), num_accounts_(static_cast<size_t>(params->scalefactor_ * NUM_ACCOUNTS)), random_generator_(num_accounts_, params->theta_){}
+				MicroSource(const std::string &filename_prefix, IORedirector *const redirector, MicroScaleParams *const params, const size_t &num_transactions, const size_t &dist_ratio) : BenchmarkSource(filename_prefix, redirector, params, num_transactions, dist_ratio), num_items_(static_cast<size_t>(params->scalefactor_ * NUM_ITEMS)), random_generator_(num_items_, params->theta_){}
 
 				 virtual ~MicroSource(){}
 
@@ -25,23 +21,8 @@ namespace Cavalia{
 
 				virtual TxnParam* DeserializeParam(const size_t &param_type, const CharArray &entry){
 					TxnParam *tuple;
-					if (param_type == TupleType::AMALGAMATE){
-						tuple = new AmalgamateParam();
-					}
-					else if (param_type == TupleType::DEPOSIT_CHECKING){
-						tuple = new DepositCheckingParam();
-					}
-					else if (param_type == TupleType::SEND_PAYMENT){
-						tuple = new SendPaymentParam();
-					}
-					else if (param_type == TupleType::TRANSACT_SAVINGS){
-						tuple = new TransactSavingsParam();
-					}
-					else if (param_type == TupleType::WRITE_CHECK){
-						tuple = new WriteCheckParam();
-					}
-					else if (param_type == TupleType::BALANCE){
-						tuple = new BalanceParam();
+					if (param_type == TupleType::MICRO){
+						tuple = new MicroParam();
 					}
 					else{
 						assert(false);
@@ -56,7 +37,7 @@ namespace Cavalia{
 				MicroSource& operator=(const MicroSource &);
 
 			private:
-				const size_t num_accounts_;
+				const size_t num_items_;
 				MicroRandomGenerator random_generator_;
 			};
 		}

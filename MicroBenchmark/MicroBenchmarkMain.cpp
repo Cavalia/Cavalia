@@ -11,7 +11,6 @@
 #include <Logger/CommandLogger.h>
 #include <Logger/ValueLogger.h>
 #include <Storage/ShareStorageManager.h>
-#include <Storage/ShardStorageManager.h>
 
 #include "MicroTableInitiator.h"
 #include "MicroPopulator.h"
@@ -33,22 +32,6 @@ int main(int argc, char *argv[]) {
 		PRINT_STORAGE_STATUS;
 		CHECKPOINT_STORAGE;
 	}
-#if defined(ST)
-	else if (app_type == APP_REPLAY) {
-		if (replay_type == APP_SERIAL_COMMAND_REPLAY) {
-			RELOAD_STORAGE(Micro, dir_name, false);
-			PRINT_STORAGE_STATUS;
-			SERIAL_COMMAND_REPLAY(Micro, dir_name, num_core);
-			PRINT_STORAGE_STATUS;
-		}
-		else if (replay_type == APP_VALUE_REPLAY) {
-			RELOAD_STORAGE(Micro, dir_name, true);
-			PRINT_STORAGE_STATUS;
-			VALUE_REPLAY(Micro, dir_name, num_core);
-			PRINT_STORAGE_STATUS;
-		}
-	}
-#endif
 	else if (app_type == APP_CC_EXECUTE){
 		assert(factor_count == 2);
 		MicroScaleParams params(scale_factors[0], scale_factors[1]);
@@ -61,7 +44,6 @@ int main(int argc, char *argv[]) {
 #endif
 		IORedirector io_redirector(num_core);
 		SET_SOURCE(Micro, dir_name, num_txn, dist_ratio);
-		//SET_SOURCE_PARTITION(Micro, num_txn, num_core, dist_ratio);
 		INIT_PROFILERS;
 		RELOAD_STORAGE(Micro, dir_name, true);
 		PRINT_STORAGE_STATUS;

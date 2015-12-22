@@ -6,7 +6,7 @@ namespace Cavalia{
 	namespace Benchmark{
 		namespace Micro{
 			enum TupleType : size_t { 
-				AMALGAMATE, 
+				MICRO, 
 			};
 			
 			enum TableType : size_t { 

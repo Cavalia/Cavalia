@@ -7,19 +7,9 @@
 namespace Cavalia{
 	namespace Benchmark{
 		namespace Micro{
-			struct AccountsRecord{
-				int64_t custid_;
-				char name_[64];
-			};
-
-			struct SavingsRecord{
-				int64_t custid_;
-				float bal_;
-			};
-
-			struct CheckingRecord{
-				int64_t custid_;
-				float bal_;
+			struct MicroRecord{
+				int64_t key_;
+				char value_[64];
 			};
 		}
 	}
