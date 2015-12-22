@@ -133,6 +133,7 @@ namespace Cavalia{
 				while (is_begin_ == false);
 				int count = 0;
 				int abort_count = 0;
+				uint32_t backoff_shifts = 0;
 				CharArray ret;
 				ret.char_ptr_ = new char[1024];
 				ExeContext exe_context;
@@ -158,7 +159,22 @@ namespace Cavalia{
 							}
 							BEGIN_CC_ABORT_TIME_MEASURE(thread_id);
 							exe_context.is_retry_ = true;
+							if (backoff_shifts < 63){
+								++backoff_shifts;
+							}
+							//uint64_t spins = 1UL << backoff_shifts;
+							//spins *= 100;
+							//while (spins){
+							//	_mm_pause();
+							//	--spins;
+							//}
 							while (procedures[tuple->type_]->Execute(tuple, ret, exe_context) == false){
+								uint64_t spins = 1UL << backoff_shifts;
+								spins *= 100;
+								while (spins){
+									_mm_pause();
+									--spins;
+								}
 								exe_context.is_retry_ = true;
 								ret.size_ = 0;
 								++abort_count;
@@ -172,6 +188,9 @@ namespace Cavalia{
 								}
 							}
 							END_CC_ABORT_TIME_MEASURE(thread_id);
+						}
+						else{
+							backoff_shifts >>= 1;
 						}
 						++count;
 						END_TRANSACTION_TIME_MEASURE(thread_id, tuple->type_);
