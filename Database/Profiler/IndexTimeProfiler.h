@@ -18,13 +18,15 @@
 #else
 #define INIT_INDEX_TIME_PROFILER \
 	access_index_stat_ = new long long[kMaxThreadNum]; \
-	memset(access_index_stat_, 0, sizeof(access_index_stat_)); \
+	memset(access_index_stat_, 0, sizeof(access_index_stat_)*kMaxThreadNum); \
 	access_index_timer_ = new TimeMeasurer[kMaxThreadNum];
 #endif
 #define BEGIN_INDEX_TIME_MEASURE(thread_id) \
+	assert(thread_id==0);\
 	access_index_timer_[thread_id].StartTimer();
 
 #define END_INDEX_TIME_MEASURE(thread_id) \
+	assert(thread_id==0);\
 	access_index_timer_[thread_id].EndTimer(); \
 	access_index_stat_[thread_id] += access_index_timer_[thread_id].GetElapsedNanoSeconds();
 
