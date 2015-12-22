@@ -162,19 +162,15 @@ namespace Cavalia{
 							if (backoff_shifts < 63){
 								++backoff_shifts;
 							}
-							//uint64_t spins = 1UL << backoff_shifts;
-							//spins *= 100;
-							//while (spins){
-							//	_mm_pause();
-							//	--spins;
-							//}
+							uint64_t spins = 1UL << backoff_shifts;
+#if defined(BACKOFF)
+							spins *= 100;
+							while (spins){
+								_mm_pause();
+								--spins;
+							}
+#endif
 							while (procedures[tuple->type_]->Execute(tuple, ret, exe_context) == false){
-								uint64_t spins = 1UL << backoff_shifts;
-								spins *= 100;
-								while (spins){
-									_mm_pause();
-									--spins;
-								}
 								exe_context.is_retry_ = true;
 								ret.size_ = 0;
 								++abort_count;
@@ -186,11 +182,21 @@ namespace Cavalia{
 									txn_manager->CleanUp();
 									return;
 								}
+#if defined(BACKOFF)
+								uint64_t spins = 1UL << backoff_shifts;
+								spins *= 100;
+								while (spins){
+									_mm_pause();
+									--spins;
+								}
+#endif
 							}
 							END_CC_ABORT_TIME_MEASURE(thread_id);
 						}
 						else{
+#if defined(BACKOFF)
 							backoff_shifts >>= 1;
+#endif
 						}
 						++count;
 						END_TRANSACTION_TIME_MEASURE(thread_id, tuple->type_);
