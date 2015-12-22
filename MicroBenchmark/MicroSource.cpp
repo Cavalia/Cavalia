@@ -27,7 +27,7 @@ namespace Cavalia{
 						MicroParam* param = new MicroParam();
 						for (size_t access_id = 0; access_id < NUM_ACCESSES; ++access_id){
 							int res = random_generator_.GenerateZipfNumber();
-							while (keys.find(res) == keys.end()){
+							while (keys.find(res) != keys.end()){
 								res = random_generator_.GenerateZipfNumber();
 							}
 							keys.insert(res);
@@ -35,6 +35,7 @@ namespace Cavalia{
 							count[res]++;
 						}
 						tuples->push_back(param);
+						keys.clear();
 					}
 					if ((i + 1) % gParamBatchSize == 0){
 						DumpToDisk(tuples);

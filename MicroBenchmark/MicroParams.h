@@ -5,6 +5,7 @@
 #include <Transaction/TxnParam.h>
 #include "MicroRecords.h"
 #include "MicroMeta.h"
+#include "MicroConstants.h"
 
 namespace Cavalia{
 	namespace Benchmark{
