@@ -5,13 +5,13 @@
 #include <cstdint>
 #include <cmath>
 #include <random>
+#include "FastRandom.h"
 
 class ZipfDistribution{
 public:
-	ZipfDistribution(const uint64_t& n, const double& theta){
+	ZipfDistribution(const uint64_t& n, const double& theta) : rand_generator(rand()){
 		// range: 1-n
 		the_n = n;
-
 		zipf_theta = theta;
 		zeta_2_theta = zeta(2, zipf_theta);
 		denom = zeta(the_n, zipf_theta);
@@ -22,14 +22,15 @@ public:
 			sum += pow(1.0 / i, theta);
 		return sum;
 	}
-	static int GenerateInteger(const int &min, const int &max){
-		// TODO: needs a better, cross-platform random generator!
-		if (RAND_MAX <= 32767){
-			return ((rand() << 16) + rand()) % (max - min + 1) + min;
-		}
-		else{
-			return rand() % (max - min + 1) + min;
-		}
+	int GenerateInteger(const int &min, const int &max){
+		return rand_generator.next() % (max - min + 1) + min;
+		//// TODO: needs a better, cross-platform random generator!
+		//if (RAND_MAX <= 32767){
+		//	return ((rand() << 16) + rand()) % (max - min + 1) + min;
+		//}
+		//else{
+		//	return rand() % (max - min + 1) + min;
+		//}
 	}
 	uint64_t GetNextNumber() {
 		double alpha = 1 / (1 - zipf_theta);
@@ -47,6 +48,7 @@ public:
 	double zipf_theta;
 	double denom;
 	double zeta_2_theta;
+	fast_random rand_generator;
 };
 
 #endif
