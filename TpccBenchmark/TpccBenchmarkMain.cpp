@@ -78,7 +78,8 @@ int main(int argc, char *argv[]) {
 			ENABLE_VALUE_LOGGER(Tpcc, dir_name, num_core);
 #endif
 			IORedirector io_redirector(num_core);
-			SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, dist_ratio, (int)(scale_factors[0]));
+			SET_SOURCE(Tpcc, dir_name, num_txn, dist_ratio);
+			//SET_SOURCE_PARTITION(Tpcc, dir_name, num_txn, dist_ratio, (int)(scale_factors[0]));
 			INIT_PROFILERS;
 			RELOAD_STORAGE(Tpcc, dir_name, true);
 			PRINT_STORAGE_STATUS;
