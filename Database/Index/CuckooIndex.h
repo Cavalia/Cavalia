@@ -20,6 +20,7 @@ namespace Cavalia{
 
 			virtual bool DeleteRecord(const std::string &key){
 				//hash_index_.erase(key);
+				return false;
 			}
 
 			virtual TableRecord* SearchRecord(const std::string &key){

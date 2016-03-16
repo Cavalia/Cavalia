@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
-#if defined(__linux__)
+#if defined(NUMA)
 #include <numa.h>
 #endif
 
@@ -20,7 +20,7 @@ public:
 	}
 
 	static char* AllocNode(const size_t &size, const size_t &numa_node_id){
-#if defined(__linux__)
+#if defined(NUMA)
 		return (char*)numa_alloc_onnode(size, numa_node_id);
 #else
 		return (char*)malloc(size);
@@ -28,7 +28,7 @@ public:
 	}
 
 	 static void FreeNode(char *ptr, const size_t &size){
-#if defined(__linux__)
+#if defined(NUMA)
 		numa_free(ptr, size);
 #else
 		free(ptr);
@@ -36,7 +36,7 @@ public:
 	}
 
 	static char* AllocLocal(const size_t &size){
-#if defined(__linux__)
+#if defined(NUMA)
 		return (char*)numa_alloc_local(size);
 #else
 		return (char*)malloc(size);
@@ -44,7 +44,7 @@ public:
 	}
 
 	static void FreeLocal(char *ptr, const size_t &size){
-#if defined(__linux__)
+#if defined(NUMA)
 		numa_free(ptr, size);
 #else
 		free(ptr);

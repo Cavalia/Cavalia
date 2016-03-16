@@ -4,11 +4,11 @@
 
 #include <iostream>
 #include <vector>
-#if defined(__linux__)
+#if defined(NUMA)
 #include <numa.h>
 #endif
 
-#if defined(__linux__)
+#if defined(NUMA)
 struct NumaTopology{
 	NumaTopology(){
 		// number of cores in the machine.
@@ -46,7 +46,7 @@ struct NumaTopology{
 #endif
 
 static size_t GetNumaNodeId(const size_t &core_id){
-#if defined(__linux__)
+#if defined(NUMA)
 	return numa_node_of_cpu(core_id);
 #else
 	return 0;
@@ -54,7 +54,7 @@ static size_t GetNumaNodeId(const size_t &core_id){
 }
 
 static size_t GetCoreInNode(const size_t &numa_node_id){
-#if defined(__linux__)
+#if defined(NUMA)
 	size_t max_core_count = numa_num_task_cpus();
 	bitmask *bm = numa_allocate_cpumask();
 	numa_node_to_cpus(numa_node_id, bm);

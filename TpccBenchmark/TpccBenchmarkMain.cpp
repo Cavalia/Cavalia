@@ -21,7 +21,7 @@
 #include "TpccSerialCommandReplayer.h"
 #include "TpccValueReplayer.h"
 #endif
-#if defined(__linux__)
+#if defined(NUMA)
 #include "TpccShardStorageManager.h"
 #include "TpccHStoreConfiguration.h"
 #include "TpccHStoreExecutor.h"
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 			PRINT_STORAGE_STATUS;
 			REPORT_PROFILERS;
 		}
-#if defined(__linux__)
+#if defined(NUMA)
 		else if (app_type == APP_HSTORE_EXECUTE) {
 			// number of threads should be equal to number of warehouses.
 			size_t total_num_core = num_core * num_node;
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
 		delete logger;
 		logger = NULL;
 	}
-#if defined(__linux__)
+#if defined(NUMA)
 	else if (app_type == APP_ISLAND_EXECUTE){
 		assert(factor_count == 2);
 		TpccScaleParams params((int)(scale_factors[0]), scale_factors[1]);
