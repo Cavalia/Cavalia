@@ -11,7 +11,6 @@
 #include "CCAbortTimeProfiler.h"
 #include "CCTsAllocTimeProfiler.h"
 #include "CCMemAllocTimeProfiler.h"
-#include "CacheMissProfiler.h"
 #include "IndexTimeProfiler.h"
 #include "CCWaitCountProfiler.h"
 
