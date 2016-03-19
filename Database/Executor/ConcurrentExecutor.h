@@ -70,11 +70,9 @@ namespace Cavalia{
 				// epoch generator.
 				Epoch epoch;
 				std::cout << "start processing..." << std::endl;
-				BEGIN_CACHE_MISS_PROFILE;
 				is_begin_ = true;
 				start_timestamp_ = timer_.GetTimePoint();
 				thread_group.join_all();
-				END_CACHE_MISS_PROFILE;
 				long long elapsed_time = timer_.CalcMilliSecondDiff(start_timestamp_, end_timestamp_);
 				double throughput = total_count_ * 1.0 / elapsed_time;
 				double per_core_throughput = throughput / thread_count_;
