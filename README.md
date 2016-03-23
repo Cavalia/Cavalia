@@ -5,7 +5,7 @@ A transactional main-memory database on multicores.
 
 Cavalia is a main-memory database system specifically designed for modern multicore architectures. It aims at providing a generalized framework for comparing different concurrency-control mechanisms. A highlight in Cavalia is that new hardware features (e.g., NUMA, HTM, and NVRAM) are judiciously leveraged for achieving higher level of concurrency when processing massive volume of transactions. 
 
-**if you would like to see how a product-level database system implements different concurrency-control protocols, please check [Peloton](https://github.com/cmu-db/peloton), a street strength database management system for real-time analytics.** _--Yingjun Wu_
+**If you would like to see how a product-level database system implements different concurrency-control protocols, please check [Peloton](https://github.com/cmu-db/peloton), a street strength database management system for real-time analytics. Contact me for more information!** _--Yingjun Wu_
 
 
 ##Disclaimers
