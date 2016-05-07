@@ -70,26 +70,26 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 * the memory allocated for storage manager, including indexes and records, goes unmanaged -- we do not reclaim them throughout the lifetime.
 
 ##References
-* [BBG+95] Hal Berenson, Phil Bernstein, Jim Gray, Jim Melton, Elizabeth O’Neil, and Patrick O’Neil. A critique of ansi sql isolation levels. In SIGMOD, 1995.
-* [BHG87] Philip A Bernstein, Vassos Hadzilacos, and Nathan Goodman. Concurrency control and recovery in database systems. 1987.
-* [CM86] Michael J Carey and Waleed A Muhanna. The performance of multiversion concurrency control
-algorithms. TOCS, 1986.
+* [BBG+95] Hal Berenson, Phil Bernstein, Jim Gray, Jim Melton, Elizabeth O’Neil, and Patrick O’Neil. A Critique of ANSI SQL Isolation Levels. In SIGMOD, 1995.
+* [BHG87] Philip A Bernstein, Vassos Hadzilacos, and Nathan Goodman. Concurrency Control and Recovery in Database Systems. 1987.
+* [CM86] Michael J Carey and Waleed A Muhanna. The Performance of Multiversion Concurrency Control
+Algorithms. TOCS, 1986.
 * [MWMS14] Nirmesh Malviya, Ariel Weisberg, Samuel Madden,
-and Michael Stonebraker. Rethinking main memory
-oltp recovery. In ICDE, 2014.
+and Michael Stonebraker. Rethinking Main Memory
+OLTP Recovery. In ICDE, 2014.
 * [TZK+13] Stephen Tu, Wenting Zheng, Eddie Kohler, Barbara
-Liskov, and Samuel Madden. Speedy transactions in
-multicore in-memory databases. In SOSP, 2013.
+Liskov, and Samuel Madden. Speedy Transactions in
+Multicore In-memory Databases. In SOSP, 2013.
 * [WQLC14] Zhaoguo Wang, Hao Qian, Jinyang Li, and Haibo
-Chen. Using restricted transactional memory to build
-a scalable in-memory database. In EuroSys, 2014.
+Chen. Using Restricted Transactional Memory to Build
+a Scalable In-Memory Database. In EuroSys, 2014.
 * [YBP+14] Xiangyao Yu, George Bezerra, Andrew Pavlo,
 Srinivas Devadas, and Michael Stonebraker. Staring
-into the abyss: An evaluation of concurrency control
-with one thousand cores. In VLDB, 2014.
+into the Abyss: An Evaluation of Concurrency Control
+with One Thousand Cores. In VLDB, 2014.
 * [ZTKL14] Wenting Zheng, Stephen Tu, Eddie Kohler, and
-Barbara Liskov. Fast databases with fast durability
-and recovery through multicore parallelism. In
+Barbara Liskov. Fast Databases with Fast Durability
+and Recovery Through Multicore Parallelism. In
 OSDI, 2014.
 
 
