@@ -3,9 +3,12 @@ A transactional main-memory database on multicores.
 
 ##Features
 
-Cavalia is a main-memory database system specifically designed for modern multicore architectures. It aims at providing a generalized framework for comparing different concurrency-control mechanisms. A highlight in Cavalia is that new hardware features (e.g., NUMA, HTM, and NVRAM) are judiciously leveraged for achieving higher level of concurrency when processing massive volume of transactions. 
+Cavalia is a main-memory database system specifically designed for modern multicore architectures. It aims at providing a generalized framework for comparing different concurrency-control mechanisms. A highlight in Cavalia is that new hardware features (e.g., NUMA, HTM, and NVRAM) are judiciously leveraged for achieving higher level of concurrency when processing massive volume of transactions.
 
-**If you would like to see how a product-level database system implements different concurrency-control protocols, please check [Peloton](https://github.com/cmu-db/peloton), a street strength database management system for real-time analytics. Contact me for more information!** _--Yingjun Wu_
+##News
+__[May 2016]__ I have successfully migrated (almost) all the concurrency-control protocols implemented in Cavalia to [Peloton](https://github.com/cmu-db/peloton), a main-memory database management system for real-time analytics. Cavalia will remain to be a research prototype for developing new techniques in transaction processing. 
+
+**If you would like to see how each concurrency-control protocols behave in a product-level main-memory database system, please don't hesitate to contact me.** _--Yingjun Wu \<yingjun AT comp.nus.edu.sg\>_
 
 
 ##Disclaimers
@@ -92,10 +95,6 @@ Barbara Liskov. Fast Databases with Fast Durability
 and Recovery Through Multicore Parallelism. In
 OSDI, 2014.
 
-
-##Authors
-* Yingjun Wu \<yingjun AT comp.nus.edu.sg\>
-* Wentian Guo \<wentian AT comp.nus.edu.sg\>
 
 ##Licence
 Copyright (C) 2015-16, School of Computing, National University of Singapore
