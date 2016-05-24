@@ -8,7 +8,7 @@ Cavalia is a main-memory database system specifically designed for modern multic
 ##News
 __[May 2016]__ I have successfully migrated (almost) all the concurrency-control protocols implemented in Cavalia to [Peloton](https://github.com/cmu-db/peloton), a main-memory database management system for real-time analytics. Cavalia will remain to be a research prototype for developing new techniques in transaction processing. 
 
-**If you would like to see how each concurrency-control protocols behave in a product-level main-memory database system, please don't hesitate to contact me.** _--Yingjun Wu \<yingjun AT comp.nus.edu.sg\>_
+**If you would like to see how each concurrency-control protocol behaves in a product-level main-memory database system, please don't hesitate to contact me.** --Yingjun Wu \<yingjun AT comp.nus.edu.sg\>
 
 
 ##Disclaimers
