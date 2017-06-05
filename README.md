@@ -1,14 +1,14 @@
-#Cavalia
+# Cavalia
 A transactional main-memory database on multicores.
 
-##Features
+## Features
 
 Cavalia is a main-memory database system specifically designed for modern multicore architectures. It aims at providing a generalized framework for comparing different concurrency-control mechanisms. A highlight in Cavalia is that new hardware features (e.g., NUMA, HTM, and NVRAM) are judiciously leveraged for achieving higher level of concurrency when processing massive volume of transactions.
 
-##Disclaimers
+## Disclaimers
 Our project aims at faithfully implementing all kinds of concurrency-control and failure-recovery schemes in the same database framework. Currently, this project is still under instensive development. Please feel free to contact us if you find any bugs or errors in our implementation. Thanks!
 
-##Linux Platform Installation
+## Linux Platform Installation
 
 1. Download and install dependent libraries, including: boost-1.55.0 and libcuckoo;
 2. Clone Cavalia project, update CMakeLists.txt to set dependent library directories. 
@@ -16,8 +16,8 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 * Please note that the project requires g++ 4.8 with C++11 enabled.
 
 
-##Compile Options
-###Concurrency control
+## Compile Options
+### Concurrency control
 * SILOCK: locking-based snapshot isolation with no-wait strategy [BBG+95].
 * SIOCC: optimistic snapshot isolation [BBG+95].
 * MVTO: multi-version timestamp ordering [BHG87, CM86, YBP+14].
@@ -33,19 +33,19 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 * DBX: an implementation following DBX's design [WQLC14].
 * ST: disable concurrency control. must be turned on when performing log replay [MWMS14, ZTKL14].
 
-###Index
+### Index
 * CUCKOO_INDEX: enable cuckoo index (See https://github.com/efficient/libcuckoo).
 
-###Logging
+### Logging
 * VALUE_LOGGING: enable value logging [ZTKL14].
 * COMMAND_LOGGING: enable command logging [MWMS14].
 * COMPRESSION: enable log compression.
 
-###Timestamp allocation
+### Timestamp allocation
 * BATCH_TIMESTAMP: allocate timestamp in batch.
 * SCALABLE_TIMESTAMP: allocate timestamp in Silo's style [TZK+13,].
 
-###Profiler
+### Profiler
 * MUTE: mute profiling.
 * PRECISE_TIMER: use rdtsc timer.
 * PROFILE_PHASE: profile execution time of each transaction phase (insert, select, and commit).
@@ -58,15 +58,15 @@ Our project aims at faithfully implementing all kinds of concurrency-control and
 * PROFILE_CC_EXECUTION_TIME: measure time breakdown of the current concurrency control algorithm.
 * PROFILE_CC_EXECUTION_COUNT: measure statistics of the current concurrency control algorithm.
 
-###Hardware architecture
+### Hardware architecture
 * PTHREAD_LOCK: use pthread_spin_lock.
 * BUILTIN_LOCK: use __sync_lock_test_and_set.
 
-##Notes
+## Notes
 * please turn off all the cc-related options when testing transaction replays.
 * the memory allocated for storage manager, including indexes and records, goes unmanaged -- we do not reclaim them throughout the lifetime.
 
-##References
+## References
 * [BBG+95] Hal Berenson, Phil Bernstein, Jim Gray, Jim Melton, Elizabeth O’Neil, and Patrick O’Neil. A Critique of ANSI SQL Isolation Levels. In SIGMOD, 1995.
 * [BHG87] Philip A Bernstein, Vassos Hadzilacos, and Nathan Goodman. Concurrency Control and Recovery in Database Systems. 1987.
 * [CM86] Michael J Carey and Waleed A Muhanna. The Performance of Multiversion Concurrency Control
@@ -90,7 +90,7 @@ and Recovery Through Multicore Parallelism. In
 OSDI, 2014.
 
 
-##Licence
+## Licence
 Copyright (C) 2015-16, School of Computing, National University of Singapore
 
 Licensed under the Apache License, Version 2.0 (the "License");
