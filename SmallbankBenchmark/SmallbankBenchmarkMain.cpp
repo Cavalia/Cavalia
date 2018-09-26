@@ -21,7 +21,7 @@
 #include "SmallbankSerialCommandReplayer.h"
 #include "SmallbankValueReplayer.h"
 #endif
-#if defined(__linux__)
+#if defined(NUMA)
 #include "SmallbankShardStorageManager.h"
 #include "SmallbankHStoreConfiguration.h"
 #include "SmallbankHStoreExecutor.h"
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 			PRINT_STORAGE_STATUS;
 			REPORT_PROFILERS;
 		}
-#if defined(__linux__)
+#if defined(NUMA)
 		else if (app_type == APP_HSTORE_EXECUTE) {
 			size_t total_num_core = num_core * num_node;
 			CONFIGURE_HSTORE(Smallbank, num_core, num_node);
