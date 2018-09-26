@@ -3,17 +3,61 @@ A transactional main-memory database on multicores.
 
 ## Features
 
-Cavalia is a main-memory database system specifically designed for modern multicore architectures. It aims at providing a generalized framework for comparing different concurrency-control mechanisms. A highlight in Cavalia is that new hardware features (e.g., NUMA, HTM, and NVRAM) are judiciously leveraged for achieving higher level of concurrency when processing massive volume of transactions.
+Cavalia is a main-memory database system specifically designed for modern multicore architectures. It aims at providing a generalized framework for comparing different concurrency-control mechanisms. A highlight in Cavalia is that new hardware features (e.g., NUMA, HTM) are judiciously leveraged for achieving higher level of concurrency when processing massive volume of transactions.
 
 ## Disclaimers
 Our project aims at faithfully implementing all kinds of concurrency-control and failure-recovery schemes in the same database framework. Currently, this project is still under instensive development. Please feel free to contact us if you find any bugs or errors in our implementation. Thanks!
 
-## Linux Platform Installation
+## Ubuntu 16.04 Installation
 
-1. Download and install dependent libraries, including: boost-1.55.0 and libcuckoo;
-2. Clone Cavalia project, update CMakeLists.txt to set dependent library directories. 
-3. Build the project using the following command: mkdir build; cd build; cmake -DCMAKE_INSTALL_PREFIX=/to/your/directory ..; make -j; make install.
+```
+git clone https://github.com/google/cityhash.git
+cd cityhash
+./configure && make -j4 && make install
+sudo apt-get install libpapi-dev liblz4-dev libboost-all-dev libjemalloc-dev
+git clone https://github.com/Cavalia/Cavalia.git
+cd Cavalia
+mkdir build
+cmake .. && make -j4
+``` 
 * Please note that the project requires g++ 4.8 with C++11 enabled.
+
+## Examples
+### Run TPC-C Benchmark
+
+1. Populate tables. The warehouse is set to 10 and the scalefactor is set to 100 (inversely propotional to table size).
+```
+./tpcc_benchmark -a0 -sf10 -sf100
+```
+
+2. Execute transactions. The core count is set to 1, and the number of transactions to be executed is set to 10000.
+```
+./tpcc_benchmark -a2 -sf10 -sf100 -c1 -t10000
+```
+
+### Run Micro Benchmark
+
+1. Populate tables. The scalefactor is set to 1 (propotional to table size).
+```
+./micro_benchmark -a0 -sf1
+```
+
+2. Execute transactions. The skewness is set to 0.1, the core count is set to 1, and the number of transactions to be executed is set to 10000. Note that the skewness parameter is required.
+```
+./micro_benchmark -a2 -sf1 -sf0.1 -c1 -t10000
+```
+
+### Run Smallbank Benchmark
+
+1. Populate tables. The scalefactor is set to 1 (propotional to table size).
+```
+./smallbank_benchmark -a0 -sf1
+```
+
+2. Execute transactions. The skewness is set to 0.1, the core count is set to 1, and the number of transactions to be executed is set to 10000. Note that the skewness parameter is required.
+```
+./smallbank_benchmark -a2 -sf1 -sf0.1 -c1 -t10000
+```
 
 
 ## Compile Options
