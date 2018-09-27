@@ -1,5 +1,5 @@
 # Cavalia
-A transactional main-memory database on multicores.
+A transactional main-memory database system on multicores.
 
 ## Features
 
